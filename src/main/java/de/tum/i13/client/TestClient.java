@@ -111,27 +111,24 @@ public class TestClient {
     /**
      * Sends a message to the server and prints the response.
      *
-     * @param command   The user input split into a String array.
+     * @param message       The message to be sent.
+     * @param b64Message    Will be encoded to Base64 and appended to message.
      */
-    private static void sendMessage(String[] command) {
+    private static void sendMessage(String message, String b64Message) {
         if (!socketCommunicator.isConnected()) {
             System.out.println("Not connected to server!");
             return;
         }
 
-        String[] t = new String[command.length - 1];
-        System.arraycopy(command, 1, t, 0, command.length - 1);
         try {
-            String message = Base64.getEncoder().encodeToString(String.join(" ", t).getBytes());
+            message += Base64.getEncoder().encodeToString(b64Message.getBytes());
 
-            if (command.length > 1) {
-                socketCommunicator.sendMessage(message);
-                LOGGER.fine("Successfully sent message");
+            socketCommunicator.sendMessage(message);
+            LOGGER.fine("Successfully sent message");
 
-                System.out.println(new String(Base64.getDecoder().decode(socketCommunicator.receiveMessage())));
-            } else {
-                System.out.println("There is no message to send!");
-            }
+            //System.out.println(new String(Base64.getDecoder().decode(socketCommunicator.receiveMessage())));
+            System.out.println(socketCommunicator.receiveMessage());
+
         } catch (UnsupportedEncodingException e) {
             // we will never reach here as the encoding is supported
             LOGGER.severe(e.getMessage());
@@ -151,8 +148,11 @@ public class TestClient {
                     + "server according to the communication protocol.\n\t<message> - Sequence of characters to be "
                     + "sent to the echo server."
             );
-        else
-            sendMessage(command);
+        else {
+            String[] t = new String[command.length - 1];
+            System.arraycopy(command, 1, t, 0, command.length - 1);
+            sendMessage(String.join(" ", command), "");
+        }
     }
 
     /**
@@ -199,7 +199,7 @@ public class TestClient {
     }
 
     /**
-     * Sends a put command to the server by calling {@link #sendMessage(String[])}.
+     * Sends a put command to the server by calling {@link #sendMessage(String, String)}.
      * @param command   The user input split into a String array.
      */
     private static void put(String[] command) {
@@ -210,11 +210,11 @@ public class TestClient {
                     + "stored. "
             );
         else
-            sendMessage(command);
+            sendMessage(String.format("put %s ", command[1]), command[2]);
     }
 
     /**
-     * Sends a get command to the server by calling {@link #sendMessage(String[])}.
+     * Sends a get command to the server by calling {@link #sendMessage(String, String)}.
      * @param command   The user input split into a String array.
      */
     private static void get(String[] command) {
@@ -224,11 +224,11 @@ public class TestClient {
                     + "server.\n\t<key> - The key to be searched for."
             );
         else
-            sendMessage(command);
+            sendMessage("get " + command[1], "");
     }
 
     /**
-     * Sends a delete command to the server by calling {@link #sendMessage(String[])}.
+     * Sends a delete command to the server by calling {@link #sendMessage(String, String)}.
      * @param command   The user input split into a String array.
      */
     private static void delete(String[] command) {
@@ -238,7 +238,7 @@ public class TestClient {
                     + "<key> - the key to be deleted"
             );
         else
-            sendMessage(command);
+            sendMessage("delete " + command[1], "");
     }
 
     /**
