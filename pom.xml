@@ -76,7 +76,7 @@
                             <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifest>
-                                    <mainClass>de.tum.i13.client.Milestone1Main</mainClass>
+                                    <mainClass>de.tum.i13.client.TestClient</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
