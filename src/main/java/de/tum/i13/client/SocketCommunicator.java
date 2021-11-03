@@ -1,6 +1,7 @@
 package de.tum.i13.client;
 
 import static de.tum.i13.shared.Constants.*;
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 import java.io.*;
 import java.net.Socket;
@@ -109,7 +110,7 @@ public class SocketCommunicator {
      * @return  true,   if the data was sent successfully
      *          false,  otherwise
      */
-    private boolean send(byte[] data) throws IOException {
+    public boolean send(byte[] data) throws IOException {
         // check if the socket is connected
         if (isConnected) {
             LOGGER.fine("Socket currently connected, trying to send data");
@@ -155,8 +156,8 @@ public class SocketCommunicator {
                 isConnected = false;
                 throw e;
             }
-
             LOGGER.info(String.format("Received %d bytes: \"%s\"", data.size(), new String(data.toByteArray(), StandardCharsets.ISO_8859_1)));
+            //LOGGER.fine(String.format("In hex: %s", printHexBinary(data.toByteArray())));
             return data.toByteArray();
 
         } else {
@@ -172,7 +173,8 @@ public class SocketCommunicator {
      * @return Decoded read message
      */
     public String receiveMessage() throws IOException {
-        return new String(receive(), StandardCharsets.ISO_8859_1);
+        String msg = new String(receive(), StandardCharsets.ISO_8859_1);
+        return msg.substring(0, msg.length() - 2);
     }
 
     /**
@@ -187,6 +189,7 @@ public class SocketCommunicator {
         message = message.replace("\r\n", "");
         message += "\r\n";
         LOGGER.info(String.format("Message to server: %s", message));
+        LOGGER.fine(String.format("Message in hex: %s", printHexBinary(message.getBytes())));
         byte[] data;
         // convert string to byte array
         data = message.getBytes(TELNET_ENCODING);

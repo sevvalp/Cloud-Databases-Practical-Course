@@ -1,13 +1,16 @@
 package de.tum.i13.client;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Scanner;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 import static de.tum.i13.shared.LogSetup.setupLogging;
 
 /**
@@ -118,18 +121,22 @@ public class TestClient {
 
         String[] t = new String[command.length - 1];
         System.arraycopy(command, 1, t, 0, command.length - 1);
-        String message = String.join(" ", t);
+        try {
+            String message = Base64.getEncoder().encodeToString(String.join(" ", t).getBytes());
 
-        if (command.length > 1) {
-            try {
+            if (command.length > 1) {
                 socketCommunicator.sendMessage(message);
-                LOGGER.info("Successfully sent message");
-                System.out.print(socketCommunicator.receiveMessage());
-            } catch (IOException e) {
-                System.out.printf("There was an error sending the message: %s%n", e.getMessage());
+                LOGGER.fine("Successfully sent message");
+
+                System.out.println(new String(Base64.getDecoder().decode(socketCommunicator.receiveMessage())));
+            } else {
+                System.out.println("There is no message to send!");
             }
-        } else {
-            System.out.println("There is no message to send!");
+        } catch (UnsupportedEncodingException e) {
+            // we will never reach here as the encoding is supported
+            LOGGER.severe(e.getMessage());
+        } catch (IOException e) {
+            System.out.printf("There was an error sending the message: %s", e.getMessage());
         }
     }
 
@@ -267,12 +274,12 @@ public class TestClient {
         //System.out.println("\t<key> - The key to be deleted.");
 
         System.out.println("logLevel <level> - Sets the logger to the specified log level.");
-        System.out.println("\t<level> - One of the following log levels: "
-                + "(ALL|SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST).");
+        //System.out.println("\t<level> - One of the following log levels: "
+        //       + "(ALL|SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST).");
 
         System.out.println("help - Prints this help message.");
 
-        System.out.println("quit: - Disconnects from the server and exits the program execution.");
+        System.out.println("quit - Disconnects from the server and exits the program execution.");
     }
 
     /**
