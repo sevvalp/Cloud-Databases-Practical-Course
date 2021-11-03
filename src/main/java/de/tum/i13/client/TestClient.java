@@ -138,7 +138,7 @@ public class TestClient {
     }
 
     /**
-     * Sends a message to the server.
+     * Sends a message to the server using {@link #sendMessage(String, String)}.
      * @param command   The user input split into a String array.
      */
     private static void send(String[] command) {
@@ -151,7 +151,7 @@ public class TestClient {
         else {
             String[] t = new String[command.length - 1];
             System.arraycopy(command, 1, t, 0, command.length - 1);
-            sendMessage(String.join(" ", command), "");
+            sendMessage(String.join(" ", t), "");
         }
     }
 
