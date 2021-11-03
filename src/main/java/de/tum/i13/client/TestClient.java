@@ -39,6 +39,15 @@ public class TestClient {
             case "logLevel":
                 handleLogLevel(command);
                 break;
+            case "put":
+                put(command);
+                break;
+            case "get":
+                get(command);
+                break;
+            case "delete":
+                delete(command);
+                break;
             case "quit":
                 return true;
             default:
@@ -57,8 +66,8 @@ public class TestClient {
     private static void handleLogLevel(String[] command) {
         LOGGER.info(String.format("User wants to set loglevel with arguments: %s", String.join(" ", command)));
         if (command.length != 2) {
-            System.out.println("Cannot parse arguments! \nlogLevel <level>:\t\t\tSets the logger to the specified log "
-                    + "level\n\t<level>:\t\t\t\tOne of the following log levels: "
+            System.out.println("Cannot parse arguments! \nlogLevel <level> - Sets the logger to the specified log "
+                    + "level\n\t<level> - One of the following log levels: "
                     + "(ALL|SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST)"
             );
         } else {
@@ -72,8 +81,8 @@ public class TestClient {
                 case "FINER": setLogLevel(Level.FINER); break;
                 case "FINEST": setLogLevel(Level.FINEST); break;
                 default: {
-                    System.out.println("Cannot parse arguments! \nlogLevel <level>:\t\t\tSets the logger to the specified log "
-                            + "level\n\t<level>:\t\t\t\tOne of the following log levels: "
+                    System.out.println("Cannot parse arguments! \nlogLevel <level> - Sets the logger to the specified log "
+                            + "level\n\t<level> - One of the following log levels: "
                             + "(ALL|SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST)"
                     ); return;
                 }
@@ -101,7 +110,7 @@ public class TestClient {
      *
      * @param command   The user input split into a String array.
      */
-    private static void send(String[] command) {
+    private static void sendMessage(String[] command) {
         if (!socketCommunicator.isConnected()) {
             System.out.println("Not connected to server!");
             return;
@@ -111,7 +120,6 @@ public class TestClient {
         System.arraycopy(command, 1, t, 0, command.length - 1);
         String message = String.join(" ", t);
 
-        LOGGER.info(String.format("User wants to send a message: %s", String.join(" ", command)));
         if (command.length > 1) {
             try {
                 socketCommunicator.sendMessage(message);
@@ -126,16 +134,31 @@ public class TestClient {
     }
 
     /**
+     * Sends a message to the server.
+     * @param command   The user input split into a String array.
+     */
+    private static void send(String[] command) {
+        LOGGER.info(String.format("User wants to send a message: %s", String.join(" ", command)));
+        if (command.length <= 1)
+            System.out.println("Cannot parse arguments! Usage:\nsend <message> - Sends a text message to the echo "
+                    + "server according to the communication protocol.\n\t<message> - Sequence of characters to be "
+                    + "sent to the echo server."
+            );
+        else
+            sendMessage(command);
+    }
+
+    /**
      * Tries to connect to a server by calling {@link SocketCommunicator#connect(String, int)}.
      * @param command   The user input split into a String array.
      */
     private static void connect(String[] command) {
         LOGGER.info(String.format("User wants to connect to server with arguments: %s", String.join(" ", command)));
         if (command.length != 3) {
-            System.out.println("Cannot parse arguments! Usage:\nconnect <address> <port>:\tTries to establish a "
+            System.out.println("Cannot parse arguments! Usage:\nconnect <address> <port> - Tries to establish a "
                     + "TCP-connection to the echo server based on the given server address and the port number of the "
-                    + "echo service.\n\t<address>:\t\t\t\tHostname or IP address of the echo server.\n\t<port>:\t\t\t\t"
-                    + "\tThe port of the echo service on the respective server."
+                    + "echo service.\n\t<address> - Hostname or IP address of the echo server.\n\t<port> - "
+                    + "The port of the echo service on the respective server."
             );
         } else {
             try {
@@ -169,6 +192,49 @@ public class TestClient {
     }
 
     /**
+     * Sends a put command to the server by calling {@link #sendMessage(String[])}.
+     * @param command   The user input split into a String array.
+     */
+    private static void put(String[] command) {
+        LOGGER.info(String.format("User wants to put a key with arguments: %s", String.join(" ", command)));
+        if (command.length != 3)
+            System.out.println("Cannot parse arguments! Usage:\nput <key> <value> - Sends a key value pair to the "
+                    + "server.\n\t<key> - The key under which the value should be stored.\n\t<value> - The value to be "
+                    + "stored. "
+            );
+        else
+            sendMessage(command);
+    }
+
+    /**
+     * Sends a get command to the server by calling {@link #sendMessage(String[])}.
+     * @param command   The user input split into a String array.
+     */
+    private static void get(String[] command) {
+        LOGGER.info(String.format("User wants to put a key with arguments: %s", String.join(" ", command)));
+        if (command.length != 2)
+            System.out.println("Cannot parse arguments! Usage:\nget <key> - Gets the value of the key from the "
+                    + "server.\n\t<key> - The key to be searched for."
+            );
+        else
+            sendMessage(command);
+    }
+
+    /**
+     * Sends a delete command to the server by calling {@link #sendMessage(String[])}.
+     * @param command   The user input split into a String array.
+     */
+    private static void delete(String[] command) {
+        LOGGER.info(String.format("User wants to delete a key with arguments: %s", String.join(" ", command)));
+        if (command.length != 2)
+            System.out.println("Cannot parse arguments! Usage:\ndelete <key> - Deletes a value from the server. \n\t"
+                    + "<key> - the key to be deleted"
+            );
+        else
+            sendMessage(command);
+    }
+
+    /**
      * Prints a help page for the user.
      */
     private static void printHelp() {
@@ -176,18 +242,36 @@ public class TestClient {
         System.out.println("This program allows to connect to a server through a socket. The server will echo the sent "
                 + "message, which will be printed on the CLI.");
         System.out.println("Commands:");
+
         System.out.println("connect <address> <port> - Tries to establish a TCP-connection to the echo server based on "
                 + "the given server address and the port number of the echo service.");
-        System.out.println("\t<address> - Hostname or IP address of the echo server.");
-        System.out.println("\t<port> - The port of the echo service on the respective server.");
+        //System.out.println("\t<address> - Hostname or IP address of the echo server.");
+        //System.out.println("\t<port> - The port of the echo service on the respective server.");
+
         System.out.println("disconnect - Tries to disconnect from the connected server.");
+
+        /* Removed for Milestone 2
         System.out.println("send <message> - Sends a text message to the echo server according to the communication "
                 + "protocol.");
         System.out.println("\t<message> - Sequence of characters to be sent to the echo server.");
+        */
+
+        System.out.println("put <key> <value> - Sends a key value pair to the server.");
+        //System.out.println("\t<key> - The key under which the value should be stored.");
+        //System.out.println("\t<value> - The value to be stored.");
+
+        System.out.println("get <key> - Gets the value of the key from the server.");
+        //System.out.println("\t<key> - The key to be searched for.");
+
+        System.out.println("delete <key> - Deletes a value from the server.");
+        //System.out.println("\t<key> - The key to be deleted.");
+
         System.out.println("logLevel <level> - Sets the logger to the specified log level.");
         System.out.println("\t<level> - One of the following log levels: "
                 + "(ALL|SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST).");
+
         System.out.println("help - Prints this help message.");
+
         System.out.println("quit: - Disconnects from the server and exits the program execution.");
     }
 
