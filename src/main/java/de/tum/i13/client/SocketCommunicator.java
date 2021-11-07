@@ -125,10 +125,17 @@ public class SocketCommunicator implements KVStore {
         // convert key and value to Base64
         String b64Key = Base64.getEncoder().encodeToString(key.getBytes());
         String b64Value = Base64.getEncoder().encodeToString(value.getBytes());
+        // put message to server has the following format
+        // PUT <Base64 encoded key> <Base64 encoded value>
         String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
+        // expected receive message
+        // <STATUS> <Base64 encoded key> (<Base64 encoded value>)
+        // for example:
+        // PUT_SUCCESS <b64 key> <b64 value>
+        // PUT_ERROR <b64 key>
         send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
@@ -145,10 +152,17 @@ public class SocketCommunicator implements KVStore {
     @Override
     public KVMessage get(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key to Base64
+        // get message to server has the following format
+        // GET <Base64 encoded key>
         String message = String.format("GET %s\r\n", Base64.getEncoder().encodeToString(key.getBytes()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
+        // expected receive message
+        // <STATUS> <Base64 encoded key> (<Base64 encoded value>)
+        // for example:
+        // GET_SUCCESS <b64 key> <b64 value>
+        // GET_ERROR <b64 key>
         send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
@@ -164,10 +178,17 @@ public class SocketCommunicator implements KVStore {
      */
     public KVMessage delete(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key to Base64
+        // delete message to server has the following format
+        // DELETE <Base64 encoded key>
         String message = String.format("DELETE %s\r\n", Base64.getEncoder().encodeToString(key.getBytes()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
+        // expected receive message
+        // <STATUS> <Base64 encoded key> (<Base64 encoded value>)
+        // for example:
+        // DELETE_SUCCESS <b64 key> <b64 value>
+        // DELETE_ERROR <b64 key>
         send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
