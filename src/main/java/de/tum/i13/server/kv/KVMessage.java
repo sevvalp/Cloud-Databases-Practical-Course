@@ -33,4 +33,24 @@ public interface KVMessage {
      */
     public StatusType getStatus();
 
+    /**
+     * @param status String of a status
+     * @return Status associated with string, null if not found
+     */
+    public static StatusType parseStatus(String status) {
+        switch (status) {
+            case "GET": return StatusType.GET;
+            case "GET_ERROR": return StatusType.GET_ERROR;
+            case "GET_SUCCESS": return StatusType.GET_SUCCESS;
+            case "PUT": return StatusType.PUT;
+            case "PUT_SUCCESS": return StatusType.PUT_SUCCESS;
+            case "PUT_UPDATE": return StatusType.PUT_UPDATE;
+            case "PUT_ERROR": return StatusType.PUT_ERROR;
+            case "DELETE": return StatusType.DELETE;
+            case "DELETE_SUCCESS": return StatusType.DELETE_SUCCESS;
+            case "DELETE_ERROR": return StatusType.DELETE_ERROR;
+            default: return null;
+        }
+    }
+
 }

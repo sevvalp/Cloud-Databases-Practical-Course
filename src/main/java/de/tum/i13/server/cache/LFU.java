@@ -2,6 +2,7 @@ package de.tum.i13.server.cache;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * Class implementing an LFU cache to store kv-pairs.
@@ -10,6 +11,8 @@ import java.util.LinkedList;
  * @since   2021-11-06
  */
 public class LFU implements Cache {
+
+    private final static Logger LOGGER = Logger.getLogger(LFU.class.getName());
 
     private HashMap<String, String> cache;
     // to keep track of which keys were used i times
@@ -20,6 +23,7 @@ public class LFU implements Cache {
     private int currentSize;
 
     public LFU(int size) {
+        LOGGER.info(String.format("Created LFU cache with size %d", maxSize));
         cache = new HashMap<String, String>();
         lfu_freq_key = new HashMap<Integer, LinkedList<String>>();
         lfu_key_freq = new HashMap<String, Integer>();
@@ -85,6 +89,7 @@ public class LFU implements Cache {
      */
     @Override
     public void delete(String key) {
+        LOGGER.info(String.format("Removing key from cache: %s", key));
         // remove key from cache
         if (cache.remove(key) != null) {
             // remove key from key-freq map
@@ -106,6 +111,7 @@ public class LFU implements Cache {
      */
     @Override
     public String get(String key) {
+        LOGGER.info(String.format("Getting cache value for %s", key));
         return cache.get(key);
     }
 }
