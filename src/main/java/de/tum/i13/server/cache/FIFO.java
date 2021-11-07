@@ -37,6 +37,7 @@ public class FIFO implements Cache{
         LOGGER.info(String.format("Put into cache: <%s, %s>", key, value));
         // insert into map
         if (cache.put(key, value) == null) {
+            LOGGER.fine("Key was not in cache yet, adding...");
             // key not in fifo
             fifo.addFirst(key);
 
