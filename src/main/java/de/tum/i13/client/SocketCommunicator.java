@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * @since   2021-10-25
  *
  */
-public class SocketCommunicator {
+public class SocketCommunicator implements KVStore {
 
     private final static Logger LOGGER = Logger.getLogger(SocketCommunicator.class.getName());
 
@@ -120,6 +120,7 @@ public class SocketCommunicator {
      * @throws IllegalStateException if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
+    @Override
     public KVMessage put(String key, String value) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key and value to Base64
         String b64Key = Base64.getEncoder().encodeToString(key.getBytes());
@@ -141,6 +142,7 @@ public class SocketCommunicator {
      * @throws IllegalStateException if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
+    @Override
     public KVMessage get(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key to Base64
         String message = String.format("GET %s\r\n", Base64.getEncoder().encodeToString(key.getBytes()));
