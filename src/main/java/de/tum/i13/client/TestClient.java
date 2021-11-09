@@ -24,7 +24,7 @@ public class TestClient {
 
     private final static Logger LOGGER = Logger.getLogger(TestClient.class.getName());
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
-    private final static SocketCommunicator socketCommunicator = new SocketCommunicator();
+    private final static TestStore store = new TestStore();
 
     private static boolean interpretInput(String input) {
         if (input.length() == 0)
@@ -75,9 +75,9 @@ public class TestClient {
         else {
             try {
                 int port = Integer.parseInt(command[2]);
-                socketCommunicator.connect(command[1], port);
+                store.connect(command[1], port);
                 LOGGER.info("Successfully connected to server.");
-                System.out.println(socketCommunicator.receiveMessage());
+                System.out.println(store.connect(command[1], port));
 
             } catch (NumberFormatException e) {
                 System.out.println("The port must be a number!");
@@ -96,7 +96,7 @@ public class TestClient {
      */
     private static void disconnect() {
         try {
-            socketCommunicator.disconnect();
+            store.disconnect();
         } catch (IllegalStateException e) {
             System.out.println("Not connected to a KVServer!");
         } catch (IOException e) {
@@ -133,7 +133,7 @@ public class TestClient {
             printHelp("put");
         else {
             try {
-                KVMessage msg = socketCommunicator.put(command[1], command[2]);
+                KVMessage msg = store.put(command[1], command[2]);
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>", msg.getKey(), msg.getValue()); break;
@@ -160,7 +160,7 @@ public class TestClient {
             printHelp("get");
         else {
             try {
-                KVMessage msg = socketCommunicator.get(command[1]);
+                KVMessage msg = store.get(command[1]);
                 switch(msg.getStatus()) {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.println("There was an error getting the value.");
@@ -186,7 +186,7 @@ public class TestClient {
             printHelp("delete");
         else {
             try {
-                KVMessage msg = socketCommunicator.delete(command[1]);
+                KVMessage msg = store.delete(command[1]);
                 switch (msg.getStatus()) {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");
@@ -286,7 +286,7 @@ public class TestClient {
         LOGGER.info("Exiting program");
         System.out.println("Exiting program...");
         try {
-            socketCommunicator.disconnect();
+            store.disconnect();
         } catch (IOException e) {
             System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
         }
