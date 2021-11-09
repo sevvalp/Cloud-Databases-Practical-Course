@@ -1,5 +1,6 @@
 package de.tum.i13.client;
 
+import de.tum.i13.server.kv.KVCommunicator;
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVStore;
 
@@ -10,6 +11,13 @@ import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
+/**
+ * Test Store
+ * This class is intended as a library to interact with a KVCommunicator. Provides functions for the CLI.
+ *
+ * @version 0.1
+ * @since   2021-11-09
+ */
 public class TestStore implements KVStore {
 
     private final SocketCommunicator communicator;
@@ -27,10 +35,12 @@ public class TestStore implements KVStore {
      * @param port The port to use for the connection.
      * @throws IOException if there is an IOException during the connect.
      * @throws IllegalStateException if currently connected to a KVServer.
+     * @return the answer from the server to the connect.
      */
     public String connect(String host, int port) throws IOException, IllegalStateException {
         communicator.connect(host, port);
-        return communicator.receiveMessage();
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        return msg.substring(0, msg.length() - 2);
     }
 
     /**
@@ -61,7 +71,7 @@ public class TestStore implements KVStore {
         String b64Value = Base64.getEncoder().encodeToString(value.getBytes());
         // put message to server has the following format
         // PUT <Base64 encoded key> <Base64 encoded value>
-        String message = String.format("PUT %s %s", b64Key, b64Value);
+        String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -70,7 +80,7 @@ public class TestStore implements KVStore {
         // for example:
         // PUT_SUCCESS <b64 key> <b64 value>
         // PUT_ERROR <b64 key>
-        communicator.sendMessage(message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
 
@@ -88,7 +98,7 @@ public class TestStore implements KVStore {
         // convert key to Base64
         // get message to server has the following format
         // GET <Base64 encoded key>
-        String message = String.format("GET %s", Base64.getEncoder().encodeToString(key.getBytes()));
+        String message = String.format("GET %s\r\n", Base64.getEncoder().encodeToString(key.getBytes()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -97,7 +107,7 @@ public class TestStore implements KVStore {
         // for example:
         // GET_SUCCESS <b64 key> <b64 value>
         // GET_ERROR <b64 key>
-        communicator.sendMessage(message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
 
@@ -114,7 +124,7 @@ public class TestStore implements KVStore {
         // convert key to Base64
         // delete message to server has the following format
         // DELETE <Base64 encoded key>
-        String message = String.format("DELETE %s", Base64.getEncoder().encodeToString(key.getBytes()));
+        String message = String.format("DELETE %s\r\n", Base64.getEncoder().encodeToString(key.getBytes()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -123,9 +133,11 @@ public class TestStore implements KVStore {
         // for example:
         // DELETE_SUCCESS <b64 key> <b64 value>
         // DELETE_ERROR <b64 key>
-        communicator.sendMessage(message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
         return receiveKVMessage();
     }
+
+
 
     /**
      * Reads data from the socket using {@link SocketCommunicator#receive()} and decodes it into a KVMessage.
@@ -134,13 +146,14 @@ public class TestStore implements KVStore {
      * @throws IOException if there is an IOExcpetion during read.
      * @throws IllegalStateException if currently not connected to a KVServer.
      */
-    public KVMessage receiveKVMessage() throws IOException, IllegalStateException {
-        String[] rcvMsg = communicator.receiveMessage().split("\\s");
+    private KVMessage receiveKVMessage() throws IOException, IllegalStateException {
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        String[] rcvMsg = msg.substring(0, msg.length() - 2).split("\\s");
         if (KVMessage.parseStatus(rcvMsg[0]) == null)
             return null;
 
         // check for errors first
-        if (rcvMsg[0].equals("GET_ERROR") || rcvMsg[0].equals("PUT_ERROR") || rcvMsg[0].equals("DELETE_ERROR"))
+        if (rcvMsg[0].toLowerCase().contains("error"))
             return new ClientMessage(KVMessage.parseStatus(rcvMsg[0]));
 
         // operation succeeded

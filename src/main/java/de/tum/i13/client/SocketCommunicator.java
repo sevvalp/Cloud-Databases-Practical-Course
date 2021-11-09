@@ -1,5 +1,7 @@
 package de.tum.i13.client;
 
+import de.tum.i13.server.kv.KVCommunicator;
+
 import javax.naming.SizeLimitExceededException;
 
 import static de.tum.i13.shared.Constants.*;
@@ -17,7 +19,7 @@ import java.util.logging.Logger;
  * @since   2021-10-25
  *
  */
-public class SocketCommunicator {
+public class SocketCommunicator implements KVCommunicator {
 
     private final static Logger LOGGER = Logger.getLogger(SocketCommunicator.class.getName());
 
@@ -39,6 +41,7 @@ public class SocketCommunicator {
      * @throws IOException if there is an IOException during the disconnect.
      * @throws IllegalStateException if currently not connected to a KVServer.
      */
+    @Override
     public void disconnect() throws IOException, IllegalStateException {
         // check if the socket is connected
         if (isConnected) {
@@ -72,6 +75,7 @@ public class SocketCommunicator {
      * @throws IOException if there is an IOException during the connect.
      * @throws IllegalStateException if currently connected to a KVServer.
      */
+    @Override
     public void connect(String host, int port) throws IOException, IllegalStateException {
         // check if the socket is disconnected
         if (!isConnected) {
@@ -110,6 +114,9 @@ public class SocketCommunicator {
      * Sends message to the server. The message will be sanitized and finally sent using {@link #send(byte[])}.
      *
      * @param   message The message to be sent to the server
+     * @throws IOException if there is an IOException while sending the message.
+     * @throws IllegalStateException if not connected to a KVServer.
+     * @throws SizeLimitExceededException if the message is longer than 128 kB.
      */
     public void sendMessage(String message) throws IOException, IllegalStateException, SizeLimitExceededException {
         // replace \r\n with space, as this is the message delimiter of the server protocol
@@ -127,7 +134,11 @@ public class SocketCommunicator {
      * method will do nothing.
      *
      * @param   data    Data to be sent to the server
+     * @throws IOException if there is an IOException during the send.
+     * @throws IllegalStateException if not connected to a KVServer.
+     * @throws SizeLimitExceededException if the message is loniger than 128 kB.
      */
+    @Override
     public void send(byte[] data) throws IOException, IllegalStateException, SizeLimitExceededException {
         // check if the socket is connected
         if (isConnected) {
@@ -157,7 +168,10 @@ public class SocketCommunicator {
      * Reads from the input stream until /r/n is read.
      *
      * @return byte array containing the read data
+     * @throws IOException if there is an IOException during the receive.
+     * @throws IllegalStateException if not connected to a KVServer.
      */
+    @Override
     public byte[] receive() throws IOException, IllegalStateException {
         // check if the socket is connected
         if (isConnected) {
@@ -186,17 +200,5 @@ public class SocketCommunicator {
             LOGGER.warning("Socket currently disconnected!");
             throw new IllegalStateException("Not connected to KVServer!");
         }
-    }
-
-    /**
-     * Reads data from the socket using {@link #receive()} and decodes it into a String.
-     *
-     * @return Decoded read message.
-     * @throws IOException if there is an IOException during read.
-     * @throws IllegalStateException if currently not connected to a KVServer.
-     */
-    public String receiveMessage() throws IOException, IllegalStateException {
-        String msg = new String(receive(), TELNET_ENCODING);
-        return msg.substring(0, msg.length() - 2);
     }
 }
