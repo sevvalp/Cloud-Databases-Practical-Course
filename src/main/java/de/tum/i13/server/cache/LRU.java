@@ -26,13 +26,24 @@ public class LRU implements Cache{
     }
 
     /**
-     * Will put a kv-pair into the cache.
+     * Will put a kv-pair into the cache and the disk.
      *
      * @param key   Key to store.
      * @param value Value to store.
      */
     @Override
     public void put(String key, String value) {
+        this.put(key, value, true);
+    }
+
+    /**
+     * Will put a kv-pair into the cache and optionally the disk.
+     *
+     * @param key           Key to store.
+     * @param value         Value to store.
+     * @param writeToDisk   Flag if value should be written to the disk.
+     */
+    public void put(String key, String value, boolean writeToDisk) {
         LOGGER.info(String.format("Put into cache: <%s, %s>", key, value));
         // insert into lru
         lru.addFirst(key);
@@ -46,10 +57,15 @@ public class LRU implements Cache{
             // key in lru --> remove duplicate
             lru.removeLastOccurrence(key);
         }
+
+        if (writeToDisk) {
+            LOGGER.fine("Writing value to disk...");
+            // TODO: asynchronously write to disk
+        }
     }
 
     /**
-     * Deletes a kv-pair from the cache.
+     * Deletes a kv-pair from the cache and the disk.
      *
      * @param key   Key to delete.
      */
@@ -58,6 +74,7 @@ public class LRU implements Cache{
         LOGGER.info(String.format("Deleting key from cache: %s", key));
         cache.remove(key);
         lru.remove(key);
+        // TODO: asynchronously delete from disk
     }
 
     /**
@@ -69,6 +86,14 @@ public class LRU implements Cache{
     @Override
     public String get(String key) {
         LOGGER.info(String.format("Getting cache value for %s", key));
-        return cache.get(key);
+        String value = cache.get(key);
+        if (value == null) {
+            LOGGER.info("Key not in cache, reading from disk...");
+            // TODO: read from disk
+            value = "TODO: read from disk";
+            this.put(key, value, false);
+        }
+
+        return value;
     }
 }

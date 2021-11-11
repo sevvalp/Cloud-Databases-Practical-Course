@@ -32,13 +32,24 @@ public class LFU implements Cache {
     }
 
     /**
-     * Puts a key-value pair into the cache.
+     * Puts a key-value pair into the cache and the disk.
      *
      * @param key   Key to store.
      * @param value Value to store.
      */
     @Override
     public void put(String key, String value) {
+        this.put(key, value, true);
+    }
+
+    /**
+     * Puts a key-value pair into the cache and optionally the disk.
+     *
+     * @param key           Key to store.
+     * @param value         Value to store.
+     * @param writeToDisk   Flag if value should be written to the disk.
+     */
+    public void put(String key, String value, boolean writeToDisk) {
         LOGGER.info(String.format("Put into cache <%s, %s>", key, value));
         int f = 0;
         LinkedList<String> list = null;
@@ -89,6 +100,11 @@ public class LFU implements Cache {
         list.add(key);
         lfu_freq_key.put(f, list);
         LOGGER.fine(String.format("Added key to new frequency: %d", f));
+
+        if (writeToDisk) {
+            LOGGER.fine("Writing value to disk...");
+            // TODO: asynchronously write value to disk
+        }
     }
 
     /**
@@ -111,6 +127,8 @@ public class LFU implements Cache {
             lfu_freq_key.put(f, list);
             LOGGER.fine("Removed key from lfu_freq_key");
         }
+
+        // TODO: asynchronously delete value from disk
     }
 
     /**
@@ -123,6 +141,14 @@ public class LFU implements Cache {
     @Override
     public String get(String key) {
         LOGGER.info(String.format("Getting cache value for %s", key));
-        return cache.get(key);
+        String value = cache.get(key);
+        if (value == null) {
+            LOGGER.info("Key not in cache, reading from disk...");
+            // TODO: read from disk
+            value = "TODO: read from disk";
+            this.put(key, value, false);
+        }
+
+        return value;
     }
 }

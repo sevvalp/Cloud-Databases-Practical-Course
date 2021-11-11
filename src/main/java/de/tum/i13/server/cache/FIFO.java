@@ -27,13 +27,24 @@ public class FIFO implements Cache{
     }
 
     /**
-     * Will put a kv-pair into the cache.
+     * Will put a kv-pair into the cache and to the disk.
      *
      * @param key   Key to be stored.
      * @param value Value to be stored.
      */
     @Override
     public void put(String key, String value) {
+        this.put(key, value, true);
+    }
+
+    /**
+     * Will put a kv-pair into the cache and optionally to the disk.
+     *
+     * @param key           Key to be stored.
+     * @param value         Value to be stored.
+     * @param writeToDisk   Flag if value should be written to the disk.
+     */
+    public void put(String key, String value, boolean writeToDisk) {
         LOGGER.info(String.format("Put into cache: <%s, %s>", key, value));
         // insert into map
         if (cache.put(key, value) == null) {
@@ -48,21 +59,34 @@ public class FIFO implements Cache{
                 cache.remove(fifo.removeLast());
             }
         }
+
+        if (writeToDisk) {
+            LOGGER.fine("Writing value to disk...");
+            // TODO: asynchronously write to disk
+        }
     }
 
     /**
-     * Gets the value for a key from the cache.
+     * Gets the value for a key from the cache, reads from disk in case of cache miss.
      *
      * @param key   Key to get.
      */
     @Override
     public String get(String key) {
         LOGGER.info(String.format("Getting cache value for %s", key));
-        return cache.get(key);
+        String value = cache.get(key);
+        if (value == null) {
+            LOGGER.info("Key not in cache, reading from disk...");
+            // TODO: read from disk
+            value = "TODO: read from disk";
+            this.put(key, value, false);
+        }
+
+        return value;
     }
 
     /**
-     * Deletes a kv-pair from the cache.
+     * Deletes a kv-pair from the cache and the disk.
      *
      * @param key   Key to delete.
      */
@@ -71,5 +95,6 @@ public class FIFO implements Cache{
         LOGGER.info(String.format("Deleting key from cache: %s", key));
         cache.remove(key);
         fifo.remove(key);
+        // TODO: asynchronously delete from disk
     }
 }

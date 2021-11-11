@@ -96,7 +96,7 @@ public class TestClient {
      */
     private static void disconnect() {
         try {
-            store.disconnect();
+            System.out.println(store.disconnect());
         } catch (IllegalStateException e) {
             System.out.println("Not connected to a KVServer!");
         } catch (IOException e) {

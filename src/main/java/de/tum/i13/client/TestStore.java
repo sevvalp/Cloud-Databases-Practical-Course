@@ -16,7 +16,7 @@ import static de.tum.i13.shared.Constants.TELNET_ENCODING;
  * This class is intended as a library to interact with a KVCommunicator. Provides functions for the CLI.
  *
  * @version 0.1
- * @since   2021-11-09
+ * @since 2021-11-09
  */
 public class TestStore implements KVStore {
 
@@ -33,9 +33,9 @@ public class TestStore implements KVStore {
      *
      * @param host The host to connect to.
      * @param port The port to use for the connection.
-     * @throws IOException if there is an IOException during the connect.
-     * @throws IllegalStateException if currently connected to a KVServer.
      * @return the answer from the server to the connect.
+     * @throws IOException           if there is an IOException during the connect.
+     * @throws IllegalStateException if currently connected to a KVServer.
      */
     public String connect(String host, int port) throws IOException, IllegalStateException {
         communicator.connect(host, port);
@@ -46,11 +46,13 @@ public class TestStore implements KVStore {
     /**
      * Disconnects the socket, if it is currently connected. If the socket is disconnected, the method does nothing.
      *
-     * @throws IOException if there is an IOException during the disconnect.
+     * @throws IOException           if there is an IOException during the disconnect.
      * @throws IllegalStateException if currently not connected to a KVServer.
+     * @return a message informing about the disconnect.
      */
-    public void disconnect() throws IOException, IllegalStateException {
+    public String disconnect() throws IOException, IllegalStateException {
         communicator.disconnect();
+        return "Disconnected from KVServer successfully.";
     }
 
 
@@ -60,8 +62,8 @@ public class TestStore implements KVStore {
      * @param key   the key that identifies the given value.
      * @param value the value that is indexed by the given key.
      * @return a message that confirms the insertion of the tuple or an error.
-     * @throws IOException if there is an IOException during the put.
-     * @throws IllegalStateException if currently not connected to a KVServer.
+     * @throws IOException                if there is an IOException during the put.
+     * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
@@ -89,8 +91,8 @@ public class TestStore implements KVStore {
      *
      * @param key the key that identifies the value.
      * @return the value, which is indexed by the given key.
-     * @throws IOException if there is an IOException during the get.
-     * @throws IllegalStateException if currently not connected to a KVServer.
+     * @throws IOException                if there is an IOException during the get.
+     * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
@@ -116,8 +118,8 @@ public class TestStore implements KVStore {
      *
      * @param key the key that identifies the value.
      * @return the last stored value of that key
-     * @throws IOException if there is an IOException during the delete.
-     * @throws IllegalStateException if currently not connected to a KVServer.
+     * @throws IOException                if there is an IOException during the delete.
+     * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     public KVMessage delete(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
@@ -138,12 +140,11 @@ public class TestStore implements KVStore {
     }
 
 
-
     /**
      * Reads data from the socket using {@link SocketCommunicator#receive()} and decodes it into a KVMessage.
      *
      * @return Decoded read KVMessage.
-     * @throws IOException if there is an IOExcpetion during read.
+     * @throws IOException           if there is an IOExcpetion during read.
      * @throws IllegalStateException if currently not connected to a KVServer.
      */
     private KVMessage receiveKVMessage() throws IOException, IllegalStateException {
