@@ -52,17 +52,20 @@ public class DiskManager implements IDiskManager {
     /**
      * Write a kv-pair into the disk.
      *
-     * @param key   Key to be stored.
-     * @param value Value to be stored.
+     * @param msg KVMessage with the key and value to store.
      * @return KVMessage with the result
      */
     @Override
-    public KVMessage writeContent(String key, String value) {
+    public KVMessage writeContent(KVMessage msg) {
         // TODO: return KVMessage
+        // TODO: check if manager is initialized (i.e. we have a path where to store the files)
+        // TODO: return error if msg status is not PUT
         // TODO: Catch Exceptions here and return PUT_ERROR KVMessage
+        // TODO: In case of error, supply message to be printed to client as value
+        // TODO: Use B64Util.encode(<message>) to encode the message
 
         try {
-            String filepath = getW_path()+ key + ".dat";
+            String filepath = getW_path()+ msg.getKey() + ".dat";
             LOGGER.info("Writing file path " + filepath);
             File nFile = new File(filepath);
             //  Object lock = writeLocks.get(filepath);
@@ -79,7 +82,7 @@ public class DiskManager implements IDiskManager {
                 }
 
                 try (FileOutputStream fos = new FileOutputStream(filepath)) {
-                    fos.write(value.getBytes());
+                    fos.write(msg.getValue().getBytes());
                 } catch (IOException exception) {
                     LOGGER.severe("IO Exception while writing to file. " +  filepath);
                 }
@@ -94,16 +97,18 @@ public class DiskManager implements IDiskManager {
     /**
      * Read the value of a given key
      *
-     * @param key   Key to be searched.
+     * @param msg KVMessage with the key to read.
      * @return KVMessage with the result
      */
     @Override
-    public KVMessage readContent(String key) {
+    public KVMessage readContent(KVMessage msg) {
         // TODO: return KVMessage
+        // TODO: check if manager is initialized (i.e. we have a path where to store the files)
+        // TODO: return error if msg status is not GET
         // TODO: Catch Exceptions here and return GET_ERROR
 
             ByteArrayOutputStream data = new ByteArrayOutputStream();
-            String filepath = getW_path() + key + ".dat";
+            String filepath = getW_path() + msg.getKey() + ".dat";
 
             File nFile = new File(filepath);
 
@@ -126,22 +131,24 @@ public class DiskManager implements IDiskManager {
     /**
      * Deletes a kv-pair from disk
      *
-     * @param key   Key value to be deleted.
+     * @param msg KVMessage with the key to delete.
      * @return KVMessage with the result.
      */
     @Override
-    public KVMessage deleteContent(String key) {
+    public KVMessage deleteContent(KVMessage msg) {
         // TODO: return KVMessage with the result
+        // TODO: check if manager is initialized (i.e. we have a path where to store the files)
+        // TODO: return error if msg status is not DELETE
         // TODO: return error if file could not be found
         LOGGER.info("Deleting key from disk.");
 
-        String filepath = getW_path()+ key + ".dat";
+        String filepath = getW_path()+ msg.getKey() + ".dat";
         File dFile = new File(filepath);
         if(dFile.exists()){
             dFile.delete();
-            LOGGER.info(key + " succesfully deleted from disk.");
+            LOGGER.info(msg.getKey() + " successfully deleted from disk.");
         }else{
-            LOGGER.info(key + " file could not be found.");
+            LOGGER.info(msg.getKey() + " file could not be found.");
         }
 
         return null;

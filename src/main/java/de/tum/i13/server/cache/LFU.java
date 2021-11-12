@@ -2,6 +2,7 @@ package de.tum.i13.server.cache;
 
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.ServerMessage;
+import de.tum.i13.shared.B64Util;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -70,9 +71,14 @@ public class LFU implements Cache {
      */
     public KVMessage put(KVMessage msg) {
         // TODO: implement semaphore
+        // if cache is not yet initialized, return error
+        if (cache == null)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
         // if KVMessage does not have PUT command, return error
         if (msg.getStatus() != KVMessage.StatusType.PUT)
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey());
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Put into cache <%s, %s>", msg.getKey(), msg.getValue()));
         int f = 0;
@@ -135,9 +141,14 @@ public class LFU implements Cache {
      */
     @Override
     public KVMessage delete(KVMessage msg) {
+        // if cache is not yet initialized, return error
+        if (cache == null)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
         // if KVMessage does not have DELETE command, return error
         if (msg.getStatus() != KVMessage.StatusType.DELETE)
-            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey());
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Removing key from cache: %s", msg.getKey()));
         // remove key from cache
@@ -157,7 +168,7 @@ public class LFU implements Cache {
         }
 
         // key not found
-        return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey());
+        return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
     }
 
     /**
@@ -168,15 +179,20 @@ public class LFU implements Cache {
      */
     @Override
     public KVMessage get(KVMessage msg) {
+        // if cache is not yet initialized, return error
+        if (cache == null)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
         // if KVMessage does not have GET command, return error
         if (msg.getStatus() != KVMessage.StatusType.GET)
-            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey());
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Getting cache value for %s", msg.getKey()));
         String value = cache.get(msg.getKey());
         if (value == null) {
             LOGGER.info("Key not in cache");
-            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey());
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
         }
 
         return new ServerMessage(KVMessage.StatusType.GET_SUCCESS, msg.getKey(), value);

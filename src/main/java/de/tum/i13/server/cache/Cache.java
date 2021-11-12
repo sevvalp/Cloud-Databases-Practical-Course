@@ -16,7 +16,7 @@ public interface Cache {
      * @param msg KVMessage with key and value to store.
      * @return KVMessage with the result.
      */
-    public KVMessage put(KVMessage msg);
+    KVMessage put(KVMessage msg);
 
     /**
      * Deletes a key-value pair from the cache.
@@ -24,7 +24,7 @@ public interface Cache {
      * @param msg   KVMessage with key to delete.
      * @return KVMessage with the result.
      */
-    public KVMessage delete(KVMessage msg);
+    KVMessage delete(KVMessage msg);
 
     /**
      * Gets the value to a key from the cache.
@@ -32,20 +32,20 @@ public interface Cache {
      * @param msg   KVMessage with key to get.
      * @return KVMessage with the result.
      */
-    public KVMessage get(KVMessage msg);
+    KVMessage get(KVMessage msg);
 
     /**
      * Initializes the cache data structure.
      *
      * @param maxSize the maximum number of keys to store in the cache.
      */
-    public void initCache(int maxSize);
+    void initCache(int maxSize);
 
     /**
      * Returns the cache instance.
      * @return The cache instance.
      */
-    public static Cache getInstance() {
+    static Cache getInstance() {
         // Initialization-on-demand holder idiom
         // https://stackoverflow.com/questions/16106260/thread-safe-singleton-class
         return null;

@@ -9,25 +9,24 @@ public interface IDiskManager {
     /**
      * Write a kv-pair into the disk.
      *
-     * @param key   Key to be stored.
-     * @param value Value to be stored.
+     * @param msg KVMessage with the key and value to store.
      * @return KVMessage with the result.
      */
-    KVMessage writeContent(String key, String value);
+    KVMessage writeContent(KVMessage msg);
 
     /**
      * Read the value of a given key
      *
-     * @param key   Key to be searched.
+     * @param msg KVMessage with the key to read.
      * @return KVMessage with the result.
      */
-    KVMessage readContent(String key);
+    KVMessage readContent(KVMessage msg);
 
     /**
      * Deletes a kv-pair from disk
      *
-     * @param key   Key value to be deleted.
+     * @param msg KVMessage with the key to delete.
      * @return KVMessage with the result.
      */
-    KVMessage deleteContent(String key);
+    KVMessage deleteContent(KVMessage msg);
 }

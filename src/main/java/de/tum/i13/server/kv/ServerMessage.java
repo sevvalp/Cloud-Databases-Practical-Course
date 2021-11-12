@@ -14,12 +14,6 @@ public class ServerMessage implements KVMessage {
         this.status = status;
     }
 
-    public ServerMessage (StatusType status, String key) {
-        this.status = status;
-        this.key = null;
-        this.value = null;
-    }
-
     /**
      * @return the key that is associated with this message,
      * null if not key is associated.
