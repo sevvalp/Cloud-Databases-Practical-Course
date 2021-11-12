@@ -3,7 +3,6 @@ package de.tum.i13.server.disk;
 import de.tum.i13.server.kv.KVMessage;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,16 +17,36 @@ public class DiskManager implements IDiskManager {
     private final ConcurrentMap<String, Object> writeLocks = new ConcurrentHashMap<>();
     private String w_path;
 
+    private static class Holder {
+        private static final DiskManager MANAGER = new DiskManager();
+    }
+
+    private DiskManager(){};
+
+    /**
+     * Returns the DiskManager instance.
+     *
+     * @return  The DiskManager instance.
+     */
+    public static DiskManager getInstance(){
+        return Holder.MANAGER;
+    }
+
+    /**
+     * Initializes the DiskManager
+     * @param path  Path where the files shall be stored.
+     */
+    public void initDiskManager(String path) {
+        this.w_path = path;
+    }
+
+    /**
+     * Returns the path where the files will be stored.
+     *
+     * @return  Path where the files will be stored.
+     */
     public String getW_path() {
         return w_path;
-    }
-
-    public void setW_path(String w_path) {
-        this.w_path = System.getProperty("user.dir") + w_path + "\\";
-    }
-
-    public DiskManager() {
-        this.w_path = System.getProperty("user.dir") + "\\data" + "\\";
     }
 
     /**
@@ -35,18 +54,21 @@ public class DiskManager implements IDiskManager {
      *
      * @param key   Key to be stored.
      * @param value Value to be stored.
+     * @return KVMessage with the result
      */
     @Override
-    public synchronized void writeContent(String key, String value) {
+    public KVMessage writeContent(String key, String value) {
+        // TODO: return KVMessage
+        // TODO: Catch Exceptions here and return PUT_ERROR KVMessage
 
         try {
             String filepath = getW_path()+ key + ".dat";
             LOGGER.info("Writing file path " + filepath);
             File nFile = new File(filepath);
-          //  Object lock = writeLocks.get(filepath);
+            //  Object lock = writeLocks.get(filepath);
 
             //not sure if we need that
-      //   synchronized (lock) {
+            //   synchronized (lock) {
                 //if file exists delete old value
                 if (nFile.exists())
                     new FileOutputStream(filepath).close();
@@ -65,15 +87,20 @@ public class DiskManager implements IDiskManager {
         } catch (IOException e) {
             LOGGER.severe("IO Exception while writing to file."+  e.getMessage());
         }
+
+        return null;
     }
 
     /**
      * Read the value of a given key
      *
      * @param key   Key to be searched.
+     * @return KVMessage with the result
      */
     @Override
-    public String readContent(String key) {
+    public KVMessage readContent(String key) {
+        // TODO: return KVMessage
+        // TODO: Catch Exceptions here and return GET_ERROR
 
             ByteArrayOutputStream data = new ByteArrayOutputStream();
             String filepath = getW_path() + key + ".dat";
@@ -83,7 +110,9 @@ public class DiskManager implements IDiskManager {
             if (nFile.exists()) {
                 try {
                     byte[] value = Files.readAllBytes(Paths.get(filepath));
-                    return new String(value,TELNET_ENCODING);
+                    // TODO: return KVMessage
+                    //return new String(value,TELNET_ENCODING);
+                    return null;
                 } catch (IOException e) {
                     LOGGER.severe("Error during getting value "+ e.getMessage());
                 }
@@ -92,16 +121,18 @@ public class DiskManager implements IDiskManager {
             }
 
         return  null;
-
     }
 
     /**
      * Deletes a kv-pair from disk
      *
      * @param key   Key value to be deleted.
+     * @return KVMessage with the result.
      */
     @Override
-    public void deleteContent(String key) {
+    public KVMessage deleteContent(String key) {
+        // TODO: return KVMessage with the result
+        // TODO: return error if file could not be found
         LOGGER.info("Deleting key from disk.");
 
         String filepath = getW_path()+ key + ".dat";
@@ -113,6 +144,7 @@ public class DiskManager implements IDiskManager {
             LOGGER.info(key + " file could not be found.");
         }
 
+        return null;
     }
 
 }

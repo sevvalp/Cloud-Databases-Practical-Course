@@ -1,5 +1,8 @@
 package de.tum.i13.server.cache;
 
+import de.tum.i13.server.kv.KVMessage;
+import de.tum.i13.server.kv.ServerMessage;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Logger;
@@ -14,6 +17,7 @@ public class LFU implements Cache {
 
     private final static Logger LOGGER = Logger.getLogger(LFU.class.getName());
 
+    // TODO: make this threadsafe
     private HashMap<String, String> cache;
     // to keep track of which keys were used i times
     private HashMap<Integer, LinkedList<String>> lfu_freq_key;
@@ -22,39 +26,59 @@ public class LFU implements Cache {
     private int maxSize;
     private int currentSize;
 
-    public LFU(int size) {
-        LOGGER.info(String.format("Created LFU cache with size %d", maxSize));
-        cache = new HashMap<String, String>();
-        lfu_freq_key = new HashMap<Integer, LinkedList<String>>();
-        lfu_key_freq = new HashMap<String, Integer>();
-        this.maxSize = size;
+    private static class Holder {
+        private static final Cache INSTANCE = new LFU();
+    }
+
+    private LFU() {
+        cache = null;
+        lfu_freq_key = null;
+        lfu_key_freq = null;
+        this.maxSize = 0;
         this.currentSize = 0;
     }
 
     /**
-     * Puts a key-value pair into the cache and the disk.
-     *
-     * @param key   Key to store.
-     * @param value Value to store.
+     * Returns the cache instance.
+     * @return The cache instance.
      */
-    @Override
-    public void put(String key, String value) {
-        this.put(key, value, true);
+    public static Cache getInstance() {
+        return Holder.INSTANCE;
+    }
+
+    /**
+     * Initializes the cache data structure.
+     *
+     * @param maxSize the maximum number of keys to store in the cache.
+     */
+    public void initCache(int maxSize) {
+        // only init if cache is null
+        if (this.cache == null) {
+            LOGGER.info(String.format("Initialized LFU cache with size %d", maxSize));
+            cache = new HashMap<String, String>();
+            lfu_freq_key = new HashMap<Integer, LinkedList<String>>();
+            lfu_key_freq = new HashMap<String, Integer>();
+            this.maxSize = maxSize;
+            this.currentSize = 0;
+        }
     }
 
     /**
      * Puts a key-value pair into the cache and optionally the disk.
      *
-     * @param key           Key to store.
-     * @param value         Value to store.
-     * @param writeToDisk   Flag if value should be written to the disk.
+     * @param msg KVMessage with key and value to store.
      */
-    public void put(String key, String value, boolean writeToDisk) {
-        LOGGER.info(String.format("Put into cache <%s, %s>", key, value));
+    public KVMessage put(KVMessage msg) {
+        // TODO: implement semaphore
+        // if KVMessage does not have PUT command, return error
+        if (msg.getStatus() != KVMessage.StatusType.PUT)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey());
+
+        LOGGER.info(String.format("Put into cache <%s, %s>", msg.getKey(), msg.getValue()));
         int f = 0;
         LinkedList<String> list = null;
 
-        if (cache.put(key, value) == null) {
+        if (cache.put(msg.getKey(), msg.getValue()) == null) {
             LOGGER.fine("Key was not in cache.");
             // key not in cache
             if (++currentSize > maxSize) {
@@ -84,9 +108,9 @@ public class LFU implements Cache {
             LOGGER.fine("Key already in cache.");
 
             // remove key from old frequency
-            f = lfu_key_freq.get(key);
+            f = lfu_key_freq.get(msg.getKey());
             list = lfu_freq_key.get(f);
-            list.remove(key);
+            list.remove(msg.getKey());
             // do I need to do this?
             lfu_freq_key.put(f, list);
             LOGGER.fine(String.format("Removing key from old frequency: %d", f));
@@ -94,61 +118,67 @@ public class LFU implements Cache {
 
         // add key to new frequency
         list = lfu_freq_key.get(++f);
-        lfu_key_freq.put(key, f);
+        lfu_key_freq.put(msg.getKey(), f);
         if (list == null)
             list = new LinkedList<String>();
-        list.add(key);
+        list.add(msg.getKey());
         lfu_freq_key.put(f, list);
         LOGGER.fine(String.format("Added key to new frequency: %d", f));
 
-        if (writeToDisk) {
-            LOGGER.fine("Writing value to disk...");
-            // TODO: asynchronously write value to disk
-        }
+        return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
     }
 
     /**
      * Deletes a key-value pair from the cache.
      *
-     * @param key Key to delete.
+     * @param msg KVMessage with key to delete.
      */
     @Override
-    public void delete(String key) {
-        LOGGER.info(String.format("Removing key from cache: %s", key));
+    public KVMessage delete(KVMessage msg) {
+        // if KVMessage does not have DELETE command, return error
+        if (msg.getStatus() != KVMessage.StatusType.DELETE)
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey());
+
+        LOGGER.info(String.format("Removing key from cache: %s", msg.getKey()));
         // remove key from cache
-        if (cache.remove(key) != null) {
+        String value = cache.remove(msg.getKey());
+        if (value != null) {
             // remove key from key-freq map
-            Integer f = lfu_key_freq.remove(key);
+            Integer f = lfu_key_freq.remove(msg.getKey());
             LOGGER.fine(String.format("Removed key from lfu_key_freq with freq %d", f));
             LinkedList<String> list = lfu_freq_key.get(f);
             // remove key from freq-key map
-            list.remove(key);
+            list.remove(msg.getKey());
             // do I need this?
             lfu_freq_key.put(f, list);
             LOGGER.fine("Removed key from lfu_freq_key");
+
+            return new ServerMessage(KVMessage.StatusType.DELETE_SUCCESS, msg.getKey(), value);
         }
 
-        // TODO: asynchronously delete value from disk
+        // key not found
+        return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey());
     }
 
     /**
      * Gets the value to a key from the cache.
      *
-     * @param key Key to get
-     * @return Value associated with the key from the cache
-     * null, if key does not exist in cache
+     * @param msg KVMessage with key to get.
+     * @return KVMessage with the result.
      */
     @Override
-    public String get(String key) {
-        LOGGER.info(String.format("Getting cache value for %s", key));
-        String value = cache.get(key);
+    public KVMessage get(KVMessage msg) {
+        // if KVMessage does not have GET command, return error
+        if (msg.getStatus() != KVMessage.StatusType.GET)
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey());
+
+        LOGGER.info(String.format("Getting cache value for %s", msg.getKey()));
+        String value = cache.get(msg.getKey());
         if (value == null) {
-            LOGGER.info("Key not in cache, reading from disk...");
-            // TODO: read from disk
-            value = "TODO: read from disk";
-            this.put(key, value, false);
+            LOGGER.info("Key not in cache");
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey());
         }
 
-        return value;
+        return new ServerMessage(KVMessage.StatusType.GET_SUCCESS, msg.getKey(), value);
     }
 }

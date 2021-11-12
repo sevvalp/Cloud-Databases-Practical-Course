@@ -1,5 +1,7 @@
 package de.tum.i13.server.disk;
 
+import de.tum.i13.server.kv.KVMessage;
+
 import java.io.UnsupportedEncodingException;
 
 public interface IDiskManager {
@@ -9,20 +11,23 @@ public interface IDiskManager {
      *
      * @param key   Key to be stored.
      * @param value Value to be stored.
+     * @return KVMessage with the result.
      */
-    void writeContent(String key, String value) throws UnsupportedEncodingException;
+    KVMessage writeContent(String key, String value);
 
     /**
      * Read the value of a given key
      *
      * @param key   Key to be searched.
+     * @return KVMessage with the result.
      */
-    String readContent(String key) throws UnsupportedEncodingException;
+    KVMessage readContent(String key);
 
     /**
      * Deletes a kv-pair from disk
      *
      * @param key   Key value to be deleted.
+     * @return KVMessage with the result.
      */
-    void deleteContent(String key);
+    KVMessage deleteContent(String key);
 }

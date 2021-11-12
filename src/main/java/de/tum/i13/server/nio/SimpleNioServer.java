@@ -32,6 +32,7 @@ public class SimpleNioServer {
 
     public SimpleNioServer(CommandProcessor cmdProcessor) {
         this.cmdProcessor = cmdProcessor;
+        // TODO: replace with threadsafe data structure
         this.pendingChanges = new LinkedList<>();
         this.pendingWrites = new HashMap<>();
         this.pendingReads = new HashMap<>();
@@ -233,7 +234,9 @@ public class SimpleNioServer {
 
     private void handleRequest(SelectionKey selectionKey, String request) {
         try {
+            // TODO: pass selectionKey
             String res = cmdProcessor.process(request);
+            // TODO: delete this send, let the cache lookup thread do it asynchronously
             send(selectionKey, res.getBytes(Constants.TELNET_ENCODING));
 
         } catch (UnsupportedEncodingException e) {
@@ -241,7 +244,7 @@ public class SimpleNioServer {
         }
     }
 
-    private void send(SelectionKey selectionKey, byte[] data) {
+    public void send(SelectionKey selectionKey, byte[] data) {
         // Indicate we want the interest ops set changed
         this.pendingChanges.add(new ChangeRequest(selectionKey, SelectionKey.OP_WRITE));
 

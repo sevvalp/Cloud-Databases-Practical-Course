@@ -1,20 +1,20 @@
-package de.tum.i13.client;
+package de.tum.i13.server.kv;
 
 import de.tum.i13.server.kv.KVMessage;
 
-public class ClientMessage implements KVMessage {
+public class ServerMessage implements KVMessage {
 
     private final String key;
     private final String value;
     private final StatusType status;
 
-    public ClientMessage(StatusType status, String key, String value) {
+    public ServerMessage (StatusType status, String key, String value) {
         this.key = key;
         this.value = value;
         this.status = status;
     }
 
-    public ClientMessage(StatusType status, String key) {
+    public ServerMessage (StatusType status, String key) {
         this.status = status;
         this.key = null;
         this.value = null;

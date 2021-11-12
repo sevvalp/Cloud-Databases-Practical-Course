@@ -153,13 +153,15 @@ public class TestStore implements KVStore {
         if (KVMessage.parseStatus(rcvMsg[0]) == null)
             return null;
 
+        KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
+        String rcvKey = new String(Base64.getDecoder().decode(rcvMsg[2]));
+
         // check for errors first
         if (rcvMsg[0].toLowerCase().contains("error"))
-            return new ClientMessage(KVMessage.parseStatus(rcvMsg[0]));
+            return new ClientMessage(status, rcvKey);
 
         // operation succeeded
-        String rcvKey = new String(Base64.getDecoder().decode(rcvMsg[1]));
         String rcvVal = new String(Base64.getDecoder().decode(rcvMsg[2]));
-        return new ClientMessage(rcvKey, rcvVal, KVMessage.parseStatus(rcvMsg[0]));
+        return new ClientMessage(status, rcvKey, rcvVal);
     }
 }
