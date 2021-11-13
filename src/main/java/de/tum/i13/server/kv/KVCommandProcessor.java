@@ -21,10 +21,8 @@ public class KVCommandProcessor implements CommandProcessor {
     public void process(String command) {
         LOGGER.info("Received command: " + command.trim());
 
-        // TODO: Let the magic happen here
-
         /* TODO:
-            - add selectionKey parameter
+            - add selectionKey parameter, needed to write back result to NioServer asynchronously
             - split command and check for GET, PUT, DELETE --> return error message if unrecognized message
             - call respective method
          */
@@ -34,61 +32,39 @@ public class KVCommandProcessor implements CommandProcessor {
      * Gets the value specified by the key.
      *
      * @param command   parsed command from user.
-     * @return          Stringified KVMessage answer from cache.
      */
-    private String get(String[] command) {
+    private void get(String[] command) {
         /* TODO:
             - add selectionKey parameter
             - check for correct number of args
-            - call kvStore.get asynchronously
-            - do not return String here, but call server.send directly
+            - call kvStore.get (include selectionKey in KVMessage!)
          */
-        return null;
     }
 
     /**
      * Puts the key-value pair into the store.
      *
      * @param command   parsed command from user.
-     * @return          Stringified KVMessage answer from cache.
      */
-    private String put(String[] command) {
+    private void put(String[] command) {
         /* TODO:
             - add selectionKey parameter
             - check for correct number of args
-            - call kvStore.put asynchronously
-            - do not return String here, but call server.send directly
+            - call kvStore.put (include selectionKey in KVMessage!)
          */
-        return null;
     }
 
     /**
      * Deletes value from the store.
      *
      * @param command   parsed command from user.
-     * @return          Stringified KVMessage answer from cache.
      */
-    private String delete(String[] command) {
+    private void delete(String[] command) {
         /* TODO:
             - add selectionKey parameter
             - check for correct number of args
-            - call kvStore.delete asynchronously
-            - do not return String here, but call server.send directly
+            - call kvStore.delete (include selectionKey in KVMessage!)
          */
-        return null;
-    }
-
-    /**
-     * Converts a KVMessage to a String.
-     *
-     * @param msg   KVMessage to stringify.
-     * @return      Stringified KVMessage.
-     */
-    private String stringifyKVMessage(KVMessage msg) {
-        // if there is an error, there is no value
-        if (msg.getStatus().name().toLowerCase().contains("error"))
-            return String.format("%s %s\r\n", msg.getStatus().name().toUpperCase(), msg.getKey());
-        return String.format("%s %s %s\r\n", msg.getStatus().name().toUpperCase(), msg.getKey(), msg.getValue());
     }
 
     @Override

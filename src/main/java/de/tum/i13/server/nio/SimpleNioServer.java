@@ -14,13 +14,15 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Based on http://rox-xmlrpc.sourceforge.net/niotut/
  */
 public class SimpleNioServer {
 
-    private List<ChangeRequest> pendingChanges;
+    private Queue<ChangeRequest> pendingChanges;
     private Map<SelectionKey, List<ByteBuffer>> pendingWrites;
     private Map<SelectionKey, byte[]> pendingReads;
 
@@ -32,9 +34,8 @@ public class SimpleNioServer {
 
     public SimpleNioServer(CommandProcessor cmdProcessor) {
         this.cmdProcessor = cmdProcessor;
-        // TODO: replace with threadsafe data structure
-        this.pendingChanges = new LinkedList<>();
-        this.pendingWrites = new HashMap<>();
+        this.pendingChanges = new ConcurrentLinkedQueue<>();
+        this.pendingWrites = new ConcurrentHashMap<>();
         this.pendingReads = new HashMap<>();
 
         this.readBuffer = ByteBuffer.allocate(8192); // = 2^13
@@ -112,7 +113,7 @@ public class SimpleNioServer {
     private void read(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
 
-        // Clear out our read buffer so it's ready for new data
+        // Clear out our read buffer, so it's ready for new data
         this.readBuffer.clear();
 
         // Attempt to read off the channel
@@ -247,7 +248,7 @@ public class SimpleNioServer {
         // And queue the data we want written
         queueForWrite(selectionKey, data);
 
-        // Finally, wake up our selecting thread so it can make the required
+        // Finally, wake up our selecting thread, so it can make the required
         // changes
         this.selector.wakeup();
     }

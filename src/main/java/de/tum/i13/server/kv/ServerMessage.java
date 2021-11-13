@@ -1,17 +1,35 @@
 package de.tum.i13.server.kv;
 
-import de.tum.i13.server.kv.KVMessage;
+
+import java.nio.channels.SelectionKey;
 
 public class ServerMessage implements KVMessage {
 
     private final String key;
     private final String value;
     private final StatusType status;
+    private final SelectionKey selectionKey;
 
     public ServerMessage (StatusType status, String key, String value) {
         this.key = key;
         this.value = value;
         this.status = status;
+        this.selectionKey = null;
+    }
+
+    public ServerMessage (StatusType status, String key, String value, SelectionKey selectionKey) {
+        this.key = key;
+        this.value = value;
+        this.status = status;
+        this.selectionKey = selectionKey;
+    }
+
+    /**
+     * @return the selection key that is associated with this message,
+     * null if no selection key is associated.
+     */
+    public SelectionKey getSelectionKey() {
+        return selectionKey;
     }
 
     /**
