@@ -58,18 +58,17 @@ public class TestStore implements KVStore {
     /**
      * Inserts a key-value pair into the KVServer.
      *
-     * @param key   the key that identifies the given value.
-     * @param value the value that is indexed by the given key.
+     * @param msg KVMessage containint key and value to put into the store.″
      * @return a message that confirms the insertion of the tuple or an error.
      * @throws IOException                if there is an IOException during the put.
      * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
-    public KVMessage put(String key, String value) throws IOException, IllegalStateException, SizeLimitExceededException {
+    public KVMessage put(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key and value to Base64
-        String b64Key = B64Util.b64encode(key);
-        String b64Value = B64Util.b64encode(value);
+        String b64Key = B64Util.b64encode(msg.getKey());
+        String b64Value = B64Util.b64encode(msg.getValue());
         // put message to server has the following format
         // PUT <Base64 encoded key> <Base64 encoded value>
         String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
@@ -88,18 +87,18 @@ public class TestStore implements KVStore {
     /**
      * Retrieves the value for a given key from the KVServer.
      *
-     * @param key the key that identifies the value.
+     * @param msg KVMessage contianing the key to get from the store.
      * @return the value, which is indexed by the given key.
      * @throws IOException                if there is an IOException during the get.
      * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
-    public KVMessage get(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
+    public KVMessage get(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key to Base64
         // get message to server has the following format
         // GET <Base64 encoded key>
-        String message = String.format("GET %s\r\n", B64Util.b64encode(key));
+        String message = String.format("GET %s\r\n", B64Util.b64encode(msg.getKey()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -115,17 +114,18 @@ public class TestStore implements KVStore {
     /**
      * Deletes the value for a given key from the KVServer.
      *
-     * @param key the key that identifies the value.
+     * @param msg KVMessage containint the key to delete from the store.
      * @return the last stored value of that key
      * @throws IOException                if there is an IOException during the deletion.
      * @throws IllegalStateException      if currently not connected to a KVServer.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
-    public KVMessage delete(String key) throws IOException, IllegalStateException, SizeLimitExceededException {
+    @Override
+    public KVMessage delete(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key to Base64
         // delete message to server has the following format
         // DELETE <Base64 encoded key>
-        String message = String.format("DELETE %s\r\n", B64Util.b64encode(key));
+        String message = String.format("DELETE %s\r\n", B64Util.b64encode(msg.getKey()));
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown

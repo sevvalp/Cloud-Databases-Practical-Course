@@ -1,9 +1,23 @@
 package de.tum.i13.server.kv;
 
-import javax.naming.SizeLimitExceededException;
-import java.io.IOException;
+import de.tum.i13.server.cache.Cache;
+import de.tum.i13.server.cache.FIFO;
+import de.tum.i13.server.cache.LFU;
+import de.tum.i13.server.cache.LRU;
 
-public interface KVStore {
+public class KVServer implements KVStore {
+
+    private Cache cache;
+
+    public KVServer(String cacheType) {
+        if (cacheType.equals("LFU"))
+            cache = LFU.getInstance();
+        else if (cacheType.equals("LRU"))
+            cache = LRU.getInstance();
+        else
+            // we default to FIFO queue if cacheType is unknown
+            cache = FIFO.getInstance();
+    }
 
     /**
      * Inserts a key-value pair into the KVServer.
@@ -13,7 +27,10 @@ public interface KVStore {
      * @throws Exception if put command cannot be executed (e.g. not connected to any
      *                   KV server).
      */
-    public KVMessage put(KVMessage msg) throws Exception;
+    @Override
+    public KVMessage put(KVMessage msg) throws Exception {
+        return null;
+    }
 
     /**
      * Retrieves the value for a given key from the KVServer.
@@ -23,7 +40,10 @@ public interface KVStore {
      * @throws Exception if put command cannot be executed (e.g. not connected to any
      *                   KV server).
      */
-    public KVMessage get(KVMessage msg) throws Exception;
+    @Override
+    public KVMessage get(KVMessage msg) throws Exception {
+        return null;
+    }
 
     /**
      * Deletes the value for a given key from the KVServer.
@@ -32,6 +52,8 @@ public interface KVStore {
      * @return the last stored value of that key
      * @throws Exception if delete command cannot be executed (e.g. not connected to any KV server).
      */
-    public KVMessage delete(KVMessage msg) throws Exception;
-
+    @Override
+    public KVMessage delete(KVMessage msg) throws Exception {
+        return null;
+    }
 }

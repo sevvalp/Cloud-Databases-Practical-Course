@@ -133,7 +133,7 @@ public class TestClient {
             printHelp("put");
         else {
             try {
-                KVMessage msg = store.put(command[1], command[2]);
+                KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], command[2]));
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>", msg.getKey(), msg.getValue()); break;
@@ -160,7 +160,7 @@ public class TestClient {
             printHelp("get");
         else {
             try {
-                KVMessage msg = store.get(command[1]);
+                KVMessage msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null));
                 switch(msg.getStatus()) {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.println("There was an error getting the value.");
@@ -186,7 +186,7 @@ public class TestClient {
             printHelp("delete");
         else {
             try {
-                KVMessage msg = store.delete(command[1]);
+                KVMessage msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], null));
                 switch (msg.getStatus()) {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");
