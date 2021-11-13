@@ -1,8 +1,7 @@
 package de.tum.i13.server.nio;
 
 import de.tum.i13.server.disk.DiskManager;
-import de.tum.i13.server.echo.EchoLogic;
-import de.tum.i13.server.processor.KVProcessor;
+import de.tum.i13.server.kv.KVCommandProcessor;
 import de.tum.i13.shared.CommandProcessor;
 import de.tum.i13.shared.Config;
 
@@ -39,7 +38,8 @@ public class StartSimpleNioServer {
          * -h   Displays the help
          */
 
-        CommandProcessor kvProcessor = new KVProcessor();
+        // TODO: init command processor″
+        CommandProcessor kvProcessor = new KVCommandProcessor(null);
 
         SimpleNioServer sn = new SimpleNioServer(kvProcessor);
         sn.bindSockets(cfg.listenaddr, cfg.port);

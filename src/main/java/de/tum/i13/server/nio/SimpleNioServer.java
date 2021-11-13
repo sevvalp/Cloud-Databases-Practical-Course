@@ -233,15 +233,11 @@ public class SimpleNioServer {
     }
 
     private void handleRequest(SelectionKey selectionKey, String request) {
-        try {
-            // TODO: pass selectionKey
-            String res = cmdProcessor.process(request);
-            // TODO: delete this send, let the cache lookup thread do it asynchronously
-            send(selectionKey, res.getBytes(Constants.TELNET_ENCODING));
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        // TODO: pass selectionKey
+        cmdProcessor.process(request);
+        // TODO: delete this send, let the cache lookup thread do it asynchronously
+        // send(selectionKey, res.getBytes(Constants.TELNET_ENCODING));
     }
 
     public void send(SelectionKey selectionKey, byte[] data) {

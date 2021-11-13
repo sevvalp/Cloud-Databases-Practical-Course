@@ -6,7 +6,7 @@ import java.io.IOException;
 public interface KVCommunicator {
 
     /**
-     * Disconnects the coket, if it is currently connected, If the socket is disconnected, the method does nothing.
+     * Disconnects the socket, if it is currently connected, If the socket is disconnected, the method does nothing.
      *
      * @throws Exception if there is an error during the disconnect.
      */

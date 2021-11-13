@@ -33,25 +33,6 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>threadperconnection-echo</id>
-                        <configuration>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <archive>
-                                <manifest>
-                                    <mainClass>de.tum.i13.server.threadperconnection.Main</mainClass>
-                                </manifest>
-                            </archive>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                            <finalName>threadperconnection-echo-server</finalName>
-                        </configuration>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                    <execution>
                         <id>kv-server</id>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
