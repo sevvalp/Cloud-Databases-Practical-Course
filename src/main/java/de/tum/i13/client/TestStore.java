@@ -153,7 +153,7 @@ public class TestStore implements KVStore {
             return null;
 
         KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
-        String rcvKey = B64Util.b64decode(rcvMsg[2]);
+        String rcvKey = B64Util.b64decode(rcvMsg[1]);
         String rcvVal = B64Util.b64decode(rcvMsg[2]);
         return new ClientMessage(status, rcvKey, rcvVal);
     }

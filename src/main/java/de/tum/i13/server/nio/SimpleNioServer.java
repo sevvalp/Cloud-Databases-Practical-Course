@@ -16,6 +16,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Logger;
+
+import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
 /**
  * Based on http://rox-xmlrpc.sourceforge.net/niotut/
@@ -107,7 +110,7 @@ public class SimpleNioServer {
         // Register the new SocketChannel with our Selector, indicating
         // we'd like to be notified when there's data waiting to be read
         SelectionKey registeredKey = socketChannel.register(this.selector, SelectionKey.OP_WRITE);
-        queueForWrite(registeredKey, confirmation.getBytes(Constants.TELNET_ENCODING));
+        queueForWrite(registeredKey, confirmation.getBytes(TELNET_ENCODING));
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -164,7 +167,7 @@ public class SimpleNioServer {
 
             // In case we have now finally reached all characters
             if (checkIfFinished(concatenated)) {
-                String data = new String(concatenated, Constants.TELNET_ENCODING);
+                String data = new String(concatenated, TELNET_ENCODING);
                 this.pendingReads.remove(key);
                 handleRequest(key, data);
             } else {
@@ -176,7 +179,7 @@ public class SimpleNioServer {
             // In this case no buffering in the hashtable and start direct
             // handling the request
             if (checkIfFinished(dataCopy)) {
-                String data = new String(dataCopy, Constants.TELNET_ENCODING);
+                String data = new String(dataCopy, TELNET_ENCODING);
                 handleRequest(key, data);
             } else {
                 // in case it is the first request we
@@ -234,11 +237,7 @@ public class SimpleNioServer {
     }
 
     private void handleRequest(SelectionKey selectionKey, String request) {
-
-        // TODO: pass selectionKey
-        cmdProcessor.process(request);
-        // TODO: delete this send, let the cache lookup thread do it asynchronously
-        // send(selectionKey, res.getBytes(Constants.TELNET_ENCODING));
+        cmdProcessor.process(selectionKey, request);
     }
 
     public void send(SelectionKey selectionKey, byte[] data) {

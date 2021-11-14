@@ -11,11 +11,13 @@ import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.B64Util;
 
 import java.util.concurrent.ExecutorService;
+import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
 public class KVServer implements KVStore {
     // TODO: logging
+    private static final Logger LOGGER = Logger.getLogger(KVServer.class.getName());
 
     private Cache cache;
     private SimpleNioServer server;
@@ -64,6 +66,8 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        LOGGER.info(String.format("Client wants to put key: <%s, %s>", msg.getKey(), msg.getValue()));
+
         // queue put command
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
@@ -74,7 +78,8 @@ public class KVServer implements KVStore {
                     res = disk.writeContent(msg);
 
                 // return answer to client
-                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue();
+                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                LOGGER.info("Answer to client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
             }
@@ -105,6 +110,8 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        LOGGER.info("Client wants to get key: %s" + msg.getKey());
+
         // queue get command
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
@@ -122,7 +129,8 @@ public class KVServer implements KVStore {
                 }
 
                 // return answer to client
-                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue();
+                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                LOGGER.info("Answer to Client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
             }
@@ -153,6 +161,8 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        LOGGER.info("Client wants to delete key: %s" + msg.getKey());
+
         // queue get command
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
@@ -162,7 +172,8 @@ public class KVServer implements KVStore {
                 KVMessage res = disk.deleteContent(msg);
 
                 // return answer to client
-                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue();
+                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                LOGGER.info("Answer to Client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
             }

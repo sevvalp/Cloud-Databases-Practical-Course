@@ -75,7 +75,6 @@ public class TestClient {
         else {
             try {
                 int port = Integer.parseInt(command[2]);
-                store.connect(command[1], port);
                 LOGGER.info("Successfully connected to server.");
                 System.out.println(store.connect(command[1], port));
 
@@ -135,9 +134,9 @@ public class TestClient {
             try {
                 KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], command[2]));
                 switch (msg.getStatus()) {
-                    case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>", msg.getKey(), msg.getValue()); break;
-                    case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>", msg.getKey(), msg.getValue()); break;
-                    case PUT_ERROR: System.out.println("There was an error putting the value.");
+                    case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>%n", msg.getKey(), msg.getValue()); break;
+                    case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
+                    case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue());
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -162,8 +161,8 @@ public class TestClient {
             try {
                 KVMessage msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null));
                 switch(msg.getStatus()) {
-                    case GET_SUCCESS: System.out.printf("Get success: <%s, %s>", msg.getKey(), msg.getValue()); break;
-                    case GET_ERROR: System.out.println("There was an error getting the value.");
+                    case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
+                    case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -188,7 +187,7 @@ public class TestClient {
             try {
                 KVMessage msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], null));
                 switch (msg.getStatus()) {
-                    case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>", msg.getKey(), msg.getValue()); break;
+                    case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");
                 }
             } catch (IllegalStateException e) {

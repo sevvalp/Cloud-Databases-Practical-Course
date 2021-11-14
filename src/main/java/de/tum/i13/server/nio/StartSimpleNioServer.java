@@ -48,11 +48,13 @@ public class StartSimpleNioServer {
 
         // TODO: init DiskManager
         DiskManager disk = DiskManager.getInstance();
-        disk.initDiskManager("path");
+        disk.initDiskManager("testdata");
 
         SimpleNioServer sn = new SimpleNioServer(kvProcessor);
         ((KVServer) kvStore).setServer(sn);
-        sn.bindSockets(cfg.listenaddr, cfg.port);
+        // TODO: hardcoded address and port for testing
+        //sn.bindSockets(cfg.listenaddr, cfg.port);
+        sn.bindSockets("127.0.0.1", 5551);
         sn.start();
     }
 }

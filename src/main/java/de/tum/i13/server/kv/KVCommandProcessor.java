@@ -5,6 +5,7 @@ import de.tum.i13.shared.CommandProcessor;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.channels.SelectionKey;
 import java.util.logging.Logger;
 
 public class KVCommandProcessor implements CommandProcessor {
@@ -18,8 +19,21 @@ public class KVCommandProcessor implements CommandProcessor {
     }
 
     @Override
-    public void process(String command) {
+    public void process(SelectionKey selectionKey, String command) {
+        // just for testing
+        // TODO: delete this
         LOGGER.info("Received command: " + command.trim());
+        String[] c = command.split("\\s");
+        try {
+            if (c[0].equals("PUT"))
+                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, c[1], c[2], selectionKey));
+            else if (c[0].equals("GET"))
+                kvStore.get(new ServerMessage(KVMessage.StatusType.GET, c[1], null, selectionKey));
+            else if (c[0].equals("DELETE"))
+                kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, c[1], null, selectionKey));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         /* TODO:
             - add selectionKey parameter, needed to write back result to NioServer asynchronously
@@ -36,7 +50,7 @@ public class KVCommandProcessor implements CommandProcessor {
     private void get(String[] command) {
         /* TODO:
             - add selectionKey parameter
-            - check for correct number of args
+            - check for correct number of args etc.
             - call kvStore.get (include selectionKey in KVMessage!)
          */
     }
@@ -49,7 +63,7 @@ public class KVCommandProcessor implements CommandProcessor {
     private void put(String[] command) {
         /* TODO:
             - add selectionKey parameter
-            - check for correct number of args
+            - check for correct number of args etc.
             - call kvStore.put (include selectionKey in KVMessage!)
          */
     }
@@ -62,7 +76,7 @@ public class KVCommandProcessor implements CommandProcessor {
     private void delete(String[] command) {
         /* TODO:
             - add selectionKey parameter
-            - check for correct number of args
+            - check for correct number of args etc.
             - call kvStore.delete (include selectionKey in KVMessage!)
          */
     }

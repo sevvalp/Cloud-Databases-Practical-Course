@@ -39,6 +39,8 @@ public class DiskManager implements IDiskManager {
      */
     public void initDiskManager(String path) {
         this.w_path = path;
+        if (this.w_path.charAt(this.w_path.length() - 1) != '/')
+            this.w_path += "/";
     }
 
     /**
