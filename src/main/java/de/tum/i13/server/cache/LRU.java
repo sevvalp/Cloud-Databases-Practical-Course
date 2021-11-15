@@ -69,6 +69,8 @@ public class LRU implements Cache{
      */
     @Override
     public KVMessage put(KVMessage msg) {
+        //TODO: return KVMessage.StatusType.PUT_UPDATE if key already in cache
+
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
