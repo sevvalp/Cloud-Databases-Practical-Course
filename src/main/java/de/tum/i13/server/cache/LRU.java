@@ -4,8 +4,11 @@ import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.shared.B64Util;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Deque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -18,10 +21,10 @@ public class LRU implements Cache{
 
     private final static Logger LOGGER = Logger.getLogger(LRU.class.getName());
 
-    // TODO: make this threadsafe
-    private HashMap<String, String> cache;
-    private LinkedList<String> lru;
+    private Map<String, String> cache;
+    private Deque<String> lru;
     private int maxSize;
+    private AtomicInteger currentSize;
 
     private static class Holder {
         private static final Cache INSTANCE = new LRU();
@@ -31,6 +34,7 @@ public class LRU implements Cache{
         cache = null;
         lru = null;
         this.maxSize = 0;
+        currentSize = new AtomicInteger();
     }
 
     /**
@@ -51,8 +55,8 @@ public class LRU implements Cache{
         // only init if cache is null
         if (cache == null) {
             LOGGER.info(String.format("Created LRU cache with size %d", maxSize));
-            cache = new HashMap<String, String>();
-            lru = new LinkedList<>();
+            cache = new ConcurrentHashMap<>();
+            lru = new ConcurrentLinkedDeque<>();
             this.maxSize = maxSize;
         }
     }
@@ -65,7 +69,6 @@ public class LRU implements Cache{
      */
     @Override
     public KVMessage put(KVMessage msg) {
-        // TODO: implement semaphore
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -76,19 +79,27 @@ public class LRU implements Cache{
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Put into cache: <%s, %s>", msg.getKey(), msg.getValue()));
+        LOGGER.finer("LRU before put: " + lru);
         // insert into lru
         lru.addFirst(msg.getKey());
 
         // insert into map
-        if (cache.put(msg.getKey(), msg.getValue()) == null && lru.size() > maxSize) {
-            LOGGER.info("Cache full, removing least recently used...");
-            // key not in lru and cache exceeding size --> remove last element
-            cache.remove(lru.removeLast());
+        if (cache.put(msg.getKey(), msg.getValue()) == null) {
+            if (currentSize.get() >= maxSize) {
+                LOGGER.info("Cache full, removing least recently used...");
+                // key not in lru and cache exceeding size --> remove last element
+                cache.remove(lru.removeLast());
+            } else {
+                currentSize.incrementAndGet();
+                LOGGER.finer("Key not in cache, still space left... " + msg.getKey());
+            }
         } else {
+            LOGGER.finer("Key already in cache, removing duplicate: " + msg.getKey());
             // key in lru --> remove duplicate
             lru.removeLastOccurrence(msg.getKey());
         }
 
+        LOGGER.finer("LRU after put: " + lru);
         return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
     }
 
@@ -110,11 +121,15 @@ public class LRU implements Cache{
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Deleting key from cache: %s", msg.getKey()));
+        LOGGER.finer("LRU before delete: " + lru);
         String value = cache.remove(msg.getKey());
         lru.remove(msg.getKey());
 
-        if (value != null)
+        LOGGER.finer("LRU after delete: " + lru);
+        if (value != null) {
+            currentSize.decrementAndGet();
             return new ServerMessage(KVMessage.StatusType.DELETE_SUCCESS, msg.getKey(), msg.getValue());
+        }
         return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
     }
 
@@ -136,11 +151,20 @@ public class LRU implements Cache{
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Getting cache value for %s", msg.getKey()));
+        LOGGER.finer("LRU before get: " + lru);
         String value = cache.get(msg.getKey());
+
         if (value == null) {
             LOGGER.info("Key not in cache");
+            LOGGER.finer("LRU after get: " + lru);
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
         }
+
+        // insert at first position of lru
+        lru.addFirst(msg.getKey());
+        // delete old entry
+        lru.removeLastOccurrence(msg.getKey());
+        LOGGER.finer("LRU after get: " + lru);
 
         return new ServerMessage(KVMessage.StatusType.GET_SUCCESS, msg.getKey(), value);
     }

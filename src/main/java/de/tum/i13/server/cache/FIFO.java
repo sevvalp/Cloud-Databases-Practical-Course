@@ -4,8 +4,11 @@ import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.shared.B64Util;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Deque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -18,10 +21,10 @@ public class FIFO implements Cache{
 
     private final static Logger LOGGER = Logger.getLogger(FIFO.class.getName());
 
-    // TODO: make this threadsafe
-    private HashMap<String, String> cache;
-    private LinkedList<String> fifo;
+    private Map<String, String> cache;
+    private Deque<String> fifo;
     private int maxSize;
+    private AtomicInteger currentSize;
 
     private static class Holder {
         private static final Cache INSTANCE = new FIFO();
@@ -31,6 +34,7 @@ public class FIFO implements Cache{
         this.cache = null;
         this.fifo = null;
         this.maxSize = 0;
+        this.currentSize = new AtomicInteger();
     }
 
     /**
@@ -51,8 +55,8 @@ public class FIFO implements Cache{
         // only init if cache is null
         if (this.cache == null) {
             LOGGER.info(String.format("Initialized FIFO cache with size %d", maxSize));
-            cache = new HashMap<String, String>();
-            fifo = new LinkedList<>();
+            cache = new ConcurrentHashMap<>();
+            fifo = new ConcurrentLinkedDeque<String>();
             this.maxSize = maxSize;
         }
     }
@@ -64,7 +68,6 @@ public class FIFO implements Cache{
      * @return KVMessage with the result.
      */
     public KVMessage put(KVMessage msg) {
-        // TODO: implement semaphore
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -75,6 +78,7 @@ public class FIFO implements Cache{
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Put into cache: <%s, %s>", msg.getKey(), msg.getValue()));
+        LOGGER.finer("Fifo before put: " + fifo);
         // insert into map
         if (cache.put(msg.getKey(), msg.getValue()) == null) {
             LOGGER.fine("Key was not in cache yet, adding...");
@@ -82,13 +86,15 @@ public class FIFO implements Cache{
             fifo.addFirst(msg.getKey());
 
             // check if fifo is full
-            if (fifo.size() > maxSize) {
+            if (currentSize.get() >= maxSize) {
                 LOGGER.info("Cache full, removing last...");
                 // fifo is full --> remove last element from fifo and map
                 cache.remove(fifo.removeLast());
-            }
+            } else
+                currentSize.incrementAndGet();
         }
 
+        LOGGER.finer("Fifo after put: " + fifo);
         return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
     }
 
@@ -112,7 +118,7 @@ public class FIFO implements Cache{
         LOGGER.info(String.format("Getting cache value for %s", msg.getKey()));
         String value = cache.get(msg.getKey());
         if (value == null) {
-            LOGGER.info("Key not in cache");
+            LOGGER.info("Key not in cache: " + msg.getKey());
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
         }
 
@@ -126,7 +132,7 @@ public class FIFO implements Cache{
      * @return KVMessage with the result
      */
     @Override
-    public KVMessage delete(KVMessage msg) {
+    public  KVMessage delete(KVMessage msg) {
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -140,8 +146,11 @@ public class FIFO implements Cache{
         String value = cache.remove(msg.getKey());
         fifo.remove(msg.getKey());
 
-        if (value != null)
+        if (value != null) {
+            currentSize.decrementAndGet();
             return new ServerMessage(KVMessage.StatusType.DELETE_SUCCESS, msg.getKey(), value);
+        }
+        LOGGER.info("Key not in cache: " + msg.getKey());
         return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
     }
 }

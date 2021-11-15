@@ -87,7 +87,7 @@ public class TestStore implements KVStore {
     /**
      * Retrieves the value for a given key from the KVServer.
      *
-     * @param msg KVMessage contianing the key to get from the store.
+     * @param msg KVMessage containing the key to get from the store.
      * @return the value, which is indexed by the given key.
      * @throws IOException                if there is an IOException during the get.
      * @throws IllegalStateException      if currently not connected to a KVServer.

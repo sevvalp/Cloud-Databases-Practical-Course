@@ -16,6 +16,7 @@ public class KVCommandProcessor implements CommandProcessor {
     public KVCommandProcessor (KVStore kvStore) {
         this.kvStore = kvStore;
         // TODO: handle args
+        // TODO: log stuff
     }
 
     @Override

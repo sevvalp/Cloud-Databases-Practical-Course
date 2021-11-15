@@ -43,7 +43,7 @@ public class StartSimpleNioServer {
          */
 
         // TODO: init kvStore, command processor
-        KVStore kvStore = new KVServer("FIFO", 50);
+        KVStore kvStore = new KVServer("LRU", 2);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
 
         // TODO: init DiskManager

@@ -85,7 +85,7 @@ public class TestClient {
             } catch (IllegalStateException e) {
                 System.out.println("Already connected to a KVServer!");
             } catch (IOException e) {
-                System.out.printf("There was an error connecting to the server: %s", e.getMessage());
+                System.out.printf("There was an error connecting to the server: %s%n", e.getMessage());
             }
         }
     }
@@ -99,7 +99,7 @@ public class TestClient {
         } catch (IllegalStateException e) {
             System.out.println("Not connected to a KVServer!");
         } catch (IOException e) {
-            System.out.printf("There was an error while disconnecting from the server: %s", e.getMessage());
+            System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
         }
     }
 

@@ -4,8 +4,12 @@ import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.shared.B64Util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntBinaryOperator;
 import java.util.logging.Logger;
 
 /**
@@ -15,17 +19,19 @@ import java.util.logging.Logger;
  * @since   2021-11-06
  */
 public class LFU implements Cache {
+    // TODO: make this threadsafe
+    // TODO: logging
 
     private final static Logger LOGGER = Logger.getLogger(LFU.class.getName());
 
-    // TODO: make this threadsafe
     private HashMap<String, String> cache;
     // to keep track of which keys were used i times
     private HashMap<Integer, LinkedList<String>> lfu_freq_key;
     // to keep track of how often each key was used
     private HashMap<String, Integer> lfu_key_freq;
     private int maxSize;
-    private int currentSize;
+    private AtomicInteger currentSize;
+    private AtomicInteger lowestFreq;
 
     private static class Holder {
         private static final Cache INSTANCE = new LFU();
@@ -36,7 +42,8 @@ public class LFU implements Cache {
         lfu_freq_key = null;
         lfu_key_freq = null;
         this.maxSize = 0;
-        this.currentSize = 0;
+        this.currentSize = new AtomicInteger();
+        this.lowestFreq = new AtomicInteger();
     }
 
     /**
@@ -60,7 +67,6 @@ public class LFU implements Cache {
             lfu_freq_key = new HashMap<Integer, LinkedList<String>>();
             lfu_key_freq = new HashMap<String, Integer>();
             this.maxSize = maxSize;
-            this.currentSize = 0;
         }
     }
 
@@ -70,7 +76,6 @@ public class LFU implements Cache {
      * @param msg KVMessage with key and value to store.
      */
     public KVMessage put(KVMessage msg) {
-        // TODO: implement semaphore
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -81,55 +86,53 @@ public class LFU implements Cache {
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info(String.format("Put into cache <%s, %s>", msg.getKey(), msg.getValue()));
-        int f = 0;
-        LinkedList<String> list = null;
+        String key = msg.getKey();
+        int currentFreq = 0;
 
-        if (cache.put(msg.getKey(), msg.getValue()) == null) {
+        if (cache.put(key, msg.getValue()) == null) {
             LOGGER.fine("Key was not in cache.");
             // key not in cache
-            if (++currentSize > maxSize) {
+            if (currentSize.getAndAccumulate(maxSize, (current, max) -> {
+                if (current < max)
+                    return ++current;
+                return current;
+            }) >= maxSize) {
                 // cache exceeding maxSize
                 LOGGER.fine("Cache exceeding max size.");
 
-                // find least frequently accessed keys
-                int i = 1;
-                while (list == null) {
-                    // get list of keys, that were accessed i times
-                    list = lfu_freq_key.get(i++);
-                    if (list == null || list.size() == 0)
-                        list = null;
-                }
-                LOGGER.fine(String.format("Lowest frequency: %d", i-1));
-
                 // remove key from lfu and cache
-                String keyToRemove = list.removeFirst();
+                String keyToRemove = lfu_freq_key.get(lowestFreq.get()).removeFirst();
                 cache.remove(keyToRemove);
                 lfu_key_freq.remove(keyToRemove);
-                // do I need to do this?
-                lfu_freq_key.put(--i, list);
                 LOGGER.fine(String.format("Removed key from cache: %s", keyToRemove));
             }
+            // key not in cache --> the lowest freq is 1 (= key to put)
+            this.lowestFreq.set(1);
         } else {
             // key already in cache
             LOGGER.fine("Key already in cache.");
+            currentFreq = lfu_key_freq.get(key);
 
             // remove key from old frequency
-            f = lfu_key_freq.get(msg.getKey());
-            list = lfu_freq_key.get(f);
-            list.remove(msg.getKey());
-            // do I need to do this?
-            lfu_freq_key.put(f, list);
-            LOGGER.fine(String.format("Removing key from old frequency: %d", f));
+            lfu_freq_key.get(currentFreq).remove(key);
+            // update lowestFreq if list is empty and key was lowestFreq
+            if (currentFreq == lowestFreq.get() && lfu_freq_key.get(currentFreq).isEmpty())
+                lowestFreq.incrementAndGet();
+
+            LOGGER.fine(String.format("Removed key from old frequency: %d", currentFreq));
         }
 
         // add key to new frequency
-        list = lfu_freq_key.get(++f);
-        lfu_key_freq.put(msg.getKey(), f);
-        if (list == null)
-            list = new LinkedList<String>();
-        list.add(msg.getKey());
-        lfu_freq_key.put(f, list);
-        LOGGER.fine(String.format("Added key to new frequency: %d", f));
+        if (lfu_freq_key.keySet().contains(++currentFreq))
+            lfu_freq_key.get(currentFreq).add(key);
+        else {
+            LinkedList<String> list = new LinkedList<>();
+            list.add(key);
+            lfu_freq_key.put(currentFreq, list);
+        }
+        lfu_key_freq.put(key, currentFreq);
+
+        LOGGER.fine(String.format("Added key to new frequency: %d", currentFreq));
 
         return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
     }
