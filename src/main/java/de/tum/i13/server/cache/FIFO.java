@@ -68,8 +68,6 @@ public class FIFO implements Cache{
      * @return KVMessage with the result.
      */
     public KVMessage put(KVMessage msg) {
-        //TODO: return KVMessage.StatusType.PUT_UPDATE if key already in cache
-
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -94,10 +92,12 @@ public class FIFO implements Cache{
                 cache.remove(fifo.removeLast());
             } else
                 currentSize.incrementAndGet();
+            LOGGER.finer("Fifo after put: " + fifo);
+            return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
         }
 
         LOGGER.finer("Fifo after put: " + fifo);
-        return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
+        return new ServerMessage(KVMessage.StatusType.PUT_UPDATE, msg.getKey(), msg.getValue());
     }
 
     /**
@@ -111,7 +111,7 @@ public class FIFO implements Cache{
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
         // if KVMessage does not have GET command, return error
         if (msg.getStatus() != KVMessage.StatusType.GET)
@@ -138,7 +138,7 @@ public class FIFO implements Cache{
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
         // if KVMessage does not have DELETE command, return error
         if (msg.getStatus() != KVMessage.StatusType.DELETE)

@@ -69,8 +69,6 @@ public class LRU implements Cache{
      */
     @Override
     public KVMessage put(KVMessage msg) {
-        //TODO: return KVMessage.StatusType.PUT_UPDATE if key already in cache
-
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
@@ -95,14 +93,16 @@ public class LRU implements Cache{
                 currentSize.incrementAndGet();
                 LOGGER.finer("Key not in cache, still space left... " + msg.getKey());
             }
-        } else {
-            LOGGER.finer("Key already in cache, removing duplicate: " + msg.getKey());
-            // key in lru --> remove duplicate
-            lru.removeLastOccurrence(msg.getKey());
+            LOGGER.finer("LRU after put: " + lru);
+            return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
         }
 
+        LOGGER.finer("Key already in cache, removing duplicate: " + msg.getKey());
+        // key in lru --> remove duplicate
+        lru.removeLastOccurrence(msg.getKey());
+
         LOGGER.finer("LRU after put: " + lru);
-        return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
+        return new ServerMessage(KVMessage.StatusType.PUT_UPDATE, msg.getKey(), msg.getValue());
     }
 
     /**
@@ -116,7 +116,7 @@ public class LRU implements Cache{
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
         // if KVMessage does not have DELETE command, return error
         if (msg.getStatus() != KVMessage.StatusType.DELETE)
@@ -146,7 +146,7 @@ public class LRU implements Cache{
         // if cache is not yet initialized, return error
         if (cache == null)
             // we should never see this error
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
         // if KVMessage does not have GET command, return error
         if (msg.getStatus() != KVMessage.StatusType.GET)
