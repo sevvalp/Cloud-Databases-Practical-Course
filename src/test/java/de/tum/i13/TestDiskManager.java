@@ -3,24 +3,19 @@ package de.tum.i13;
 import de.tum.i13.client.ClientMessage;
 import de.tum.i13.server.disk.DiskManager;
 import de.tum.i13.server.kv.KVMessage;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-
+import org.junit.jupiter.api.*;
 import java.io.File;
-
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class TestDiskManager {
 
     DiskManager dm = DiskManager.getInstance();
     String key = "someKey";
     String value = "someValue";
 
-    @Before
+    @BeforeEach
     public void initializeAll(){
         dm.initDiskManager("data");
     }
