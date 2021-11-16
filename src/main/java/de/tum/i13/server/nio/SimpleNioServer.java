@@ -237,7 +237,11 @@ public class SimpleNioServer {
     }
 
     private void handleRequest(SelectionKey selectionKey, String request) {
-        cmdProcessor.process(selectionKey, request);
+        try {
+            cmdProcessor.process(selectionKey, request);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void send(SelectionKey selectionKey, byte[] data) {

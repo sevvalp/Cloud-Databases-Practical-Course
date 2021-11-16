@@ -7,7 +7,9 @@ import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.CommandProcessor;
 import de.tum.i13.shared.Config;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Config.parseCommandlineArgs;
@@ -41,6 +43,16 @@ public class StartSimpleNioServer {
          * -s   Cache displacement strategy, FIFO, LRU, LFU
          * -h   Displays the help
          */
+        if (!Files.exists(cfg.dataDir)) {
+            try{
+                File dir = new File(cfg.dataDir.toString());
+                dir.mkdir();
+            } catch(Exception e){
+                System.out.println("An error occurred while creating the data folder");
+                return;
+            }
+
+        }
 
         // TODO: init kvStore, command processor
         KVStore kvStore = new KVServer("LRU", 2);
@@ -54,7 +66,7 @@ public class StartSimpleNioServer {
         ((KVServer) kvStore).setServer(sn);
         // TODO: hardcoded address and port for testing
         //sn.bindSockets(cfg.listenaddr, cfg.port);
-        sn.bindSockets("127.0.0.1", 5551);
+        sn.bindSockets("127.0.0.1", 5153);
         sn.start();
     }
 }

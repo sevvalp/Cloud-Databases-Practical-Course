@@ -6,7 +6,7 @@ import java.nio.channels.SelectionKey;
 
 public interface CommandProcessor {
 
-    void process(SelectionKey selectionKey, String command);
+    void process(SelectionKey selectionKey, String command) throws Exception;
 
     String connectionAccepted(InetSocketAddress address, InetSocketAddress remoteAddress);
 
