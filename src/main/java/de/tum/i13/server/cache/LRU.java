@@ -81,14 +81,14 @@ public class LRU implements Cache{
         LOGGER.info(String.format("Put into cache: <%s, %s>", msg.getKey(), msg.getValue()));
         LOGGER.finer("LRU before put: " + lru);
         // insert into lru
-        lru.addFirst(msg.getKey());
+        lru.add(msg.getKey());
 
         // insert into map
         if (cache.put(msg.getKey(), msg.getValue()) == null) {
             if (currentSize.get() >= maxSize) {
                 LOGGER.info("Cache full, removing least recently used...");
                 // key not in lru and cache exceeding size --> remove last element
-                cache.remove(lru.removeLast());
+                cache.remove(lru.remove());
             } else {
                 currentSize.incrementAndGet();
                 LOGGER.finer("Key not in cache, still space left... " + msg.getKey());
@@ -99,7 +99,7 @@ public class LRU implements Cache{
 
         LOGGER.finer("Key already in cache, removing duplicate: " + msg.getKey());
         // key in lru --> remove duplicate
-        lru.removeLastOccurrence(msg.getKey());
+        lru.remove(msg.getKey());
 
         LOGGER.finer("LRU after put: " + lru);
         return new ServerMessage(KVMessage.StatusType.PUT_UPDATE, msg.getKey(), msg.getValue());
@@ -162,10 +162,10 @@ public class LRU implements Cache{
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Key not in cache!"));
         }
 
-        // insert at first position of lru
-        lru.addFirst(msg.getKey());
+        // insert at tail of lru
+        lru.add(msg.getKey());
         // delete old entry
-        lru.removeLastOccurrence(msg.getKey());
+        lru.remove(msg.getKey());
         LOGGER.finer("LRU after get: " + lru);
 
         return new ServerMessage(KVMessage.StatusType.GET_SUCCESS, msg.getKey(), value);

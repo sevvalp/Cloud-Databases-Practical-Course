@@ -6,8 +6,10 @@ import de.tum.i13.shared.B64Util;
 
 import java.util.Deque;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -56,7 +58,7 @@ public class FIFO implements Cache{
         if (this.cache == null) {
             LOGGER.info(String.format("Initialized FIFO cache with size %d", maxSize));
             cache = new ConcurrentHashMap<>();
-            fifo = new ConcurrentLinkedDeque<String>();
+            fifo = new ConcurrentLinkedDeque<>();
             this.maxSize = maxSize;
         }
     }
@@ -83,13 +85,13 @@ public class FIFO implements Cache{
         if (cache.put(msg.getKey(), msg.getValue()) == null) {
             LOGGER.fine("Key was not in cache yet, adding...");
             // key not in fifo
-            fifo.addFirst(msg.getKey());
+            fifo.add(msg.getKey());
 
             // check if fifo is full
             if (currentSize.get() >= maxSize) {
                 LOGGER.info("Cache full, removing last...");
                 // fifo is full --> remove last element from fifo and map
-                cache.remove(fifo.removeLast());
+                cache.remove(fifo.remove());
             } else
                 currentSize.incrementAndGet();
             LOGGER.finer("Fifo after put: " + fifo);
@@ -117,7 +119,7 @@ public class FIFO implements Cache{
         if (msg.getStatus() != KVMessage.StatusType.GET)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
-        LOGGER.info(String.format("Getting cache value for %s", msg.getKey()));
+        LOGGER.info("Getting cache value for " + msg.getKey());
         String value = cache.get(msg.getKey());
         if (value == null) {
             LOGGER.info("Key not in cache: " + msg.getKey());
@@ -144,7 +146,7 @@ public class FIFO implements Cache{
         if (msg.getStatus() != KVMessage.StatusType.DELETE)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
-        LOGGER.info(String.format("Deleting key from cache: %s", msg.getKey()));
+        LOGGER.info("Deleting key from cache: " + msg.getKey());
         String value = cache.remove(msg.getKey());
         fifo.remove(msg.getKey());
 
