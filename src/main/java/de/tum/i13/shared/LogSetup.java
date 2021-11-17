@@ -24,4 +24,32 @@ public class LogSetup {
         }
         logger.setLevel(Level.ALL); //we want log everything
     }
+    public static void setLogFile(Path logfile){
+        Logger logger = LogManager.getLogManager().getLogger("");
+        FileHandler fileHandler = null;
+        try {
+            fileHandler = new FileHandler(logfile.getFileName().toString(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        fileHandler.setFormatter(new SimpleFormatter());
+
+        //Only allows logging to one file
+//        Handler[] handlers = logger.getHandlers();
+//        if(handlers.length > 0){
+//            for(int i =0; i<handlers.length; i++)
+//                logger.removeHandler(handlers[i]);
+//        }
+
+        logger.addHandler(fileHandler);
+
+    }
+    public static void setLogLevel(Level logLevel){
+        Logger logger = LogManager.getLogManager().getLogger("");
+
+        for (Handler h : logger.getHandlers()) {
+            h.setLevel(logLevel);
+        }
+        logger.setLevel(logLevel);
+    }
 }

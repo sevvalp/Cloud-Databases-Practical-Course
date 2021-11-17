@@ -27,6 +27,15 @@ public class Config {
     @CommandLine.Option(names = "-h", description = "Displays help", usageHelp = true)
     public boolean usagehelp;
 
+    @CommandLine.Option(names = "-ll", description = "Set log level", defaultValue = "ALL")
+    public String loglevel;
+
+    @CommandLine.Option(names = "-c", description = "Set cache size", defaultValue = "1073741824")
+    public int cacheSize;
+
+    @CommandLine.Option(names = "-s", description = "Set cache displacement strategy", defaultValue = "FIFO")
+    public String cacheStrategy;
+
     public static Config parseCommandlineArgs(String[] args) {
         Config cfg = new Config();
         CommandLine.ParseResult parseResult = new CommandLine(cfg).registerConverter(InetSocketAddress.class, new InetSocketAddressTypeConverter()).parseArgs(args);
@@ -61,6 +70,9 @@ public class Config {
                 ", bootstrap=" + bootstrap +
                 ", dataDir=" + dataDir +
                 ", logfile=" + logfile +
+                ", logLevel=" + loglevel +
+                ", cacheSize=" + cacheSize +
+                ", cacheStrategy=" + cacheStrategy +
                 ", usagehelp=" + usagehelp +
                 '}';
     }
