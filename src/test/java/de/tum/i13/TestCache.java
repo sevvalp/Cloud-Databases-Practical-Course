@@ -9,8 +9,6 @@ import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.shared.B64Util;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.ws.BindingType;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
