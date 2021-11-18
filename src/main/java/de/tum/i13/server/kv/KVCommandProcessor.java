@@ -23,7 +23,7 @@ public class KVCommandProcessor implements CommandProcessor {
     }
 
     @Override
-    public void process(SelectionKey selectionKey, String command) throws Exception {
+    public String process(SelectionKey selectionKey, String command) throws Exception {
         // just for testing
         // TODO: delete this
         LOGGER.info("Received command: " + command.trim());
@@ -48,6 +48,7 @@ public class KVCommandProcessor implements CommandProcessor {
             e.printStackTrace();
         }
 
+        return "Error. Wrong command.";
     }
 
     /**
