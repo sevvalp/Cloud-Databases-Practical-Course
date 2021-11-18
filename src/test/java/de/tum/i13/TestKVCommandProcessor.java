@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class TestKVCommandProcessor {
 
@@ -55,6 +54,17 @@ public class TestKVCommandProcessor {
         assertNull(argument.getValue().getValue());
         assertEquals("key", argument.getValue().getKey());
         assertEquals(KVMessage.StatusType.DELETE, argument.getValue().getStatus());
+
+    }
+    @Test
+    public void correctParsingOfWrongCommand() throws Exception {
+
+        KVStore kv = mock(KVStore.class);
+        KVCommandProcessor kvcp = new KVCommandProcessor(kv);
+        kvcp.process(null, "hello key");
+
+        verifyNoInteractions((kv));
+
 
     }
 }

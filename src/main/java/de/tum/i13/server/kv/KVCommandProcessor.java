@@ -23,7 +23,7 @@ public class KVCommandProcessor implements CommandProcessor {
     }
 
     @Override
-    public String process(SelectionKey selectionKey, String command) throws Exception {
+    public void process(SelectionKey selectionKey, String command) throws Exception {
         // just for testing
         // TODO: delete this
         LOGGER.info("Received command: " + command.trim());
@@ -37,6 +37,7 @@ public class KVCommandProcessor implements CommandProcessor {
         int size = request.length;
         request[size-1] = request[size-1].replace("\r\n", "");
         request[0] = request[0].toLowerCase();
+
         try {
             if (request[0].equals("put"))
                 kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], request[2], selectionKey));
@@ -47,8 +48,6 @@ public class KVCommandProcessor implements CommandProcessor {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return "Error. Wrong command.";
     }
 
     /**
