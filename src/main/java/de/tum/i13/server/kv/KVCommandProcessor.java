@@ -24,15 +24,8 @@ public class KVCommandProcessor implements CommandProcessor {
 
     @Override
     public void process(SelectionKey selectionKey, String command) throws Exception {
-        // just for testing
-        // TODO: delete this
         LOGGER.info("Received command: " + command.trim());
         String[] c = command.split("\\s");
-        /* TODO:
-            - add selectionKey parameter, needed to write back result to NioServer asynchronously
-            - split command and check for GET, PUT, DELETE --> return error message if unrecognized message
-            - call respective method
-         */
         String[] request = command.split(" ");
         int size = request.length;
         request[size-1] = request[size-1].replace("\r\n", "");
@@ -56,31 +49,25 @@ public class KVCommandProcessor implements CommandProcessor {
      * @param command   parsed command from user.
      */
     private String get(String[] command, SelectionKey selectionKey) {
-        /* TODO:
-            - add selectionKey parameter
-            - check for correct number of args etc.
-            - call kvStore.get (include selectionKey in KVMessage!)
-         */
-        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.GET, command[1], null, selectionKey);
 
         if(command.length == 2) { //Process Get Command
+            KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.GET, command[1], null, selectionKey);
             StartSimpleNioServer.logger.info("processing GET: " + command[1]);
-            KVMessage cmd = null;
             try {
-                cmd = kvStore.get(kvmsg);
-                if(command != null) {
-                    StartSimpleNioServer.logger.fine("GET succes: " + command[1]+ " " + cmd);
-                    return "get_success " + command[1] + " " + cmd;
+                KVMessage cmd = kvStore.get(kvmsg);
+                if(cmd.getStatus() == KVMessage.StatusType.GET_SUCCESS) {
+                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.GET_SUCCESS + " " + command[1]+ " " + cmd);
+                    return KVMessage.StatusType.GET_SUCCESS + command[1] + " " + cmd;
                 } else {
-                    StartSimpleNioServer.logger.fine("GET error: " + command[1]);
-                    return "get_error " + command[1] + " key not found.";
+                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.GET_ERROR + " " + command[1]);
+                    return KVMessage.StatusType.GET_ERROR + " " + command[1] + " key not found.";
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return "get_error " + command[1];
+                return KVMessage.StatusType.GET_ERROR + " " + command[1];
             }
         } else {
-            return "get_error wrong number of parameters.";
+            return KVMessage.StatusType.GET_ERROR + " wrong number of parameters.";
         }
     }
 
@@ -90,35 +77,30 @@ public class KVCommandProcessor implements CommandProcessor {
      * @param command   parsed command from user.
      */
     private String put(String[] command, SelectionKey selectionKey) {
-        /* TODO:
-            - add selectionKey parameter
-            - check for correct number of args etc.
-            - call kvStore.put (include selectionKey in KVMessage!)
-         */
-        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.PUT, command[1], command[2], selectionKey);
         if(command.length < 3){
-            return "put_error wrong number of parameters";
+            return KVMessage.StatusType.PUT_ERROR + " " + "wrong number of parameters";
         }
-        StartSimpleNioServer.logger.info("processing PUT: " + command[1]);
+        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.PUT, command[1], command[2], selectionKey);
+        StartSimpleNioServer.logger.info("processing PUT: " + " " + command[1]);
         try {
             //
             KVMessage ret = kvStore.put(kvmsg);
             if (ret.getStatus() == KVMessage.StatusType.PUT_SUCCESS) {
                 // NEW DATA
-                StartSimpleNioServer.logger.fine("PUT success: " + command[1] + " " + command[2]);
-                return "put_success " + command[1];
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + command[2]);
+                return KVMessage.StatusType.PUT_SUCCESS + " " + command[1];
             } else if (ret.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
                 /// UPDATE
-                StartSimpleNioServer.logger.fine("PUT update: " + command[1] + " " + command[2]);
-                return "put_update " + command[1];
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + command[2]);
+                return KVMessage.StatusType.PUT_UPDATE + " " + command[1];
             } else  {
                 //ERROR
-                StartSimpleNioServer.logger.fine("PUT error: " + command[1] + " " + command[2]);
-                return "put_error " + command[1];
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + command[2]);
+                return KVMessage.StatusType.PUT_ERROR + " " + command[1];
             }
         } catch (Exception e) {
-            StartSimpleNioServer.logger.fine("PUT error: " + command[1] + " " + command[2]);
-            return "put_error " + command[1] + " " + command[2] ;
+            StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + command[2]);
+            return KVMessage.StatusType.PUT_ERROR + command[1] + " " + command[2] ;
         }
     }
 
@@ -128,30 +110,24 @@ public class KVCommandProcessor implements CommandProcessor {
      * @param command   parsed command from user.
      */
     private String delete(String[] command, SelectionKey selectionKey) {
-        /* TODO:
-            - add selectionKey parameter
-            - check for correct number of args etc.
-            - call kvStore.delete (include selectionKey in KVMessage!)
-         */
         KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.DELETE, command[1], null, selectionKey);
         if(command.length == 2) {
-            StartSimpleNioServer.logger.info("processing DELETE: " + command[1]);
-            KVMessage ret = null;
+            StartSimpleNioServer.logger.info(KVMessage.StatusType.DELETE + " " + command[1]);
             try {
-                ret = kvStore.delete(kvmsg);
+                KVMessage ret = kvStore.delete(kvmsg);
                 if (ret.getStatus() == KVMessage.StatusType.DELETE_SUCCESS) {
-                    StartSimpleNioServer.logger.fine("DELETE success: " + command[1]);
-                    return "delete_success " + command[1];
+                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_SUCCESS + " " + command[1]);
+                    return KVMessage.StatusType.DELETE_SUCCESS + " " + command[1];
                 } else {
-                    StartSimpleNioServer.logger.fine("DELETE error: " + command[1] + " not found.");
-                    return "delete_error " + command[1];
+                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_ERROR + " " + command[1] + " not found.");
+                    return KVMessage.StatusType.DELETE_ERROR + " " + command[1];
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        StartSimpleNioServer.logger.fine("PUT error: " + command[1]);
-        return "delete_error wrong number of parameters.";
+        StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_ERROR + " " + command[1]);
+        return KVMessage.StatusType.DELETE_ERROR + " wrong number of parameters.";
     }
 
 
@@ -159,7 +135,7 @@ public class KVCommandProcessor implements CommandProcessor {
     public String connectionAccepted(InetSocketAddress address, InetSocketAddress remoteAddress) {
         LOGGER.info("new connection: " + remoteAddress.toString());
 
-        return "Accepted connection from " + remoteAddress.toString() + " to KVServer ( " + address.toString() + ")\r\n";
+        return "Accepted connection from " + remoteAddress + " to KVServer ( " + address.toString() + ")\r\n";
     }
 
     @Override
