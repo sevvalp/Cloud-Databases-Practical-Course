@@ -64,10 +64,11 @@ public class KVIntegrationTest {
         };
         th.start(); // started the server
         Thread.sleep(2000);
+        th.interrupt();
 
         String command = "PUT newkey202 newvalue202";
         String response = doRequest(command);
-        assertThat(response, is(equalTo("PUT_SUCCESS newkey202 newvalue202")));
+        assertThat(response, is(equalTo("put_success newkey202 newvalue202")));
 
     }
 
@@ -89,7 +90,7 @@ public class KVIntegrationTest {
 
         String command = "GET newkey213";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("GET_ERROR newkey213"));
+        assertThat(response, CoreMatchers.containsString("get_error newkey213"));
 
     }
 
@@ -110,7 +111,7 @@ public class KVIntegrationTest {
 
         String command = "GET newkey202";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("GET_SUCCESS newkey202"));
+        assertThat(response, CoreMatchers.containsString("get_success newkey202"));
 
     }
 
@@ -131,7 +132,7 @@ public class KVIntegrationTest {
 
         String command = "DELETE newkey202";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("DELETE_SUCCESS newkey202"));
+        assertThat(response, CoreMatchers.containsString("delete_success newkey202"));
 
     }
 
@@ -152,7 +153,7 @@ public class KVIntegrationTest {
 
         String command = "DELETE newkey202";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("DELETE_SUCCESS newkey202"));
+        assertThat(response, CoreMatchers.containsString("delete_success newkey202"));
 
     }
 
@@ -174,7 +175,7 @@ public class KVIntegrationTest {
 
         String command = "GET newkey213";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("GET_ERROR newkey213"));
+        assertThat(response, CoreMatchers.containsString("get_error newkey213"));
 
     }
 
@@ -220,7 +221,7 @@ public class KVIntegrationTest {
         Thread.sleep(5000);
 
         String response = doRequest("GET hello");
-        assertEquals(response,"GET_SUCCESS hello 8");
+        assertEquals(response,"get_success hello 9");
 
         th.interrupt();
 
