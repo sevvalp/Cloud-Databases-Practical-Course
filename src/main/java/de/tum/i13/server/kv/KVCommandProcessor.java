@@ -80,8 +80,14 @@ public class KVCommandProcessor implements CommandProcessor {
         if(command.length < 3){
             return KVMessage.StatusType.PUT_ERROR + " " + "wrong number of parameters";
         }
-        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.PUT, command[1], command[2], selectionKey);
         StartSimpleNioServer.logger.info("processing PUT: " + " " + command[1]);
+
+        StringBuilder v = new StringBuilder();
+        for (int i = 2; i < command.length; i++) {
+            v.append(command[i]);
+        }
+        String value = v.toString();
+        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.PUT, command[1], value, selectionKey);
         try {
             //
             KVMessage ret = kvStore.put(kvmsg);

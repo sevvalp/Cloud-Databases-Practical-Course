@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.Scanner;
+import java.util.StringJoiner;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +31,11 @@ public class TestClient {
         if (input.length() == 0)
             return false;
         String[] command = input.split("\\s+");
+        StringBuilder v = new StringBuilder();
+        for (int i = 1; i < command.length; i++) {
+            v.append(command[i]);
+        }
+        String[] value = v.toString().split(" ");
 
         switch (command[0]) {
             case "connect":
@@ -128,11 +134,16 @@ public class TestClient {
      */
     private static void put(String[] command) {
         LOGGER.info(String.format("User wants to put a key with arguments: %s", String.join(" ", command)));
-        if (command.length != 3)
+        if (command.length < 3)
             printHelp("put");
         else {
             try {
-                KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], command[2]));
+                StringJoiner v = new StringJoiner(" ");
+                for (int i = 2; i < command.length; i++) {
+                    v.add(command[i]);
+                }
+                String value = v.toString();
+                KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
