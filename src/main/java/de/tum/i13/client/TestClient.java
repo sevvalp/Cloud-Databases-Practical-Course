@@ -31,12 +31,6 @@ public class TestClient {
         if (input.length() == 0)
             return false;
         String[] command = input.split("\\s+");
-        StringBuilder v = new StringBuilder();
-        for (int i = 1; i < command.length; i++) {
-            v.append(command[i]);
-        }
-        String[] value = v.toString().split(" ");
-
         switch (command[0]) {
             case "connect":
                 connect(command);
