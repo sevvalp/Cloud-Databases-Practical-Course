@@ -110,8 +110,8 @@ public class KVCommandProcessor implements CommandProcessor {
      * @param command   parsed command from user.
      */
     private String delete(String[] command, SelectionKey selectionKey) {
-        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.DELETE, command[1], null, selectionKey);
         if(command.length == 2) {
+            KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.DELETE, command[1], null, selectionKey);
             StartSimpleNioServer.logger.info(KVMessage.StatusType.DELETE + " " + command[1]);
             try {
                 KVMessage ret = kvStore.delete(kvmsg);
