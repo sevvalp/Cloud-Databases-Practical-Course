@@ -74,14 +74,17 @@ public class KVServer implements KVStore {
                 LOGGER.fine(String.format("Putting key into cache: <%s, %s>", msg.getKey(), msg.getValue()));
                 // first, write the kv pair into the cache
                 KVMessage res = cache.put(msg);
+                String message;
                 if (res.getStatus() == KVMessage.StatusType.PUT_SUCCESS || res.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
                     LOGGER.fine(String.format("Successfully put key into cache, now writing to disk: <%s, %s>", msg.getKey(), msg.getValue()));
                     // successfully written kv pair into cache, now write to disk
                     res = disk.writeContent(msg);
+                    message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                }else{
+                    message = res.getStatus().name() + " " + res.getKey()  + "\r\n";
                 }
 
                 // return answer to client
-                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 LOGGER.info("Answer to client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
@@ -122,6 +125,7 @@ public class KVServer implements KVStore {
                 LOGGER.fine("Getting key from cache: " + msg.getKey());
                 // first, try to get the kv pair from the cache
                 KVMessage res = cache.get(msg);
+                String message = null;
                 if (res.getStatus() != KVMessage.StatusType.GET_SUCCESS) {
                     LOGGER.fine("Key not in cache, try reading from disk: " + msg.getKey());
                     // key not in cache, try to read from disk
@@ -133,11 +137,15 @@ public class KVServer implements KVStore {
                         // ignore result of cache put operation
                         // worst case is a new cache miss
                         cache.put(new ServerMessage(KVMessage.StatusType.PUT, res.getKey(), res.getValue()));
+                        message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                    }else {
+                        message = res.getStatus().name() + " " + res.getKey() + "\r\n";
                     }
+
                 }
 
                 // return answer to client
-                String message = res.getStatus().name() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+
                 LOGGER.info("Answer to Client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
