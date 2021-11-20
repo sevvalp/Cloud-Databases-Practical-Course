@@ -2,3 +2,1429 @@
 2021-11-19 00:10:19.519 INFO    [de.tum.i13.server.nio.StartSimpleNioServer] starting server 
 2021-11-19 00:10:19.527 INFO    [de.tum.i13.server.cache.FirstInFirstOutCache] Initialized FIFO cache with size 1073741824
 2021-11-19 00:11:24.789 INFO    [de.tum.i13.server.kv.KVCommandProcessor] new connection: /127.0.0.1:57251 
+Nov 20, 2021 11:28:05 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:28:05 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:28:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:28:46 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:53012
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT MTIz aGFsbG8=
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <MTIz, aGFsbG8=>
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key MTIz
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <MTIz, aGFsbG8=>
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <MTIz, aGFsbG8=>.
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key MTIz not in cache. Creating new CacheItem.
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Successfully put key into cache, now writing to disk: <MTIz, aGFsbG8=>
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key MTIz
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.disk.DiskManager writeContent
+INFORMATION: Put into disk: <MTIz, aGFsbG8=>
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_success MTIz aGFsbG8=
+
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:28:53 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item MTIz
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT YWJj dGVzdA==
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <YWJj, dGVzdA==>
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key YWJj
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <YWJj, dGVzdA==>
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Successfully put key into cache, now writing to disk: <YWJj, dGVzdA==>
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.disk.DiskManager writeContent
+INFORMATION: Put into disk: <YWJj, dGVzdA==>
+Nov 20, 2021 11:29:40 PM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_update YWJj dGVzdA==
+
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz in cache, reading value.
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success MTIz aGFsbG8=
+
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item MTIz
+Nov 20, 2021 11:29:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing MTIz from freq list.
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:29:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: DELETE MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVServer delete
+INFORMATION: Client wants to delete key: %sMTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVServer delete
+FEIN: Submitting new delete callable to pool for key MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVServer$3 call
+FEIN: Deleting key from cache: MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache delete
+INFORMATION: Deleting from cache: MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache delete
+FEIN: Key MTIz in cache, deleting item.
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVServer$3 call
+FEIN: Deleting key from disk: MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing MTIz from freq list.
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.disk.DiskManager deleteContent
+INFORMATION: Deleting key from disk: MTIz
+Nov 20, 2021 11:29:49 PM de.tum.i13.server.kv.KVServer$3 call
+INFORMATION: Answer to Client: delete_success MTIz aGFsbG8=
+
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:29:51 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:33:14 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:33:14 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:33:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:33:23 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:53502
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:33:26 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:35:40 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:35:40 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:35:40 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:35:46 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:53522
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:35:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:37:10 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:37:10 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:37:10 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:37:17 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:53540
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:37:18 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:38:17 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:38:17 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:38:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:40:44 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:40:44 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:40:44 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:40:57 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:59456
+Nov 20, 2021 11:41:00 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:41:00 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:41:00 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:41:00 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:41:12 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:41:12 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:41:35 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:41:35 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:41:35 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:42:10 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:59472
+Nov 20, 2021 11:42:29 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:42:29 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:42:29 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:42:29 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:43:04 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:43:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:44:54 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:44:54 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:44:54 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:45:03 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:59501
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:45:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:46:08 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:46:08 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:46:08 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:46:19 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:59515
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:46:22 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for MTIz
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Key not in disk
+Nov 20, 2021 11:46:26 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_error MTIz S2V5IG5vdCBpbiBkaXNrIQ==
+
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:47:13 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 20, 2021 11:50:46 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:50:46 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:50:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:51:17 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:50654
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:51:20 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:52:01 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:52:01 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:52:01 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:52:13 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:50670
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:52:17 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 20, 2021 11:54:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key MTIz not in cache!
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for MTIz
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Key not in disk
+Nov 20, 2021 11:54:23 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_error MTIz S2V5IG5vdCBpbiBkaXNrIQ==
+
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT dGVzdA== YWJj
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key dGVzdA==
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== not in cache. Creating new CacheItem.
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Successfully put key into cache, now writing to disk: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (2, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.disk.DiskManager writeContent
+INFORMATION: Put into disk: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_success dGVzdA== YWJj
+
+Nov 20, 2021 11:54:32 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<dGVzdA==, YWJj>, ]) (2, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT dGVzdA== YWJj
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key dGVzdA==
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== in cache, set new value.
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Successfully put key into cache, now writing to disk: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<dGVzdA==, YWJj>, ]) (2, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.disk.DiskManager writeContent
+INFORMATION: Put into disk: <dGVzdA==, YWJj>
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<dGVzdA==, YWJj>, ]) 
+Nov 20, 2021 11:54:47 PM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_update dGVzdA== YWJj
+
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (2, [<dGVzdA==, YWJj>, ]) 
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:56:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<dGVzdA==, YWJj>, ]) (3, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (2, [<dGVzdA==, YWJj>, ]) (3, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 3 empty, removing from list.
+Nov 20, 2021 11:57:25 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<dGVzdA==, YWJj>, ]) (4, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (2, [<dGVzdA==, YWJj>, ]) (4, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 4 empty, removing from list.
+Nov 20, 2021 11:57:37 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (2, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 2 empty, removing from list.
+Nov 20, 2021 11:57:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (3, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:57:47 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (3, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 3 empty, removing from list.
+Nov 20, 2021 11:57:48 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (4, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (4, [<dGVzdA==, YWJj>, ]) (5, [<YWJj, dGVzdA==>, ]) 
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 4 empty, removing from list.
+Nov 20, 2021 11:57:52 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (5, [<dGVzdA==, YWJj>, ]) 
+Nov 20, 2021 11:58:43 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 20, 2021 11:58:43 PM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 20, 2021 11:58:43 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 20, 2021 11:58:59 PM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:50731
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 20, 2021 11:59:05 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [, ]) 
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== not in cache!
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <dGVzdA==, YWJj>
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== not in cache. Creating new CacheItem.
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [, ]) 
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:59:14 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [, ]) 
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [, ]) 
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:59:24 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [, ]) (2, [, ]) 
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [, ]) (2, [, ]) 
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 2 empty, removing from list.
+Nov 20, 2021 11:59:46 PM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [, ]) (3, [, ]) 
+Nov 21, 2021 12:00:45 AM de.tum.i13.server.kv.KVCommandProcessor connectionClosed
+INFORMATION: Connection closed: /127.0.0.1
+Nov 21, 2021 12:00:59 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 21, 2021 12:00:59 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:00:59 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 21, 2021 12:01:05 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:62727
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:01:08 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [, ]) 
+Nov 21, 2021 12:03:14 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=10, cacheStrategy=LFU, usagehelp=false}
+Nov 21, 2021 12:03:14 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:03:14 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 10
+Nov 21, 2021 12:03:22 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:62766
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:03:26 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== not in cache!
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <dGVzdA==, YWJj>
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== not in cache. Creating new CacheItem.
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 21, 2021 12:03:31 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>, <dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>, <dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 21, 2021 12:03:36 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj in cache, reading value.
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: YWJj, dGVzdA==
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 21, 2021 12:03:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (2, [<dGVzdA==, YWJj>, <YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:03:51 AM de.tum.i13.server.kv.KVCommandProcessor connectionClosed
+INFORMATION: Connection closed: /127.0.0.1
+Nov 21, 2021 12:04:12 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=LFU, usagehelp=false}
+Nov 21, 2021 12:04:13 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:04:13 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 2
+Nov 21, 2021 12:04:25 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:62783
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:04:27 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== not in cache!
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <dGVzdA==, YWJj>
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== not in cache. Creating new CacheItem.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Cache exceeding max size.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+INFORMATION: Evicting 1 entries from cache.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+FEIN: Evicting entry YWJj with frequency 1
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 21, 2021 12:04:33 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:05:41 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=LFU, usagehelp=false}
+Nov 21, 2021 12:05:41 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:05:41 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache initCache
+INFORMATION: Initialized LFU cache with size 2
+Nov 21, 2021 12:05:49 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:62798
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: 
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:05:52 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== not in cache!
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <dGVzdA==, YWJj>
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <dGVzdA==, YWJj>.
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key dGVzdA== not in cache. Creating new CacheItem.
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>]) 
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 21, 2021 12:05:53 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>, <dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key dGVzdA== in cache, reading value.
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_SUCCESS
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key in cache: dGVzdA==, YWJj
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>, <dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success dGVzdA== YWJj
+
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item dGVzdA==
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing dGVzdA== from freq list.
+Nov 21, 2021 12:06:00 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT aGFsbG8= aGFsbG90
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <aGFsbG8=, aGFsbG90>
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key aGFsbG8=
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <aGFsbG8=, aGFsbG90>
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <aGFsbG8=, aGFsbG90>.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key aGFsbG8= not in cache. Creating new CacheItem.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key aGFsbG8=
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Successfully put key into cache, now writing to disk: <aGFsbG8=, aGFsbG90>
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.disk.DiskManager writeContent
+INFORMATION: Put into disk: <aGFsbG8=, aGFsbG90>
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Cache exceeding max size.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+INFORMATION: Evicting 1 entries from cache.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+FEIN: Evicting entry YWJj with frequency 1
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing YWJj from freq list.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_update aGFsbG8= aGFsbG90
+
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item aGFsbG8=
+Nov 21, 2021 12:06:12 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<aGFsbG8=, aGFsbG90>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+INFORMATION: Getting from cache: YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache get
+FEIN: Key YWJj not in cache!
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+INFORMATION: Putting into cache: <YWJj, dGVzdA==>.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache put
+FEIN: Key YWJj not in cache. Creating new CacheItem.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+INFORMATION: Incrementing key YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU before increment: (1, [<aGFsbG8=, aGFsbG90>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Cache exceeding max size.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+INFORMATION: Evicting 1 entries from cache.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache evict
+FEIN: Evicting entry aGFsbG8= with frequency 1
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+INFORMATION: Removing aGFsbG8= from freq list.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache remove
+FEIN: Frequency level 1 empty, removing from list.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Next freq amount doesn't exist.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Added new freq amount to list.
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: Updating frequency in item YWJj
+Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
+FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 

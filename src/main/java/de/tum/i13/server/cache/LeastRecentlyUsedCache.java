@@ -31,8 +31,8 @@ public class LeastRecentlyUsedCache implements Cache{
     }
 
     private LeastRecentlyUsedCache() {
-        cache = null;
-        lru = null;
+        cache = new ConcurrentHashMap<>();
+        lru = new ConcurrentLinkedDeque<>();
         this.maxSize = 0;
         currentSize = new AtomicInteger();
     }
@@ -53,10 +53,8 @@ public class LeastRecentlyUsedCache implements Cache{
      */
     public void initCache(int maxSize) {
         // only init if cache is null
-        if (cache == null) {
+        if (maxSize < 0) {
             LOGGER.info(String.format("Created LRU cache with size %d", maxSize));
-            cache = new ConcurrentHashMap<>();
-            lru = new ConcurrentLinkedDeque<>();
             this.maxSize = maxSize;
         }
     }
@@ -70,7 +68,7 @@ public class LeastRecentlyUsedCache implements Cache{
     @Override
     public KVMessage put(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
@@ -85,13 +83,14 @@ public class LeastRecentlyUsedCache implements Cache{
 
         // insert into map
         if (cache.put(msg.getKey(), msg.getValue()) == null) {
-            if (currentSize.get() >= maxSize) {
+            if (currentSize.getAndAccumulate(maxSize, (current, max) -> {
+                if (current < max)
+                    return ++current;
+                return current;
+            }) >= maxSize) {
                 LOGGER.info("Cache full, removing least recently used...");
                 // key not in lru and cache exceeding size --> remove last element
                 cache.remove(lru.remove());
-            } else {
-                currentSize.incrementAndGet();
-                LOGGER.finer("Key not in cache, still space left... " + msg.getKey());
             }
             LOGGER.finer("LRU after put: " + lru);
             return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
@@ -114,7 +113,7 @@ public class LeastRecentlyUsedCache implements Cache{
     @Override
     public KVMessage delete(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
@@ -144,7 +143,7 @@ public class LeastRecentlyUsedCache implements Cache{
     @Override
     public KVMessage get(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 

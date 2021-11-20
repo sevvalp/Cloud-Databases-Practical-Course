@@ -31,9 +31,9 @@ public class FirstInFirstOutCache implements Cache{
     }
 
     private FirstInFirstOutCache() {
-        this.cache = null;
-        this.fifo = null;
-        this.maxSize = 0;
+        this.cache = new ConcurrentHashMap<>();
+        this.fifo = new ConcurrentLinkedDeque<>();
+        this.maxSize = -1;
         this.currentSize = new AtomicInteger();
     }
 
@@ -53,10 +53,8 @@ public class FirstInFirstOutCache implements Cache{
     @Override
     public void initCache(int maxSize) {
         // only init if cache is null
-        if (this.cache == null) {
-            LOGGER.info(String.format("Initialized FIFO cache with size %d", maxSize));
-            cache = new ConcurrentHashMap<>();
-            fifo = new ConcurrentLinkedDeque<>();
+        if (maxSize < 0) {
+            LOGGER.info("Initialized FIFO cache with size " + maxSize);
             this.maxSize = maxSize;
         }
     }
@@ -69,7 +67,7 @@ public class FirstInFirstOutCache implements Cache{
      */
     public KVMessage put(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
@@ -86,12 +84,15 @@ public class FirstInFirstOutCache implements Cache{
             fifo.add(msg.getKey());
 
             // check if fifo is full
-            if (currentSize.get() >= maxSize) {
+            if (currentSize.getAndAccumulate(maxSize, (current, max) -> {
+                if (current < max)
+                    return ++current;
+                return current;
+            }) >= maxSize) {
                 LOGGER.info("Cache full, removing last...");
                 // fifo is full --> remove last element from fifo and map
                 cache.remove(fifo.remove());
-            } else
-                currentSize.incrementAndGet();
+            }
             LOGGER.finer("Fifo after put: " + fifo);
             return new ServerMessage(KVMessage.StatusType.PUT_SUCCESS, msg.getKey(), msg.getValue());
         }
@@ -109,7 +110,7 @@ public class FirstInFirstOutCache implements Cache{
     @Override
     public KVMessage get(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 
@@ -136,7 +137,7 @@ public class FirstInFirstOutCache implements Cache{
     @Override
     public  KVMessage delete(KVMessage msg) {
         // if cache is not yet initialized, return error
-        if (cache == null)
+        if (maxSize < 0)
             // we should never see this error
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
 

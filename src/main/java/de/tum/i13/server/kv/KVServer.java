@@ -125,8 +125,14 @@ public class KVServer implements KVStore {
             public Void call() throws Exception {
                 LOGGER.fine("Getting key from cache: " + msg.getKey());
                 // first, try to get the kv pair from the cache
-                KVMessage res = cache.get(msg);
+                KVMessage res = null;
+                try {
+                    res = cache.get(msg);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 String message;
+                LOGGER.fine("Result: " + res.getStatus().name());
                 if (res.getStatus() != KVMessage.StatusType.GET_SUCCESS) {
                     LOGGER.fine("Key not in cache, try reading from disk: " + msg.getKey());
                     // key not in cache, try to read from disk
@@ -139,11 +145,12 @@ public class KVServer implements KVStore {
                         // worst case is a new cache miss
                         cache.put(new ServerMessage(KVMessage.StatusType.PUT, res.getKey(), res.getValue()));
                         message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
-                    }else {
-                        message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
+                    } else {
+                        message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                     }
 
-                }else{
+                } else {
+                    LOGGER.fine("Key in cache: " + res.getKey() + ", " + res.getValue());
                     message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 }
 

@@ -8,14 +8,17 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
 /**
  * Class implementing an LFU cache to store kv-pairs.
- * Loosely based on https://ieftimov.com/post/when-why-least-frequently-used-cache-implementation-golang/
+ * Loosely based on
+ *      https://ieftimov.com/post/when-why-least-frequently-used-cache-implementation-golang/
+ *      http://dhruvbird.com/lfu.pdf
+ *
+ *      https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Executor.html
  *
  * @version 0.1
  * @since   2021-11-06
@@ -25,7 +28,9 @@ public class LeastFrequentlyUsedCache implements Cache {
 
     private Map<String, CacheItem> cache;
     // store which items are on which frequency level
+    // only used in increment/remove, which run in series --> no concurrent list needed
     private LinkedList<FrequencyItem> freqs;
+    // only used in increment/evict, which run in series --> no AtomicInteger needed
     private int currentSize;
     private int maxSize;
     private Executor executor;
@@ -130,7 +135,7 @@ public class LeastFrequentlyUsedCache implements Cache {
         }
 
         LOGGER.fine("Key " + key + " not in cache!");
-        return new ServerMessage(KVMessage.StatusType.GET_ERROR, item.getKey(), B64Util.b64encode("Key not in cache!"));
+        return new ServerMessage(KVMessage.StatusType.GET_ERROR, key, B64Util.b64encode("Key not in cache!"));
     }
 
     /**
@@ -151,7 +156,7 @@ public class LeastFrequentlyUsedCache implements Cache {
         }
 
         LOGGER.fine("Key " + key + " not in cache!");
-        return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, item.getKey(), B64Util.b64encode("key not in cache!"));
+        return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, key, B64Util.b64encode("key not in cache!"));
     }
 
     public void increment(CacheItem item) {
@@ -162,10 +167,15 @@ public class LeastFrequentlyUsedCache implements Cache {
                 FrequencyItem currentFreq = item.getParentFreq();
                 int nextFreqAmount;
                 FrequencyItem nextFreq;
+                LOGGER.info("Incrementing key " + item.getKey());
+                String log = "LFU before increment: ";
+                for (FrequencyItem i : freqs)
+                    log += i.toString() + " ";
+                LOGGER.fine(log);
 
                 if (currentFreq == null) {
                     // new item added to cache --> increment size and check for eviction
-                    if (++currentSize >= maxSize) {
+                    if (++currentSize > maxSize) {
                         // cache exceeding maxSize
                         LOGGER.fine("Cache exceeding max size.");
                         evict(1);
@@ -202,6 +212,7 @@ public class LeastFrequentlyUsedCache implements Cache {
                     LOGGER.fine("Added new freq amount to list.");
                 }
 
+                LOGGER.fine("Updating frequency in item " + item.getKey());
                 // update frequency in item
                 item.setParentFreq(nextFreq);
                 // add item to nextFreq
@@ -209,6 +220,11 @@ public class LeastFrequentlyUsedCache implements Cache {
                 // remove item from currentFreq
                 if (currentFreq != null)
                     remove(currentFreq, item);
+
+                log = "LFU after increment: ";
+                for (FrequencyItem i : freqs)
+                    log += i.toString() + " ";
+                LOGGER.fine(log);
             }
         });
     }
@@ -314,7 +330,7 @@ public class LeastFrequentlyUsedCache implements Cache {
 
         @Override
         public String toString() {
-            return String.format("<%s, %s, %d>", key, value);
+            return String.format("<%s, %s>", key, value);
         }
     }
 
@@ -354,10 +370,12 @@ public class LeastFrequentlyUsedCache implements Cache {
         public String toString() {
             String s = "(%s, [%s])";
             String s2 = "";
-            for (CacheItem i : entries) {
-                s2 = i.toString() + ", ";
-            }
-            s2.substring(s2.length() - 2);
+
+            Iterator<CacheItem> iter = entries.iterator();
+            while(iter.hasNext())
+                s2 += iter.next() + ", ";
+
+            s2 = s2.substring(0, s2.length() - 2);
             return String.format(s, freq, s2);
         }
     }
