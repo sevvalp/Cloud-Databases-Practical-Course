@@ -93,20 +93,20 @@ public class KVCommandProcessor implements CommandProcessor {
             KVMessage ret = kvStore.put(kvmsg);
             if (ret.getStatus() == KVMessage.StatusType.PUT_SUCCESS) {
                 // NEW DATA
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + command[2]);
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + value);
                 return KVMessage.StatusType.PUT_SUCCESS + " " + command[1];
             } else if (ret.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
                 /// UPDATE
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + command[2]);
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + value);
                 return KVMessage.StatusType.PUT_UPDATE + " " + command[1];
             } else  {
                 //ERROR
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + command[2]);
+                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
                 return KVMessage.StatusType.PUT_ERROR + " " + command[1];
             }
         } catch (Exception e) {
-            StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + command[2]);
-            return KVMessage.StatusType.PUT_ERROR + command[1] + " " + command[2] ;
+            StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
+            return KVMessage.StatusType.PUT_ERROR + command[1] + " " + value ;
         }
     }
 
