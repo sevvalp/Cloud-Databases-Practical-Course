@@ -72,6 +72,28 @@ public class KVIntegrationTest {
 
     }
 
+    @Test
+    public void test1_multiWorldValuePutSuccess() throws InterruptedException, IOException {
+        Thread th = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        th.start(); // started the server
+        Thread.sleep(2000);
+        th.interrupt();
+
+        String command = "PUT elephant one two three";
+        String response = doRequest(command);
+        assertThat(response, is(equalTo("put_success elephant one two three")));
+
+    }
+
 
     @Test
     public void test2_getNonExistentTest() throws InterruptedException, IOException {
@@ -179,7 +201,7 @@ public class KVIntegrationTest {
 
     }
 
-    @Test
+    //@Test
     public void enjoyTheEcho() throws IOException, InterruptedException {
         Thread th = new Thread() {
             @Override

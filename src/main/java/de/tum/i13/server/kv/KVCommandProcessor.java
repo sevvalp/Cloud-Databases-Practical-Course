@@ -7,6 +7,7 @@ import de.tum.i13.shared.CommandProcessor;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
+import java.util.StringJoiner;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -31,9 +32,14 @@ public class KVCommandProcessor implements CommandProcessor {
         request[size-1] = request[size-1].replace("\r\n", "");
         request[0] = request[0].toLowerCase();
 
+        StringJoiner v = new StringJoiner(" ");
+        for (int i = 2; i < request.length; i++) {
+            v.add(request[i]);
+        }
+
         try {
             if (request[0].equals("put"))
-                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], request[2], selectionKey));
+                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
             /*else*/ if (request[0].equals("get"))
                 kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
             else if (request[0].equals("delete"))
