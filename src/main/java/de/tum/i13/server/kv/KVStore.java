@@ -34,4 +34,5 @@ public interface KVStore {
      */
     public KVMessage delete(KVMessage msg) throws Exception;
 
+    public KVMessage unknownCommand(KVMessage msg) throws Exception;
 }

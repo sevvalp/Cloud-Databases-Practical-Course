@@ -10,6 +10,7 @@ import de.tum.i13.server.stripe.StripedCallable;
 import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.B64Util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
@@ -205,4 +206,24 @@ public class KVServer implements KVStore {
         });
         return null;
     }
+
+    @Override
+    public KVMessage unknownCommand(KVMessage msg) throws UnsupportedEncodingException {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+
+        String message =  "error " + B64Util.b64encode("unknown command")+ "\r\n";
+        // return answer to client
+        LOGGER.info("Answer to client: " + message);
+        server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+        return new ServerMessage(KVMessage.StatusType.ERROR,  B64Util.b64encode("unknown"), B64Util.b64encode("command"));
+
+    }
+
 }

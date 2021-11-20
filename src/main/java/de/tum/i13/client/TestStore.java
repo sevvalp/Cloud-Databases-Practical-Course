@@ -138,6 +138,24 @@ public class TestStore implements KVStore {
         return receiveKVMessage();
     }
 
+    @Override
+    public KVMessage unknownCommand(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
+        // convert key to Base64
+        // delete message to server has the following format
+        // DELETE <Base64 encoded key>
+        String message = String.format("unknown %s\r\n", B64Util.b64encode(msg.getKey()));
+        LOGGER.info(String.format("Message to server: %s", message));
+
+        // try to send data, exceptions will be rethrown
+        // expected receive message
+        // <STATUS> <Base64 encoded key> <Base64 encoded value>
+        // for example:
+        // DELETE_SUCCESS <b64 key> <b64 value>
+        // DELETE_ERROR <b64 key> <b64 error message>
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        return receiveKVMessage();
+    }
+
 
     /**
      * Reads data from the socket using {@link SocketCommunicator#receive()} and decodes it into a KVMessage.
@@ -152,9 +170,14 @@ public class TestStore implements KVStore {
         if (KVMessage.parseStatus(rcvMsg[0]) == null)
             return null;
 
+
         KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
-        String rcvKey = B64Util.b64decode(rcvMsg[1]);
-        String rcvVal = B64Util.b64decode(rcvMsg[2]);
-        return new ClientMessage(status, rcvKey, rcvVal);
+        if(status == KVMessage.StatusType.ERROR){
+            return null;
+        }else{
+            String rcvKey = B64Util.b64decode(rcvMsg[1]);
+            String rcvVal = B64Util.b64decode(rcvMsg[2]);
+            return new ClientMessage(status, rcvKey, rcvVal);
+        }
     }
 }

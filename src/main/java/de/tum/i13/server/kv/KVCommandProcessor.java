@@ -2,6 +2,7 @@ package de.tum.i13.server.kv;
 
 import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.nio.StartSimpleNioServer;
+import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.CommandProcessor;
 
 import java.net.InetAddress;
@@ -14,10 +15,10 @@ import java.util.logging.Level;
 public class KVCommandProcessor implements CommandProcessor {
     private static final Logger LOGGER = Logger.getLogger(KVCommandProcessor.class.getName());
 
-    private KVStore kvStore;
+    private KVServer kvStore;
 
     public KVCommandProcessor (KVStore kvStore) {
-        this.kvStore = kvStore;
+        this.kvStore = (KVServer)kvStore;
         StartSimpleNioServer.logger.setLevel(Level.ALL);
         // TODO: handle args
         // TODO: log stuff
@@ -37,16 +38,33 @@ public class KVCommandProcessor implements CommandProcessor {
             v.add(request[i]);
         }
 
-        try {
-            if (request[0].equals("put"))
+//        try {
+//            if (request[0].equals("put"))
+//                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
+//            /*else*/ if (request[0].equals("get"))
+//                kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
+//            else if (request[0].equals("delete"))
+//                kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        switch (request[0]) {
+            case "put":
                 kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
-            /*else*/ if (request[0].equals("get"))
+                break;
+            case "get":
                 kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
-            else if (request[0].equals("delete"))
+                break;
+            case "delete":
                 kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey));
-        } catch (Exception e) {
-            e.printStackTrace();
+                break;
+            default:
+                //here handle unknown commands
+                kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
+                break;
         }
+
     }
 
     /**
