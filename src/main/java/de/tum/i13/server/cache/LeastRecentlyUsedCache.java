@@ -17,9 +17,9 @@ import java.util.logging.Logger;
  * @version 0.1
  * @since   2021-11-06
  */
-public class LRU implements Cache{
+public class LeastRecentlyUsedCache implements Cache{
 
-    private final static Logger LOGGER = Logger.getLogger(LRU.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(LeastRecentlyUsedCache.class.getName());
 
     private Map<String, String> cache;
     private Deque<String> lru;
@@ -27,10 +27,10 @@ public class LRU implements Cache{
     private AtomicInteger currentSize;
 
     private static class Holder {
-        private static final Cache INSTANCE = new LRU();
+        private static final Cache INSTANCE = new LeastRecentlyUsedCache();
     }
 
-    private LRU() {
+    private LeastRecentlyUsedCache() {
         cache = null;
         lru = null;
         this.maxSize = 0;

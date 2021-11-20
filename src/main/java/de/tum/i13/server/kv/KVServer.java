@@ -1,9 +1,9 @@
 package de.tum.i13.server.kv;
 
 import de.tum.i13.server.cache.Cache;
-import de.tum.i13.server.cache.FIFO;
-import de.tum.i13.server.cache.LFU;
-import de.tum.i13.server.cache.LRU;
+import de.tum.i13.server.cache.FirstInFirstOutCache;
+import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
+import de.tum.i13.server.cache.LeastRecentlyUsedCache;
 import de.tum.i13.server.disk.DiskManager;
 import de.tum.i13.server.nio.SimpleNioServer;
 import de.tum.i13.server.stripe.StripedCallable;
@@ -25,12 +25,12 @@ public class KVServer implements KVStore {
 
     public KVServer(String cacheType, int cacheSize) {
         if (cacheType.equals("LFU"))
-            cache = LFU.getInstance();
+            cache = LeastFrequentlyUsedCache.getInstance();
         else if (cacheType.equals("LRU"))
-            cache = LRU.getInstance();
+            cache = LeastRecentlyUsedCache.getInstance();
         else
             // we default to FIFO queue if cacheType is unknown
-            cache = FIFO.getInstance();
+            cache = FirstInFirstOutCache.getInstance();
 
         cache.initCache(cacheSize);
 

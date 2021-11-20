@@ -6,10 +6,8 @@ import de.tum.i13.shared.B64Util;
 
 import java.util.Deque;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -19,9 +17,9 @@ import java.util.logging.Logger;
  * @version 0.1
  * @since   2021-11-06
  */
-public class FIFO implements Cache{
+public class FirstInFirstOutCache implements Cache{
 
-    private final static Logger LOGGER = Logger.getLogger(FIFO.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(FirstInFirstOutCache.class.getName());
 
     private Map<String, String> cache;
     private Deque<String> fifo;
@@ -29,10 +27,10 @@ public class FIFO implements Cache{
     private AtomicInteger currentSize;
 
     private static class Holder {
-        private static final Cache INSTANCE = new FIFO();
+        private static final Cache INSTANCE = new FirstInFirstOutCache();
     }
 
-    private FIFO() {
+    private FirstInFirstOutCache() {
         this.cache = null;
         this.fifo = null;
         this.maxSize = 0;

@@ -1,9 +1,9 @@
 package de.tum.i13;
 
 import de.tum.i13.server.cache.Cache;
-import de.tum.i13.server.cache.FIFO;
-import de.tum.i13.server.cache.LFU;
-import de.tum.i13.server.cache.LRU;
+import de.tum.i13.server.cache.FirstInFirstOutCache;
+import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
+import de.tum.i13.server.cache.LeastRecentlyUsedCache;
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.shared.B64Util;
@@ -22,11 +22,11 @@ public class TestCache {
         KVMessage result;
 
         if (cacheType.equals("LFU"))
-            cache = LFU.getInstance();
+            cache = LeastFrequentlyUsedCache.getInstance();
         else if (cacheType.equals("LRU"))
-            cache = LRU.getInstance();
+            cache = LeastRecentlyUsedCache.getInstance();
         else
-            cache = FIFO.getInstance();
+            cache = FirstInFirstOutCache.getInstance();
 
         cache.initCache(capacity);
 
@@ -41,11 +41,11 @@ public class TestCache {
         KVMessage result;
 
         if (cacheType.equals("LFU"))
-            cache = LFU.getInstance();
+            cache = LeastFrequentlyUsedCache.getInstance();
         else if (cacheType.equals("LRU"))
-            cache = LRU.getInstance();
+            cache = LeastRecentlyUsedCache.getInstance();
         else
-            cache = FIFO.getInstance();
+            cache = FirstInFirstOutCache.getInstance();
 
         cache.initCache(capacity);
 
@@ -73,11 +73,11 @@ public class TestCache {
         KVMessage result;
 
         if (cacheType.equals("LFU"))
-            cache = LFU.getInstance();
+            cache = LeastFrequentlyUsedCache.getInstance();
         else if (cacheType.equals("LRU"))
-            cache = LRU.getInstance();
+            cache = LeastRecentlyUsedCache.getInstance();
         else
-            cache = FIFO.getInstance();
+            cache = FirstInFirstOutCache.getInstance();
 
         cache.initCache(1);
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+1, "value"+1));
@@ -108,7 +108,7 @@ public class TestCache {
     @Test
     public void testFIFOPutStrategy(){
         // fullfill the capacity
-        cache = FIFO.getInstance();
+        cache = FirstInFirstOutCache.getInstance();
         cache.initCache(3);
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+1, "value"+1));
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+2, "value"+2));
@@ -127,7 +127,7 @@ public class TestCache {
     @Test
     public void testLRUPutStrategy(){
         //fullfill the capacity
-        cache = LRU.getInstance();
+        cache = LeastRecentlyUsedCache.getInstance();
         cache.initCache(3);
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+1, "value"+1));
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+2, "value"+2));
@@ -152,7 +152,7 @@ public class TestCache {
     public void testLFUPutStrategy(){
 
         //fullfill the capacity
-        cache = LFU.getInstance();
+        cache = LeastFrequentlyUsedCache.getInstance();
         cache.initCache(3);
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+1, "value"+1));
         cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+2, "value"+2));
