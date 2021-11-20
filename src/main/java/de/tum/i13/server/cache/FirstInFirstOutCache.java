@@ -53,7 +53,7 @@ public class FirstInFirstOutCache implements Cache{
     @Override
     public void initCache(int maxSize) {
         // only init if cache is null
-        if (maxSize < 0) {
+        if (this.maxSize < 0) {
             LOGGER.info("Initialized FIFO cache with size " + maxSize);
             this.maxSize = maxSize;
         }

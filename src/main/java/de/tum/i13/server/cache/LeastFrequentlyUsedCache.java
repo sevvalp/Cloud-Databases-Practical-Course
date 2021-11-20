@@ -74,6 +74,15 @@ public class LeastFrequentlyUsedCache implements Cache {
      * @param msg KVMessage with key and value to store.
      */
     public KVMessage put(KVMessage msg) {
+        // if cache is not yet initialized, return error
+        if (maxSize < 0)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
+        // if KVMessage does not have PUT command, return error
+        if (msg.getStatus() != KVMessage.StatusType.PUT)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
         String key = msg.getKey();
         String value = msg.getValue();
         CacheItem item = cache.get(key);
@@ -116,6 +125,15 @@ public class LeastFrequentlyUsedCache implements Cache {
      * @return KVMessage with the result.
      */
     public KVMessage get(KVMessage msg) {
+        // if cache is not yet initialized, return error
+        if (maxSize < 0)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
+        // if KVMessage does not have GET command, return error
+        if (msg.getStatus() != KVMessage.StatusType.GET)
+            return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
         String key = msg.getKey();
         CacheItem item = cache.get(key);
         LOGGER.info("Getting from cache: " + key);
@@ -144,6 +162,15 @@ public class LeastFrequentlyUsedCache implements Cache {
      * @param msg KVMessage with key to delete.
      */
     public KVMessage delete(KVMessage msg) {
+        // if cache is not yet initialized, return error
+        if (maxSize < 0)
+            // we should never see this error
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Cache is not yet initialized!"));
+
+        // if KVMessage does not have DELETE command, return error
+        if (msg.getStatus() != KVMessage.StatusType.DELETE)
+            return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
         String key = msg.getKey();
         CacheItem item = cache.get(key);
         LOGGER.info("Deleting from cache: " + key);

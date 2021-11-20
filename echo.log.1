@@ -1428,3 +1428,81 @@ Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
 FEIN: Updating frequency in item YWJj
 Nov 21, 2021 12:06:39 AM de.tum.i13.server.cache.LeastFrequentlyUsedCache$1 run
 FEIN: LFU after increment: (1, [<YWJj, dGVzdA==>]) (2, [<dGVzdA==, YWJj>]) 
+Nov 21, 2021 12:17:42 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=FIFO, usagehelp=false}
+Nov 21, 2021 12:17:42 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:17:53 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:55096
+Nov 21, 2021 12:17:56 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT YWJj ZGVm
+Nov 21, 2021 12:17:56 AM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <YWJj, ZGVm>
+Nov 21, 2021 12:17:56 AM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key YWJj
+Nov 21, 2021 12:17:56 AM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <YWJj, ZGVm>
+Nov 21, 2021 12:17:56 AM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_error YWJj
+
+Nov 21, 2021 12:17:57 AM de.tum.i13.server.kv.KVCommandProcessor connectionClosed
+INFORMATION: Connection closed: /127.0.0.1
+Nov 21, 2021 12:20:51 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=FIFO, usagehelp=false}
+Nov 21, 2021 12:20:51 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:21:02 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:51929
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: GET YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer get
+INFORMATION: Client wants to get key: YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer get
+FEIN: Submitting new get callable to pool for key YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Getting key from cache: YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Result: GET_ERROR
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Key not in cache, try reading from disk: YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.disk.DiskManager readContent
+INFORMATION: Getting value from disk for YWJj
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer$2 call
+FEIN: Successfully read key from disk, put value in cache: <YWJj, dGVzdA==>
+Nov 21, 2021 12:21:05 AM de.tum.i13.server.kv.KVServer$2 call
+INFORMATION: Answer to Client: get_success YWJj dGVzdA==
+
+Nov 21, 2021 12:21:12 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT YWJj YWJj
+Nov 21, 2021 12:21:12 AM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <YWJj, YWJj>
+Nov 21, 2021 12:21:12 AM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key YWJj
+Nov 21, 2021 12:21:12 AM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <YWJj, YWJj>
+Nov 21, 2021 12:21:23 AM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_error YWJj
+
+Nov 21, 2021 12:21:25 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=FIFO, usagehelp=false}
+Nov 21, 2021 12:21:25 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:21:33 AM de.tum.i13.server.kv.KVCommandProcessor connectionAccepted
+INFORMATION: new connection: /127.0.0.1:51949
+Nov 21, 2021 12:21:35 AM de.tum.i13.server.kv.KVCommandProcessor process
+INFORMATION: Received command: PUT YWJj YWJj
+Nov 21, 2021 12:21:35 AM de.tum.i13.server.kv.KVServer put
+INFORMATION: Client wants to put key: <YWJj, YWJj>
+Nov 21, 2021 12:21:35 AM de.tum.i13.server.kv.KVServer put
+FEIN: Submitting new put callable to pool for key YWJj
+Nov 21, 2021 12:21:35 AM de.tum.i13.server.kv.KVServer$1 call
+FEIN: Putting key into cache: <YWJj, YWJj>
+Nov 21, 2021 12:25:17 AM de.tum.i13.server.kv.KVServer$1 call
+INFORMATION: Answer to client: put_error YWJj
+
+Nov 21, 2021 12:25:20 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: Config: Config{port=5551, listenaddr='127.0.0.1', bootstrap=clouddatabases.i13.in.tum.de:5153, dataDir=testdata, logfile=echo.log, logLevel=ALL, cacheSize=2, cacheStrategy=FIFO, usagehelp=false}
+Nov 21, 2021 12:25:20 AM de.tum.i13.server.nio.StartSimpleNioServer main
+INFORMATION: starting server
+Nov 21, 2021 12:25:20 AM de.tum.i13.server.cache.FirstInFirstOutCache <init>
+INFORMATION: Construct FIFO cache

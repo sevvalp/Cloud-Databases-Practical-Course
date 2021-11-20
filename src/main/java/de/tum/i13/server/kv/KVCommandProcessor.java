@@ -27,10 +27,8 @@ public class KVCommandProcessor implements CommandProcessor {
     @Override
     public void process(SelectionKey selectionKey, String command) throws Exception {
         LOGGER.info("Received command: " + command.trim());
-        String[] c = command.split("\\s");
-        String[] request = command.split(" ");
+        String[] request = command.split("\\s");
         int size = request.length;
-        request[size-1] = request[size-1].replace("\r\n", "");
         request[0] = request[0].toLowerCase();
 
         StringJoiner v = new StringJoiner(" ");

@@ -53,7 +53,7 @@ public class LeastRecentlyUsedCache implements Cache{
      */
     public void initCache(int maxSize) {
         // only init if cache is null
-        if (maxSize < 0) {
+        if (this.maxSize < 0) {
             LOGGER.info(String.format("Created LRU cache with size %d", maxSize));
             this.maxSize = maxSize;
         }
