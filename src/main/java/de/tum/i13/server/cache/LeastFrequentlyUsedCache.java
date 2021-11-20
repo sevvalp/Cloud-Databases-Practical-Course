@@ -174,6 +174,11 @@ public class LeastFrequentlyUsedCache implements Cache {
                     nextFreqAmount = 1;
                     nextFreq = freqs.peekFirst();
                 } else {
+                    if (!currentFreq.getEntries().contains(item)) {
+                        LOGGER.info("Item was deleted or evicted before!");
+                        return;
+                    }
+
                     // item already in cache before, calculate next frequency
                     nextFreqAmount = currentFreq.getFreq() + 1;
                     try {
