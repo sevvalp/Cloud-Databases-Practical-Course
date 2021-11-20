@@ -94,15 +94,15 @@ public class KVCommandProcessor implements CommandProcessor {
             if (ret.getStatus() == KVMessage.StatusType.PUT_SUCCESS) {
                 // NEW DATA
                 StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_SUCCESS + " " + command[1];
+                return KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + value;
             } else if (ret.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
                 /// UPDATE
                 StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_UPDATE + " " + command[1];
+                return KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + value;
             } else  {
                 //ERROR
                 StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_ERROR + " " + command[1];
+                return KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value;
             }
         } catch (Exception e) {
             StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
