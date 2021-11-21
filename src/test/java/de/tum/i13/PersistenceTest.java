@@ -37,10 +37,10 @@ public class PersistenceTest {
         };
         th.start(); // started the server
         Thread.sleep(2000);
-        String putResponse = doRequest("put hello438 world438");
-        assertEquals(KVMessage.StatusType.PUT_SUCCESS + " " + "hello438 world438", putResponse);
-        String getResponse = doRequest("get hello438");
-        assertEquals(KVMessage.StatusType.GET_SUCCESS + " " + "hello438 world438", getResponse);
+        String putResponse = doRequest("put hello454 world454");
+        assertEquals("put_success hello454 world454", putResponse);
+        String getResponse = doRequest("get hello454");
+        assertEquals("get_success hello454 world454", getResponse);
         th.interrupt();
 
     }
@@ -59,8 +59,8 @@ public class PersistenceTest {
         };
         th.start(); // started the server
         Thread.sleep(2000);
-        String getResponse = doRequest("get hello438");
-        assertEquals(KVMessage.StatusType.GET_SUCCESS + " " + "hello438 world438", getResponse);
+        String getResponse = doRequest("get hello454");
+        assertEquals("get_success hello454 world454", getResponse);
 
     }
 
