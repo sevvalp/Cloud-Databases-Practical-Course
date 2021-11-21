@@ -2,6 +2,7 @@ package de.tum.i13;
 
 import de.tum.i13.server.kv.KVCommandProcessor;
 import de.tum.i13.server.kv.KVMessage;
+import de.tum.i13.server.kv.KVServer;
 import de.tum.i13.server.kv.KVStore;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +16,7 @@ public class TestKVCommandProcessor {
     @Test
     public void correctParsingOfPut() throws Exception {
 
-        KVStore kv = mock(KVStore.class);
+        KVStore kv = mock(KVServer.class);
         KVCommandProcessor kvcp = new KVCommandProcessor(kv);
         kvcp.process(null, "put key hello");
 
@@ -30,7 +31,7 @@ public class TestKVCommandProcessor {
     @Test
     public void correctParsingOfGet() throws Exception {
 
-        KVStore kv = mock(KVStore.class);
+        KVStore kv = mock(KVServer.class);
         KVCommandProcessor kvcp = new KVCommandProcessor(kv);
         kvcp.process(null, "get key");
 
@@ -45,7 +46,7 @@ public class TestKVCommandProcessor {
     @Test
     public void correctParsingOfDelete() throws Exception {
 
-        KVStore kv = mock(KVStore.class);
+        KVStore kv = mock(KVServer.class);
         KVCommandProcessor kvcp = new KVCommandProcessor(kv);
         kvcp.process(null, "delete key");
 
@@ -59,12 +60,10 @@ public class TestKVCommandProcessor {
     @Test
     public void correctParsingOfWrongCommand() throws Exception {
 
-        KVStore kv = mock(KVStore.class);
+        KVStore kv = mock(KVServer.class);
         KVCommandProcessor kvcp = new KVCommandProcessor(kv);
         kvcp.process(null, "hello key");
-
-        verifyNoInteractions((kv));
-
+      //  verify(kv).unknownCommand();
 
     }
 }
