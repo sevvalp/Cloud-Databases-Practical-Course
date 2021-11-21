@@ -8,6 +8,7 @@ import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.server.nio.SimpleNioServer;
 import de.tum.i13.shared.CommandProcessor;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.naming.SizeLimitExceededException;
@@ -22,9 +23,9 @@ import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PersistenceTest {
-    @BeforeAll
-    public static void beforeAll() throws IOException, InterruptedException, SizeLimitExceededException {
 
+    @Test
+    public void runServerTest() throws IOException, InterruptedException, SizeLimitExceededException {
         Thread th = new Thread() {
             @Override
             public void run() {
@@ -47,6 +48,7 @@ public class PersistenceTest {
 
     @Test
     public void persistenceTest() throws Exception {
+
         Thread th = new Thread() {
             @Override
             public void run() {

@@ -33,7 +33,7 @@ public class LeastRecentlyUsedCache implements Cache{
     private LeastRecentlyUsedCache() {
         cache = new ConcurrentHashMap<>();
         lru = new ConcurrentLinkedDeque<>();
-        this.maxSize = 0;
+        this.maxSize = -1;
         currentSize = new AtomicInteger();
     }
 

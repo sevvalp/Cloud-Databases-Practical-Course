@@ -14,10 +14,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TestCache {
 
-    //TODO: test put, update, delete operations with multiple connected clients
+    //Execute one by one
 
     Cache cache;
-    //Test simple put operation without exceeding the maximum limit
+
     private void testPut(int capacity, String cacheType){
         KVMessage result;
 
@@ -153,25 +153,25 @@ public class TestCache {
 
         //fullfill the capacity
         cache = LeastFrequentlyUsedCache.getInstance();
-        cache.initCache(3);
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+1, "value"+1));
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+2, "value"+2));
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+3, "value"+3));
+        cache.initCache(2);
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+130, "value"+1));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+230, "value"+2));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+330, "value"+3));
 
         //play
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+2, "value"+3));
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+3, "value"+4));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+2, null));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+2, null));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+3, null));
-        //cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+3, null));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+1, null));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+1, null));
-        cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+1, null));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+230, "value"+3));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+330, "value"+4));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+230, "value"+3));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+330, "value"+4));
+
 
         // then try to add something else
-        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+4, "value"+4));
-        KVMessage result = cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+1, null));
+        cache.put(new ServerMessage(KVMessage.StatusType.PUT, "key"+430, "value"+4));
+        KVMessage result = cache.get(new ServerMessage(KVMessage.StatusType.GET, "key"+130, null));
+
+        // check the correct ordered thing deleted
+        assertThat(result.getStatus(), is(KVMessage.StatusType.GET_ERROR));
+        assertThat(B64Util.b64decode(result.getValue()), is("Key not in cache!"));
 
         // check the correct ordered thing deleted
         assertThat(result.getStatus(), is(KVMessage.StatusType.GET_ERROR));
