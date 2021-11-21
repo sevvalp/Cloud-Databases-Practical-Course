@@ -1,13 +1,18 @@
 package de.tum.i13;
 
+import de.tum.i13.client.SocketCommunicator;
+import de.tum.i13.server.kv.KVCommandProcessor;
+import de.tum.i13.shared.B64Util;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import javax.naming.SizeLimitExceededException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 import static org.hamcrest.CoreMatchers.*;
@@ -159,7 +164,7 @@ public class KVIntegrationTest {
     }
 
     @Test
-    public void test4_deleteErrorTest() throws InterruptedException, IOException {
+    public void test5_deleteErrorTest() throws InterruptedException, IOException {
         Thread th = new Thread() {
             @Override
             public void run() {
@@ -175,7 +180,7 @@ public class KVIntegrationTest {
 
         String command = "DELETE newkey202";
         String response = doRequest(command);
-        assertThat(response, CoreMatchers.containsString("delete_success newkey202"));
+        assertThat(response, CoreMatchers.containsString("delete_error newkey202"));
 
     }
 
@@ -200,6 +205,37 @@ public class KVIntegrationTest {
         assertThat(response, CoreMatchers.containsString("get_error newkey213"));
 
     }
+
+    @Test
+    public void unknownCommandTest() throws InterruptedException, IOException, SizeLimitExceededException {
+//        Thread th = new Thread() {
+//            @Override
+//            public void run() {
+//                try {
+//                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
+//        th.start(); // started the server
+//        Thread.sleep(2000);
+
+        String command =  "arbitrary@++-- string 123\r\n";
+        SocketCommunicator communicator = new SocketCommunicator();
+        communicator.connect("127.0.0.1", 5153);
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        communicator.send(command.getBytes(StandardCharsets.UTF_8));
+        msg = new String(communicator.receive(), TELNET_ENCODING);
+        //String response = doRequest(command);
+        msg = msg.substring(0, msg.length()-2);
+        String a = "error " + B64Util.b64encode("unknown command");
+        assertThat(msg, CoreMatchers.containsString(a));
+
+    }
+
+
+
 
     //@Test
     public void enjoyTheEcho() throws IOException, InterruptedException {
