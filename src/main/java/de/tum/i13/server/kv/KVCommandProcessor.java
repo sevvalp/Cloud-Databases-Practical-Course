@@ -36,128 +36,34 @@ public class KVCommandProcessor implements CommandProcessor {
             v.add(request[i]);
         }
 
-//        try {
-//            if (request[0].equals("put"))
-//                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
-//            /*else*/ if (request[0].equals("get"))
-//                kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
-//            else if (request[0].equals("delete"))
-//                kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        //TODO: receive other server hands off requests
+        //TODO: receive write lock server, re-balancing results, update metadata
 
         switch (request[0]) {
             case "put":
                 kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
+                LOGGER.info(String.format("Put a key with arguments: %s", String.join(" ", command)));
                 break;
             case "get":
                 kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
+                LOGGER.info(String.format("Get value with arguments: %s", String.join(" ", command)));
                 break;
             case "delete":
                 kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey));
+                LOGGER.info(String.format("Delete a key with arguments: %s", String.join(" ", command)));
+                break;
+            case "keyrange":
+                kvStore.getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, selectionKey));
+                LOGGER.info(String.format("Get key range of the server"));
                 break;
             default:
                 //here handle unknown commands
                 kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
+                LOGGER.info(String.format("Unknown command: %s", String.join(" ", command)));
                 break;
         }
 
     }
-
-    /**
-     * Gets the value specified by the key.
-     *
-     * @param command   parsed command from user.
-     */
-    private String get(String[] command, SelectionKey selectionKey) {
-
-        if(command.length == 2) { //Process Get Command
-            KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.GET, command[1], null, selectionKey);
-            StartSimpleNioServer.logger.info("processing GET: " + command[1]);
-            try {
-                KVMessage cmd = kvStore.get(kvmsg);
-                if(cmd.getStatus() == KVMessage.StatusType.GET_SUCCESS) {
-                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.GET_SUCCESS + " " + command[1]+ " " + cmd);
-                    return KVMessage.StatusType.GET_SUCCESS + command[1] + " " + cmd;
-                } else {
-                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.GET_ERROR + " " + command[1]);
-                    return KVMessage.StatusType.GET_ERROR + " " + command[1] + " key not found.";
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                return KVMessage.StatusType.GET_ERROR + " " + command[1];
-            }
-        } else {
-            return KVMessage.StatusType.GET_ERROR + " wrong number of parameters.";
-        }
-    }
-
-    /**
-     * Puts the key-value pair into the store.
-     *
-     * @param command   parsed command from user.
-     */
-    private String put(String[] command, SelectionKey selectionKey) {
-        if(command.length < 3){
-            return KVMessage.StatusType.PUT_ERROR + " " + "wrong number of parameters";
-        }
-        StartSimpleNioServer.logger.info("processing PUT: " + " " + command[1]);
-
-        StringBuilder v = new StringBuilder();
-        for (int i = 2; i < command.length; i++) {
-            v.append(command[i]);
-        }
-        String value = v.toString();
-        KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.PUT, command[1], value, selectionKey);
-        try {
-            //
-            KVMessage ret = kvStore.put(kvmsg);
-            if (ret.getStatus() == KVMessage.StatusType.PUT_SUCCESS) {
-                // NEW DATA
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_SUCCESS + " " + command[1] + " " + value;
-            } else if (ret.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
-                /// UPDATE
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_UPDATE + " " + command[1] + " " + value;
-            } else  {
-                //ERROR
-                StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
-                return KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value;
-            }
-        } catch (Exception e) {
-            StartSimpleNioServer.logger.fine(KVMessage.StatusType.PUT_ERROR + " " + command[1] + " " + value);
-            return KVMessage.StatusType.PUT_ERROR + command[1] + " " + value ;
-        }
-    }
-
-    /**
-     * Deletes value from the store.
-     *
-     * @param command   parsed command from user.
-     */
-    private String delete(String[] command, SelectionKey selectionKey) {
-        if(command.length == 2) {
-            KVMessage kvmsg = new ServerMessage(KVMessage.StatusType.DELETE, command[1], null, selectionKey);
-            StartSimpleNioServer.logger.info(KVMessage.StatusType.DELETE + " " + command[1]);
-            try {
-                KVMessage ret = kvStore.delete(kvmsg);
-                if (ret.getStatus() == KVMessage.StatusType.DELETE_SUCCESS) {
-                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_SUCCESS + " " + command[1]);
-                    return KVMessage.StatusType.DELETE_SUCCESS + " " + command[1];
-                } else {
-                    StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_ERROR + " " + command[1] + " not found.");
-                    return KVMessage.StatusType.DELETE_ERROR + " " + command[1];
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        StartSimpleNioServer.logger.fine(KVMessage.StatusType.DELETE_ERROR + " " + command[1]);
-        return KVMessage.StatusType.DELETE_ERROR + " wrong number of parameters.";
-    }
-
 
     @Override
     public String connectionAccepted(InetSocketAddress address, InetSocketAddress remoteAddress) {

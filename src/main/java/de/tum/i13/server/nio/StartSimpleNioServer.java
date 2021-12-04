@@ -30,6 +30,7 @@ import static de.tum.i13.shared.Config.parseCommandlineArgs;
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 import static de.tum.i13.shared.LogSetup.setLogFile;
 import static de.tum.i13.shared.LogSetup.setupLogging;
+import static de.tum.i13.shared.Util.getFreePort;
 
 public class StartSimpleNioServer {
 
@@ -44,7 +45,8 @@ public class StartSimpleNioServer {
 
         logger.info("starting server");
 
-        KVStore kvStore = new KVServer(cfg.cacheStrategy, cfg.cacheSize);
+        int intraPort = getFreePort(); //5551;
+        KVStore kvStore = new KVServer(cfg.cacheStrategy, cfg.cacheSize, cfg.bootstrap, cfg.listenaddr, cfg.port, intraPort);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
 
         DiskManager disk = DiskManager.getInstance();
@@ -53,9 +55,10 @@ public class StartSimpleNioServer {
         SimpleNioServer sn = new SimpleNioServer(kvProcessor);
         ((KVServer) kvStore).setServer(sn);
 
-        sn.bindSockets(cfg.listenaddr, cfg.port);
+        sn.bindSockets(cfg.listenaddr, cfg.port, intraPort);
         //sn.bindSockets("127.0.0.1", 5153); //port: 5551
         sn.start();
+        ((KVServer) kvStore).connectECS();
 
     }
 

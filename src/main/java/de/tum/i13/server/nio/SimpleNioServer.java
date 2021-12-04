@@ -31,9 +31,13 @@ public class SimpleNioServer {
 
     private Selector selector;
     private ServerSocketChannel serverChannel;
+    private ServerSocketChannel serverIntraChannel;
 
     private ByteBuffer readBuffer;
     private CommandProcessor cmdProcessor;
+
+    //for internal communication
+    private int intraPort;
 
     public SimpleNioServer(CommandProcessor cmdProcessor) {
         this.cmdProcessor = cmdProcessor;
@@ -44,7 +48,7 @@ public class SimpleNioServer {
         this.readBuffer = ByteBuffer.allocate(8192); // = 2^13
     }
 
-    public void bindSockets(String servername, int port) throws IOException {
+    public void bindSockets(String servername, int port, int intraPort) throws IOException {
         // Create a new non-blocking server selectionKey channel
         this.serverChannel = ServerSocketChannel.open();
         this.serverChannel.configureBlocking(false);
@@ -53,10 +57,17 @@ public class SimpleNioServer {
         InetSocketAddress isa = new InetSocketAddress(InetAddress.getByName(servername), port);
         this.serverChannel.socket().bind(isa);
 
+        //bind internal port as well to get messages from other KVServer
+        this.serverIntraChannel = ServerSocketChannel.open();
+        this.serverIntraChannel.configureBlocking(false);
+        InetSocketAddress intraIsa = new InetSocketAddress(InetAddress.getByName(servername), intraPort);
+        this.serverIntraChannel.socket().bind(intraIsa);
+
         // Register the server selectionKey channel, indicating an interest in
         // accepting new connections
         this.selector = SelectorProvider.provider().openSelector();
         this.serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        this.serverIntraChannel.register(selector,SelectionKey.OP_ACCEPT);
     }
 
     public void start() throws IOException {
