@@ -1,5 +1,6 @@
 package de.tum.i13.server.kv;
 
+import com.sun.security.ntlm.Server;
 import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.cache.FirstInFirstOutCache;
 import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
@@ -9,8 +10,13 @@ import de.tum.i13.server.nio.SimpleNioServer;
 import de.tum.i13.server.stripe.StripedCallable;
 import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.B64Util;
+import de.tum.i13.shared.Metadata;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
@@ -24,11 +30,24 @@ public class KVServer implements KVStore {
     private ExecutorService pool;
     private DiskManager disk;
 
-    public KVServer(String cacheType, int cacheSize) {
-        if (cacheType.equals("LFU"))
-            cache = LeastFrequentlyUsedCache.getInstance();
-        else if (cacheType.equals("LRU"))
-            cache = LeastRecentlyUsedCache.getInstance();
+    private InetSocketAddress bootstrap;
+    private String listenaddress;
+    private int port;
+    private int intraPort;
+
+    private boolean serverActive;
+    private boolean serverWriteLock;
+    private Metadata metadata;
+    private KVServerCommunicator kvServerECSCommunicator;
+
+
+    //TODO: add shutdown hook
+    //TODO: Hands off data items (keep track of put, delete files)
+
+
+    public KVServer(String cacheType, int cacheSize, InetSocketAddress bootstrap, String listenaddress, int port, int intraPort) {
+        if (cacheType.equals("LFU")) cache = LeastFrequentlyUsedCache.getInstance();
+        else if (cacheType.equals("LRU")) cache = LeastRecentlyUsedCache.getInstance();
         else
             // we default to FIFO queue if cacheType is unknown
             cache = FirstInFirstOutCache.getInstance();
@@ -38,14 +57,50 @@ public class KVServer implements KVStore {
         this.server = null;
         this.pool = new StripedExecutorService();
         this.disk = DiskManager.getInstance();
+
+        this.bootstrap = bootstrap;
+        this.listenaddress = listenaddress;
+        this.port = port;
+        this.intraPort = intraPort;
+        kvServerECSCommunicator = new KVServerCommunicator();
+        serverActive = false;
+        serverWriteLock = true;
+
+    }
+
+    /**
+     * Gets the internal port value to use to get messages from other servers and ECS.
+     *
+     */
+    public int getIntraPort() {
+        return intraPort;
     }
 
     /**
      * Sets the server to use to send messages to the client.
+     *
      * @param server SimpleNioServer to use.
      */
     public void setServer(SimpleNioServer server) {
         this.server = server;
+    }
+
+    /**
+     * Activate/Dis-activate the server to process commands.
+     *
+     * @param status to determine server active.
+     */
+    public void changeServerStatus(boolean status) {
+        this.serverActive = status;
+    }
+
+    /**
+     * Activate/Dis-activate the server to process put and delete commands.
+     *
+     * @param status to determine server write lock status.
+     */
+    public void changeServerWriteLockStatus(boolean status) {
+        this.serverWriteLock = status;
     }
 
     /**
@@ -55,10 +110,28 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage put(KVMessage msg) {
+    public KVMessage put(KVMessage msg) throws IOException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
+            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.PUT)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
@@ -81,8 +154,8 @@ public class KVServer implements KVStore {
                     // successfully written kv pair into cache, now write to disk
                     res = disk.writeContent(msg);
                     message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
-                }else{
-                    message = res.getStatus().name().toLowerCase() + " " + res.getKey()  + "\r\n";
+                } else {
+                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
                 }
 
                 // return answer to client
@@ -106,10 +179,22 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage get(KVMessage msg)  {
+    public KVMessage get(KVMessage msg) throws IOException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
+            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.GET)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
@@ -180,6 +265,24 @@ public class KVServer implements KVStore {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
+            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.DELETE)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
@@ -219,18 +322,101 @@ public class KVServer implements KVStore {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
-
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
         // if KVMessage does not contain selectionKey, return error
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
 
-        String message =  "error " + B64Util.b64encode("unknown command")+ "\r\n";
+        String message = "error " + B64Util.b64encode("unknown command") + "\r\n";
         // return answer to client
         LOGGER.info("Answer to client: " + message);
         server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
-        return new ServerMessage(KVMessage.StatusType.ERROR,  B64Util.b64encode("unknown"), B64Util.b64encode("command"));
+        return new ServerMessage(KVMessage.StatusType.ERROR, B64Util.b64encode("unknown"), B64Util.b64encode("command"));
 
+    }
+
+    public KVMessage getKeyRange(KVMessage msg) throws IOException {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
+            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.KEY_RANGE)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, null, B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        LOGGER.info("Client wants to get key range");
+        LOGGER.fine("Calculate key range");
+
+        String message = KVMessage.StatusType.KEY_RANGE_SUCCESS + metadata.getServerHashRange();
+        LOGGER.info("Answer to Client: " + message);
+
+        server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+        return null;
+
+    }
+
+    public void connectECS(){
+        LOGGER.info("Connecting to ECS");
+        try {
+            //connect to ECS
+            kvServerECSCommunicator.connect(this.bootstrap.getHostName(), this.bootstrap.getPort());
+            //notify ECS that new server added
+            String command = "newserver" + this.listenaddress + this.port + this.intraPort;
+            LOGGER.info("Notify ECS that new server added");
+            kvServerECSCommunicator.send(command.getBytes(TELNET_ENCODING));
+            //receive ECS response: new ServerMessage(KVMessage.StatusType.SERVER_READY, metadata)
+            byte[] data = kvServerECSCommunicator.receive();
+            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(data));
+            ServerMessage msg = (ServerMessage) in.readObject();
+
+
+            if(msg.getStatus().equals(KVMessage.StatusType.SERVER_READY)){
+                LOGGER.info("Metadata received");
+                this.metadata = msg.getMetadata();
+                changeServerStatus(true);
+                changeServerWriteLockStatus(false);
+            }else{
+                LOGGER.info("Metadata could not received");
+            }
+
+            in.close();
+
+        }catch (Exception e){
+            LOGGER.info("Exception while connecting ECS ");
+        }
+
+    }
+
+    public boolean checkServerResponsible(String key) {
+        return metadata.checkServerResposible(key);
+    }
+
+    private byte[] prepareToSend(ServerMessage msgObj) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(msgObj);
+        oos.flush();
+        return bos.toByteArray();
     }
 
 }

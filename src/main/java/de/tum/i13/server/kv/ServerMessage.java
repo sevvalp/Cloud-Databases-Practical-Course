@@ -1,6 +1,8 @@
 package de.tum.i13.server.kv;
 
 
+import de.tum.i13.shared.Metadata;
+
 import java.nio.channels.SelectionKey;
 
 public class ServerMessage implements KVMessage {
@@ -9,12 +11,14 @@ public class ServerMessage implements KVMessage {
     private final String value;
     private final StatusType status;
     private final SelectionKey selectionKey;
+    private final Metadata metadata;
 
     public ServerMessage (StatusType status, String key, String value) {
         this.key = key;
         this.value = value;
         this.status = status;
         this.selectionKey = null;
+        this.metadata = null;
     }
 
     public ServerMessage (StatusType status, String key, String value, SelectionKey selectionKey) {
@@ -22,6 +26,15 @@ public class ServerMessage implements KVMessage {
         this.value = value;
         this.status = status;
         this.selectionKey = selectionKey;
+        this.metadata = null;
+    }
+
+    public ServerMessage (StatusType status,Metadata metadata) {
+        this.status = status;
+        this.metadata = metadata;
+        this.key = null;
+        this.value = null;
+        this.selectionKey = null;
     }
 
     /**
@@ -58,4 +71,12 @@ public class ServerMessage implements KVMessage {
     public StatusType getStatus() {
         return status;
     }
+
+    /**
+     * @return a metadata for system key range,
+     * null if not metadata is associated.
+     */
+    public Metadata getMetadata() {return metadata;}
+
+
 }
