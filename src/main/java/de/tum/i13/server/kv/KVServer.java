@@ -17,6 +17,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
@@ -128,8 +129,9 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
-            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase() + " " + prepareMapToSend(metadata.getServerMap());
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
         }
         // if KVMessage does not have put command, return error
@@ -191,8 +193,9 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
-            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase() + " " + prepareMapToSend(metadata.getServerMap());
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
         }
         // if KVMessage does not have put command, return error
@@ -273,8 +276,9 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
-            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase() + " " + prepareMapToSend(metadata.getServerMap());
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
         }
         //if server locked
@@ -317,6 +321,12 @@ public class KVServer implements KVStore {
         return null;
     }
 
+    /**
+     * Returns error message to client for unknown command.
+     *
+     * @param msg KVMessage containing unknown command.
+     * @return message
+     */
     @Override
     public KVMessage unknownCommand(KVMessage msg) throws UnsupportedEncodingException {
         // if server is not set, return error
@@ -341,6 +351,12 @@ public class KVServer implements KVStore {
 
     }
 
+    /**
+     * Gets keyrange for server.
+     *
+     * @param msg KVMessage.
+     * @return message
+     */
     public KVMessage getKeyRange(KVMessage msg) throws IOException {
         // if server is not set, return error
         if (server == null)
@@ -353,8 +369,9 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            byte [] data = prepareToSend(new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata));
-            server.send(((ServerMessage) msg).getSelectionKey(), data);
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase() + " " + prepareMapToSend(metadata.getServerMap());
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
         }
         // if KVMessage does not have put command, return error
@@ -375,6 +392,12 @@ public class KVServer implements KVStore {
 
     }
 
+
+    /**
+     * Connects ECS Service.
+     *
+     *
+     */
     public void connectECS(){
         LOGGER.info("Connecting to ECS");
         try {
@@ -407,16 +430,32 @@ public class KVServer implements KVStore {
 
     }
 
+    /**
+     * Checks server is responsible for given key.
+     *
+     * @param key
+     * @return true
+     */
     public boolean checkServerResponsible(String key) {
         return metadata.checkServerResposible(key);
     }
 
-    private byte[] prepareToSend(ServerMessage msgObj) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(msgObj);
-        oos.flush();
-        return bos.toByteArray();
+    /**
+     * Prepare metadata map for sending client.
+     *
+     * @param serverMap KVMessage.
+     * @return message
+     */
+    private String prepareMapToSend(TreeMap<String, KVServerInfo> serverMap) throws IOException {
+
+        StringBuilder mapStr = new StringBuilder();
+        for (String key : serverMap.keySet()) {
+            KVServerInfo serverInfo = serverMap.get(key);
+            mapStr.append(key + "_" + serverInfo.getAddress() + "_" + serverInfo.getPort() + ";");
+        }
+        mapStr.deleteCharAt(mapStr.length()-1);
+        return mapStr.toString() + "\r\n";
+
     }
 
 }
