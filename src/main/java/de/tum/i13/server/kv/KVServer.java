@@ -73,14 +73,7 @@ public class KVServer implements KVStore {
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
 
-        connectECS();
-
-//        KVServerInfo serverInfo = new KVServerInfo(this.listenaddress, this.port,metadata.calculateHash(this.listenaddress+this.port),
-//                metadata.calculateHash(this.listenaddress+this.port),this.intraPort);
-//        this.metadata = new Metadata(serverInfo);
-//        TreeMap<String, KVServerInfo> serverMap = new TreeMap<>();
-//        serverMap.put(metadata.calculateHash(this.listenaddress+this.port), serverInfo);
-//        this.metadata.setServerMap(serverMap);
+        //connectECS();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
