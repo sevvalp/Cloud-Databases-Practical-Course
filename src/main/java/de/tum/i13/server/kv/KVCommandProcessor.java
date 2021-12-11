@@ -36,8 +36,7 @@ public class KVCommandProcessor implements CommandProcessor {
             v.add(request[i]);
         }
 
-        //TODO: receive other server hands off requests
-        //TODO: receive write lock server, re-balancing results, update metadata
+        //TODO: receive write lock server, update metadata
 
         switch (request[0]) {
             case "put":
