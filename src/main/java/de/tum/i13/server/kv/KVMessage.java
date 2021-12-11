@@ -20,13 +20,17 @@ public interface KVMessage {
         DELETE_ERROR, 	        /* Delete - request successful */
         ERROR,                  /* Error - unknown request */
         SERVER_STOPPED,         /* Request cannot be processed - server not ready */
-        SERVER_READY,         /* Request cannot be processed - server not ready */
+        SERVER_READY,           /* Request cannot be processed - server not ready */
         SERVER_WRITE_LOCK,      /* Put, Delete - request cannot be processed */
         SERVER_NOT_RESPONSIBLE, /* Requested key not in server range */
         KEY_RANGE,              /* Key range - request */
         KEY_RANGE_SUCCESS,      /* Key range - request successful */
         KEY_RANGE_ERROR,        /* Key range - request failed */
-        ECS                     /* ECS command */
+        ECS,                     /* ECS command */
+        REBALANCE,              /* Rebalance -request */
+        REBALANCE_ERROR,
+        REBALANCE_SUCCESS,
+        RECEIVE_REBALANCE
     }
 
     /**

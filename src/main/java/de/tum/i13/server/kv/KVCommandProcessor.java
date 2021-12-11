@@ -56,6 +56,12 @@ public class KVCommandProcessor implements CommandProcessor {
                 kvStore.getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, selectionKey));
                 LOGGER.info(String.format("Get key range of the server"));
                 break;
+            case "rebalance":
+                kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], null, selectionKey));
+                break;
+            case "receive_rebalance":
+                kvStore.receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], null, selectionKey));
+                break;
             default:
                 //here handle unknown commands
                 kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));

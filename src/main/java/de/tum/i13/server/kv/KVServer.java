@@ -1,5 +1,6 @@
 package de.tum.i13.server.kv;
 
+import com.sun.security.ntlm.Server;
 import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.cache.FirstInFirstOutCache;
 import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
@@ -10,13 +11,17 @@ import de.tum.i13.server.stripe.StripedCallable;
 import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.Metadata;
+import javafx.util.Pair;
 
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
@@ -37,6 +42,8 @@ public class KVServer implements KVStore {
     private boolean serverWriteLock;
     private Metadata metadata;
     private KVServerCommunicator kvServerECSCommunicator;
+    private KVServerCommunicator kvServer2ServerCommunicator;
+    private TreeMap<String, Pair<String, String>> historicPairs;
 
 
     //TODO: add shutdown hook
@@ -60,10 +67,35 @@ public class KVServer implements KVStore {
         this.listenaddress = listenaddress;
         this.port = port;
         this.intraPort = intraPort;
-        kvServerECSCommunicator = new KVServerCommunicator();
+        this.kvServerECSCommunicator = new KVServerCommunicator();
+        this.kvServer2ServerCommunicator = new KVServerCommunicator();
         serverActive = false;
         serverWriteLock = true;
+        this.historicPairs = new TreeMap<>();
 
+        connectECS();
+
+//        KVServerInfo serverInfo = new KVServerInfo(this.listenaddress, this.port,metadata.calculateHash(this.listenaddress+this.port),
+//                metadata.calculateHash(this.listenaddress+this.port),this.intraPort);
+//        this.metadata = new Metadata(serverInfo);
+//        TreeMap<String, KVServerInfo> serverMap = new TreeMap<>();
+//        serverMap.put(metadata.calculateHash(this.listenaddress+this.port), serverInfo);
+//        this.metadata.setServerMap(serverMap);
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                //send ecs historic data
+                String message = KVMessage.StatusType.SERVER_STOPPED.name().toLowerCase() + " " + convertMapToString(historicPairs) + "\r\n";
+                LOGGER.info("Send to ECS: " + message);
+                try {
+                    kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+                    kvServerECSCommunicator.disconnect();
+                } catch (Exception e) {
+                    LOGGER.info("Exception while stopping server.");
+                }
+                serverActive = false;
+            }
+        });
     }
 
     /**
@@ -152,6 +184,13 @@ public class KVServer implements KVStore {
                     LOGGER.fine(String.format("Successfully put key into cache, now writing to disk: <%s, %s>", msg.getKey(), msg.getValue()));
                     // successfully written kv pair into cache, now write to disk
                     res = disk.writeContent(msg);
+
+                    //add/update to history
+                    String hashedKey = calculateHash(msg.getKey());
+                    if(!historicPairs.containsKey(hashedKey))
+                        historicPairs.put(hashedKey,new Pair<>(msg.getKey(),msg.getValue()));
+                    else historicPairs.replace(hashedKey,new Pair<>(msg.getKey(), msg.getValue()));
+
                     message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 } else {
                     message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
@@ -304,6 +343,10 @@ public class KVServer implements KVStore {
                 // Delete kv pair from disk
                 KVMessage res = disk.deleteContent(msg);
 
+                //delete from history
+                String hashedKey = calculateHash(msg.getKey());
+                historicPairs.remove(hashedKey);
+
                 // return answer to client
                 String message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 LOGGER.info("Answer to Client: " + message);
@@ -389,6 +432,154 @@ public class KVServer implements KVStore {
 
     }
 
+    /**
+     * Send rebalanced items to corresponding newly added server.
+     *
+     * @param msg KVMessage containing the new server address information.
+     * @return null
+     */
+    public KVMessage rebalance(KVMessage msg) throws Exception {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.REBALANCE)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        LOGGER.info("Rebalance server key-value according to new server: %s" + msg.getKey());
+
+        LOGGER.fine("Submitting new rebalance callable to pool for key " + msg.getKey());
+
+
+        serverWriteLock = true;
+        // queue rebalance command
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
+
+                String addressinfo[] = msg.getKey().split(":");
+                //get pairs which are smaller than new server hash
+                String nsh = calculateHash(addressinfo[0]+addressinfo[1]);
+                String csh = calculateHash(listenaddress+port);
+                TreeMap<String, Pair<String,String>> sendHist = (TreeMap<String, Pair<String, String>>) historicPairs.headMap(nsh);
+                historicPairs.headMap(nsh).clear();
+                //get pairs which are bigger that current server hash
+                sendHist.putAll((TreeMap<String, Pair<String, String>>) historicPairs.tailMap(csh));
+                historicPairs.tailMap(csh).clear();
+
+                //delete pairs from cache and disk as well
+                for (String hKey : sendHist.keySet()) {
+                    String key = sendHist.get(hKey).getKey().toString();
+                    LOGGER.fine("Deleting key from cache: " + key);
+                    cache.delete(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
+                    LOGGER.fine("Deleting key from disk: " + key);
+                    // Delete kv pair from disk
+                    disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
+                }
+
+                String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase() + " " + convertMapToString(sendHist) + "\r\n";
+                LOGGER.info("Send handoff data to successor: " + message);
+                kvServer2ServerCommunicator.connect(addressinfo[0],Integer.parseInt(addressinfo[1]));
+                kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
+                //release write lock
+                serverWriteLock = false;
+                kvServer2ServerCommunicator.disconnect();
+                return null;
+
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+        return null;
+    }
+
+    /**
+     * rebalance.
+     *
+     * @param msg KVMessage containing the map.
+     * @return null
+     */
+    public KVMessage receiveRebalance(KVMessage msg) throws Exception {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.REBALANCE)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        LOGGER.info("Rebalance server key-value according to new server: %s" + msg.getKey());
+
+        LOGGER.fine("Submitting new rebalance callable to pool for key " + msg.getKey());
+
+
+        serverWriteLock = true;
+        // queue rebalance command
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
+
+                historicPairs.putAll(convertStringToMap(msg.getKey()));
+
+                for (String hKey : historicPairs.keySet()) {
+                    String key = historicPairs.get(hKey).getKey().toString();
+                    String value = historicPairs.get(hKey).getValue().toString();
+                    LOGGER.fine("Put key,value to cache: " + key +", "+ value);
+                    cache.delete(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                    LOGGER.fine("Put key,value to disk: " + key +", "+ value);
+                    disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                }
+
+
+                // return answer to ECS
+                String message = KVMessage.StatusType.REBALANCE_SUCCESS.name().toLowerCase() + " "  + "\r\n";
+                LOGGER.info("Answer to ECS: " + message);
+                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                //release write lock
+                serverWriteLock = false;
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+        return null;
+    }
+
+
+
 
     /**
      * Connects ECS Service.
@@ -453,6 +644,38 @@ public class KVServer implements KVStore {
         mapStr.deleteCharAt(mapStr.length()-1);
         return mapStr.toString() + "\r\n";
 
+    }
+
+    public static String calculateHash(String str) {
+
+        try {
+            MessageDigest msgDigest = MessageDigest.getInstance("MD5");
+            byte[] message = msgDigest.digest(str.getBytes(TELNET_ENCODING));
+            return message.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String convertMapToString(TreeMap<String, Pair<String,String>> map) {
+        String mapAsString = map.keySet().stream()
+                .map(key -> key + "=" + map.get(key).getKey() + "=" + map.get(key).getValue())
+                .collect(Collectors.joining(", "));
+        return mapAsString;
+    }
+
+    public TreeMap<String, Pair<String,String>> convertStringToMap(String mapAsString) {
+        TreeMap<String, Pair<String,String>> map = new TreeMap<>();
+        String[] hList = mapAsString.split(",");
+        for (String data : hList) {
+            String info[] = data.split("=");
+            map.put(info[0], new Pair<>(info[1],info[2]));
+        }
+        return map;
     }
 
 }
