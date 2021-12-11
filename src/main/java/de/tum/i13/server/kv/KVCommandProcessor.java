@@ -56,6 +56,13 @@ public class KVCommandProcessor implements CommandProcessor {
                 kvStore.getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, selectionKey));
                 LOGGER.info(String.format("Get key range of the server"));
                 break;
+            case "ecs_accept":
+                LOGGER.info("ECS accepted connection.");
+                break;
+            case "ecs_error":
+                LOGGER.info("Got error from ECS.");
+                // TODO: maybe handle?
+                break;
             default:
                 //here handle unknown commands
                 kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));

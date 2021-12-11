@@ -68,7 +68,7 @@ public class TestClient {
      */
     private static void send(String[] command) {
         LOGGER.info("User is sending debug data: " + String.join(" ", command));
-        if (command.length != 3)
+        if (command.length < 4)
             printHelp("send");
         else {
             try {
