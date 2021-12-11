@@ -141,7 +141,10 @@ public class TestClient {
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
-                    case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue());
+                    case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
+                    case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
+                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -167,7 +170,9 @@ public class TestClient {
                 KVMessage msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null));
                 switch(msg.getStatus()) {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
-                    case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());
+                    case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
+                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -193,7 +198,10 @@ public class TestClient {
                 KVMessage msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], null));
                 switch (msg.getStatus()) {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>%n", msg.getKey(), msg.getValue()); break;
-                    case DELETE_ERROR: System.out.println("There was an error deleting the value.");
+                    case DELETE_ERROR: System.out.println("There was an error deleting the value.");break;
+                    case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
+                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");

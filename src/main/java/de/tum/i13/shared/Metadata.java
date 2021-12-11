@@ -1,10 +1,7 @@
 package de.tum.i13.shared;
 
 
-import com.sun.security.ntlm.Server;
-import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
-import javafx.util.Pair;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -59,5 +56,8 @@ public class Metadata implements Serializable {
         return null;
     }
 
+    public void setServerMap(TreeMap<String, KVServerInfo> serverMap) {
+        this.serverMap = serverMap;
+    }
 }
 

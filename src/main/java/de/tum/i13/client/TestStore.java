@@ -174,7 +174,18 @@ public class TestStore implements KVStore {
         KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
         if(status == KVMessage.StatusType.ERROR){
             return null;
-        }else{
+        }
+
+        if(status == KVMessage.StatusType.SERVER_WRITE_LOCK){
+            return new ClientMessage(status, null, null);
+        }
+        if(status == KVMessage.StatusType.SERVER_STOPPED){
+            return new ClientMessage(status, null, null);
+        }
+        if(status == KVMessage.StatusType.SERVER_NOT_RESPONSIBLE){
+            return new ClientMessage(status, null, null);
+        }
+        else{
             String rcvKey = B64Util.b64decode(rcvMsg[1]);
             String rcvVal = B64Util.b64decode(rcvMsg[2]);
             return new ClientMessage(status, rcvKey, rcvVal);

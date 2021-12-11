@@ -1,6 +1,5 @@
 package de.tum.i13.server.kv;
 
-import com.sun.security.ntlm.Server;
 import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.cache.FirstInFirstOutCache;
 import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
@@ -14,9 +13,8 @@ import de.tum.i13.shared.Metadata;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+
+
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
@@ -66,6 +64,13 @@ public class KVServer implements KVStore {
         kvServerECSCommunicator = new KVServerCommunicator();
         serverActive = false;
         serverWriteLock = true;
+
+        KVServerInfo serverInfo = new KVServerInfo(this.listenaddress, this.port,metadata.calculateHash(this.listenaddress+this.port),
+                metadata.calculateHash(this.listenaddress+this.port),this.intraPort);
+        this.metadata = new Metadata(serverInfo);
+        TreeMap<String, KVServerInfo> serverMap = new TreeMap<>();
+        serverMap.put(metadata.calculateHash(this.listenaddress+this.port), serverInfo);
+        this.metadata.setServerMap(serverMap);
 
     }
 
