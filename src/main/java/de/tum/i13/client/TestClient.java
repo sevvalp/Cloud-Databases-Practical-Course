@@ -38,11 +38,9 @@ public class TestClient {
             case "disconnect":
                 disconnect();
                 break;
-            /* not needed for MS2
             case "send":
                 send(command);
                 break;
-             */
             case "logLevel":
                 handleLogLevel(command);
                 break;
@@ -62,6 +60,33 @@ public class TestClient {
                 break;
         }
         return false;
+    }
+
+    /**
+     * Function used for debugging purposes. Will send any command, key, value to the connected server.
+     * @param command The user input split into a String array.
+     */
+    private static void send(String[] command) {
+        LOGGER.info("User is sending debug data: " + String.join(" ", command));
+        if (command.length != 3)
+            printHelp("send");
+        else {
+            try {
+                StringJoiner v = new StringJoiner(" ");
+                for (int i = 3; i < command.length; i++) {
+                    v.add(command[i]);
+                }
+                String value = v.toString();
+                System.out.println(store.send(command[1], command[2], value));
+            } catch (IllegalStateException e) {
+                System.out.println("Not connected to KVServer!");
+            } catch (SizeLimitExceededException e) {
+                System.out.println("The message to the server is too long!");
+            } catch (IOException e) {
+                System.out.println("IO error while sending.");
+                LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            }
+        }
     }
 
     /**
@@ -220,7 +245,7 @@ public class TestClient {
             System.out.println("connect <address> <port> - Tries to establish a TCP-connection to the echo "
                     + "server based on the given server address and the port number of the echo service.");
             System.out.println("disconnect - Tries to disconnect from the connected server.");
-            System.out.println("send <message> - Sends a text message to the echo server according to the "
+            System.out.println("send <command> <key> <message> - Sends a text message to the echo server according to the "
                     + "communication protocol.");
             System.out.println("put <key> <value> - Sends a key value pair to the server.");
             System.out.println("get <key> - Gets the value of the key from the server.");
@@ -244,8 +269,10 @@ public class TestClient {
                     break;
                 }
                 case "send": {
-                    System.out.println("send <message> - Sends a text message to the echo server according to the "
+                    System.out.println("send <command> <key> <message> - Sends a text message to the echo server according to the "
                             + "communication protocol.");
+                    System.out.println("\t<command> - command to send, e.g. PUT, GET");
+                    System.out.println("\t<key> - Key to send");
                     System.out.println("\t<message> - Sequence of characters to be sent to the echo server.");
                     break;
                 }

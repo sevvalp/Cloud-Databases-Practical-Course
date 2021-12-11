@@ -24,5 +24,6 @@ public class StartECS {
         SimpleNioServer sn = new SimpleNioServer(ecsProcessor);
 
         sn.bindSocket(cfg.listenaddr, cfg.port);
+        sn.start();
     }
 }
