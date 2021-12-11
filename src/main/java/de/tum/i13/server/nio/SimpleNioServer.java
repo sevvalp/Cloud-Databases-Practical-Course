@@ -70,6 +70,21 @@ public class SimpleNioServer {
         this.serverIntraChannel.register(selector,SelectionKey.OP_ACCEPT);
     }
 
+    public void bindSocket(String servername, int port) throws IOException {
+        // Create a new non-blocking server selectionKey channel
+        this.serverChannel = ServerSocketChannel.open();
+        this.serverChannel.configureBlocking(false);
+
+        // Bind the server selectionKey to the specified address and port
+        InetSocketAddress isa = new InetSocketAddress(InetAddress.getByName(servername), port);
+        this.serverChannel.socket().bind(isa);
+
+        // Register the server selectionKey channel, indicating an interest in
+        // accepting new connections
+        this.selector = SelectorProvider.provider().openSelector();
+        this.serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+    }
+
     public void start() throws IOException {
         while (true) {
             // Process queued interest changes

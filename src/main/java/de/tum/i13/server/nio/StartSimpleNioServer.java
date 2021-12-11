@@ -57,7 +57,7 @@ public class StartSimpleNioServer {
         ((KVServer) kvStore).setServer(sn);
 
         sn.bindSockets(cfg.listenaddr, cfg.port, intraPort);
-        //sn.bindSockets("127.0.0.1", 5153); //port: 5551
+        //sn.bindSockets("127.0.0.1", 5153); //port: 5551f
         sn.start();
         ((KVServer) kvStore).connectECS();
 

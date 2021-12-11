@@ -1,6 +1,7 @@
 package de.tum.i13.shared;
 
 
+import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;

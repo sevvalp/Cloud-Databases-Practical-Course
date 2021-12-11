@@ -26,6 +26,7 @@ public interface KVMessage {
         KEY_RANGE,              /* Key range - request */
         KEY_RANGE_SUCCESS,      /* Key range - request successful */
         KEY_RANGE_ERROR,        /* Key range - request failed */
+        ECS                     /* ECS command */
     }
 
     /**

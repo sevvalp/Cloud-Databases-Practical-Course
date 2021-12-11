@@ -54,6 +54,29 @@ public class TestStore implements KVStore {
         return "Disconnected from KVServer successfully.";
     }
 
+    /**
+     * Function used for debugging purposes. Will send any command, key, value to the connected server.
+     * @param command Command to send to the server.
+     * @param key Key to use, will be B64 encoded.
+     * @param value Value to send, will be B64 encoded.
+     * @return
+     * @throws IOException if there is an IOException during the sending.
+     * @throws IllegalStateException if currently not connected to a Server.
+     * @throws SizeLimitExceededException if the message is greater than 128 kB.
+     */
+    public String send(String command, String key, String value) throws IOException, IllegalStateException, SizeLimitExceededException {
+        // convert key and value to Base64
+        String b64key = B64Util.b64encode(key);
+        String b64Value = B64Util.b64encode(value);
+
+        String message = String.format("%s %s %s\r\n", command.toUpperCase(), b64key, b64Value);
+        LOGGER.info("Message to server: " + message);
+
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        return msg.substring(0, msg.length() - 2);
+    }
+
 
     /**
      * Inserts a key-value pair into the KVServer.
