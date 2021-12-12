@@ -4,12 +4,15 @@ import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.server.nio.SimpleNioServer;
+import de.tum.i13.server.stripe.StripedCallable;
+import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.Util;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -22,11 +25,16 @@ public class ECSServer {
     private TreeMap<String, KVServerInfo> serverMap;
     private TreeMap<String, KVServerInfo> startingServers;
     private TreeMap<String, KVServerInfo> stoppingServers;
+    private ConcurrentHashMap<String, Long> heartBeatTime;
+
+    private ExecutorService pool;
 
     public ECSServer() {
         this.serverMap = new TreeMap<>();
         this.startingServers = new TreeMap<>();
         this.stoppingServers = new TreeMap<>();
+        this.heartBeatTime = new ConcurrentHashMap<>();
+        this.pool = new StripedExecutorService();
     }
 
     /**
@@ -109,6 +117,7 @@ public class ECSServer {
                 next = this.serverMap.firstEntry();
             LOGGER.info("Next server found, initiate data transfer.");
             // TODO: writelock on next server & transfer data to new server
+            message = "rebalance " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(hash);
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getValue(), B64Util.b64encode("Accept connection from new server."));
@@ -140,5 +149,57 @@ public class ECSServer {
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
+    }
+
+    public KVMessage heartbeat(KVMessage msg) {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine("Received heartbeat from " + B64Util.b64decode(msg.getKey()));
+                long unixTimeMillis = System.currentTimeMillis();
+                heartBeatTime.put(B64Util.b64decode(msg.getValue()), unixTimeMillis);
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+
+        return null;
+    }
+
+    public void startHeartbeat() {
+        Runnable heartBeat = new Runnable() {
+            @Override
+            public void run() {
+                // if server is not set, we cannot send messages
+                if (server == null)
+                    return;
+
+                LOGGER.info("Sending heartbeats to connected servers.");
+                for (Map.Entry<String, KVServerInfo> e : serverMap.entrySet()) {
+                    long unixTimeMillis = System.currentTimeMillis();
+
+                    // check for last heartbeat
+                    if (unixTimeMillis - heartBeatTime.get(e.getKey()) > 700L) {
+                        LOGGER.warning("Server " + e.getValue().getAddress() + ":" + e.getValue().getPort() + "failed to respond. Removing...");
+                        // TODO: remove from list
+                        // TODO: update metadata
+                    } else {
+                        // TODO: send new heartbeat
+                    }
+                }
+            }
+        };
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(heartBeat, 0, 1, TimeUnit.SECONDS);
     }
 }

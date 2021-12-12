@@ -39,6 +39,15 @@ public class Metadata implements Serializable {
         this.serverInfo = serverMap.get(Util.calculateHash(addressPort));
     }
 
+    public void updateMetadata(String toParse) {
+        String[] parse = toParse.split(";");
+        this.serverMap.clear();
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
+    }
+
     public TreeMap<String, KVServerInfo> getServerMap() {
         return serverMap;
     }
