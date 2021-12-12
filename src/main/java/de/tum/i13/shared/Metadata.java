@@ -1,60 +1,91 @@
 package de.tum.i13.shared;
 
 
-import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.TreeMap;
 
-import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
 public class Metadata implements Serializable {
 
+    // <hash of server, server info object>
     private TreeMap<String, KVServerInfo> serverMap;
+    // only needed if instantiated in KVServer
     private KVServerInfo serverInfo;
 
-    public Metadata(KVServerInfo serverInfo) {
-        this.serverInfo = serverInfo;
+    public Metadata(KVServerInfo info) {
+        this.serverInfo = info;
         this.serverMap = new TreeMap<>();
+    }
+
+    public Metadata(KVServerInfo info, String toParse) {
+        this.serverInfo = info;
+        this.serverMap = new TreeMap<>();
+        String[] parse = toParse.split(";");
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
+    }
+
+    public Metadata(String addressPort, String toParse) {
+        this.serverMap = new TreeMap<>();
+        String[] parse = toParse.split(";");
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
+        this.serverInfo = serverMap.get(Util.calculateHash(addressPort));
+    }
+
+    public void updateMetadata(String toParse) {
+        String[] parse = toParse.split(";");
+        this.serverMap.clear();
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
     }
 
     public TreeMap<String, KVServerInfo> getServerMap() {
         return serverMap;
     }
-    
-    public boolean checkServerResposible(String keyHash){
 
+    public void setServerMap(TreeMap<String, KVServerInfo> serverMap) {
+        this.serverMap = serverMap;
+    }
+    
+    public boolean checkServerResponsible(String keyHash){
         String key = serverMap.ceilingKey(calculateHash(keyHash));
 
-        if(key.isEmpty()){
+        if(key.isEmpty())
             key = serverMap.firstKey();
-        }
 
-        return key.equals(serverInfo.getServerKeyHash()) ? true : false;
+        return key.equals(serverInfo.getServerKeyHash());
     }
 
 
     public String getServerHashRange(){
-        return "<"+ serverInfo.getStartIndex() + ">, <" + serverInfo.getEndIndex() + ">, <" + serverInfo.getAddress() + ":" + serverInfo.getPort() + ">;\r\n";
+        String message = "";
+        for(String s : serverMap.keySet()){
+            KVServerInfo serverInfo = serverMap.get(s);
+            message += "<"+ serverInfo.getStartIndex() + ">, <" + serverInfo.getEndIndex() + ">, <" + serverInfo.getAddress() + ":" + serverInfo.getPort() + ">;";
+        }
+        return message + "\r\n";
     }
 
     public static String calculateHash(String str) {
+        return Util.calculateHash(str);
+    }
 
-        try {
-            MessageDigest msgDigest = MessageDigest.getInstance("MD5");
-            byte[] message = msgDigest.digest(str.getBytes(TELNET_ENCODING));
-            return message.toString();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public String toString() {
+        String s = "";
+        for (KVServerInfo info : serverMap.values())
+            s += info.toString() + ";";
 
-        return null;
+        return s.substring(0, s.length() - 1);
     }
 
     public void setServerMap(TreeMap<String, KVServerInfo> serverMap) {

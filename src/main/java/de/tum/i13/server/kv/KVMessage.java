@@ -19,14 +19,22 @@ public interface KVMessage {
         DELETE_SUCCESS,         /* Delete - request successful */
         DELETE_ERROR, 	        /* Delete - request successful */
         ERROR,                  /* Error - unknown request */
+        ECS_ERROR,              /* ECS Error - unknown request while communicating with ECS */
         SERVER_STOPPED,         /* Request cannot be processed - server not ready */
-        SERVER_READY,         /* Request cannot be processed - server not ready */
+        SERVER_READY,           /* Request cannot be processed - server not ready */
         SERVER_WRITE_LOCK,      /* Put, Delete - request cannot be processed */
         SERVER_NOT_RESPONSIBLE, /* Requested key not in server range */
         KEY_RANGE,              /* Key range - request */
         KEY_RANGE_SUCCESS,      /* Key range - request successful */
         KEY_RANGE_ERROR,        /* Key range - request failed */
-        ECS                     /* ECS command */
+        NEW_SERVER,             /* New server - first time connecting */
+        REMOVE_SERVER,          /* Remove server - prepare to shut down server */
+        ECS_ACCEPT,              /* Accept connection from new KVStore */
+        REBALANCE,              /* Rebalance -request */
+        REBALANCE_ERROR,
+        REBALANCE_SUCCESS,
+        RECEIVE_REBALANCE,
+        UPDATE_METADATA,
     }
 
     /**

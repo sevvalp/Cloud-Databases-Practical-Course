@@ -1,8 +1,13 @@
 package de.tum.i13.server.kv;
 
+import de.tum.i13.shared.Util;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
@@ -22,6 +27,43 @@ public class KVServerInfo {
         this.startIndex = startIndex;
         this.endIndex = endIndex;
         this.serverKeyHash = calculateHash(this.address, this.port);
+    }
+
+    public KVServerInfo(String toParse) {
+        String[] parse = toParse.split(",");
+        for (String attribute : parse) {
+            String[] att = attribute.split("=");
+            if (att.length != 2)
+                continue;
+            Matcher m = Pattern.compile("(?<=\\\")(.*?)(?=\\\")").matcher(att[0]);
+            String key = m.find() ? m.group(0) : "";
+            m = Pattern.compile("(?<=\\\")(.*?)(?=\\\")").matcher(att[1]);
+            String value = m.find() ? m.group(0) : att[1];
+            setAttribute(key, value);
+        }
+    }
+
+    private void setAttribute(String key, String value) {
+        switch(key) {
+            case "address":
+                this.address = value;
+                break;
+            case "port":
+                this.port = Integer.parseInt(value);
+                break;
+            case "intraPort":
+                this.intraPort = Integer.parseInt(value);
+                break;
+            case "startIndex":
+                this.startIndex = value;
+                break;
+            case "endIndex":
+                this.endIndex = value;
+                break;
+            case "serverKeyHash":
+                this.serverKeyHash = value;
+                break;
+        }
     }
 
     public String getServerKeyHash() {
@@ -68,20 +110,20 @@ public class KVServerInfo {
         this.endIndex = endIndex;
     }
 
-    private static String calculateHash(String address, int port) {
+    public static String calculateHash(String address, int port) {
+        return Util.calculateHash(address, port);
+    }
 
-        try {
-            String serverKey = address + port;
-            MessageDigest msgDigest = MessageDigest.getInstance("MD5");
-            byte[] message = msgDigest.digest(serverKey.getBytes(TELNET_ENCODING));
-            return message.toString();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    @Override
+    public String toString() {
+        return String.format("{" +
+                "\"address\"=\"%s\", " +
+                "\"port\"=%d, " +
+                "\"intraPort\"=%d. " +
+                "\"startIndex\"=\"%s\", " +
+                "\"endIndex\"=\"%s\", " +
+                "\"serverKeyHash\"=\"%s\", " +
+                "}", address, port, intraPort, startIndex, endIndex, serverKeyHash);
     }
 
 }

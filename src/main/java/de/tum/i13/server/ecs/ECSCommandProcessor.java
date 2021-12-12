@@ -33,10 +33,17 @@ public class ECSCommandProcessor implements CommandProcessor {
         // TODO: handle requests
         // TODO: request of KVServer to shutdown
         switch (request[0]) {
+            case "removeserver":
+                LOGGER.info("Server shutting down.");
+                ecs.removeServer(new ServerMessage(KVMessage.StatusType.REMOVE_SERVER, request[1], v.toString(), selectionKey));
+            case "newserver":
+                LOGGER.info("New server wants to connect.");
+                ecs.newServer(new ServerMessage(KVMessage.StatusType.NEW_SERVER, request[1], v.toString(), selectionKey));
+                break;
             default:
                 // handle unknown commands
                 ecs.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
-                LOGGER.info("Unknown command: " + String.join(" "));
+                LOGGER.info("Unknown command: " + String.join(" ", request));
         }
     }
 
@@ -50,7 +57,7 @@ public class ECSCommandProcessor implements CommandProcessor {
         // TODO: set write lock
         // TODO: invoke transfer of data to new server
 
-        return "Accepted connection from " + remoteAddress + " to KVServer ( " + address.toString() + ")\r\n";
+        return "ECS_ACCEPT\r\n";
     }
 
     @Override
