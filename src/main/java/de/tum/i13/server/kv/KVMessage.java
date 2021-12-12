@@ -28,11 +28,13 @@ public interface KVMessage {
         KEY_RANGE_SUCCESS,      /* Key range - request successful */
         KEY_RANGE_ERROR,        /* Key range - request failed */
         NEW_SERVER,             /* New server - first time connecting */
+        REMOVE_SERVER,          /* Remove server - prepare to shut down server */
         ECS_ACCEPT,              /* Accept connection from new KVStore */
         REBALANCE,              /* Rebalance -request */
         REBALANCE_ERROR,
         REBALANCE_SUCCESS,
-        RECEIVE_REBALANCE
+        RECEIVE_REBALANCE,
+        UPDATE_METADATA,
     }
 
     /**

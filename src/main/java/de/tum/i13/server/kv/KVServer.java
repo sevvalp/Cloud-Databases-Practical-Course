@@ -37,8 +37,6 @@ public class KVServer implements KVStore {
     private String listenaddress;
     private int port;
     private int intraPort;
-    // UUID in order to identify server
-    private UUID uuid;
 
     private boolean serverActive;
     private boolean serverWriteLock;
@@ -69,7 +67,6 @@ public class KVServer implements KVStore {
         this.listenaddress = listenaddress;
         this.port = port;
         this.intraPort = intraPort;
-        this.uuid = UUID.randomUUID();
         this.kvServerECSCommunicator = new KVServerCommunicator();
         this.kvServer2ServerCommunicator = new KVServerCommunicator();
         serverActive = false;
@@ -589,7 +586,7 @@ public class KVServer implements KVStore {
             kvServerECSCommunicator.connect(this.bootstrap.getHostName(), this.bootstrap.getPort());
             //notify ECS that new server added
             // NEWSERVER <encoded UUID> <encoded info: address,port,intraport>
-            String command = "NEWSERVER " + B64Util.b64encode(this.uuid.toString()) + B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
+            String command = "NEWSERVER " + this.listenaddress +B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
             LOGGER.info("Notify ECS that new server added");
             kvServerECSCommunicator.send(command.getBytes(TELNET_ENCODING));
             //receive ECS response: new ServerMessage(KVMessage.StatusType.SERVER_READY, metadata)

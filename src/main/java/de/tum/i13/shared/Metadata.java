@@ -4,6 +4,7 @@ package de.tum.i13.shared;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.TreeMap;
 
 
@@ -14,9 +15,19 @@ public class Metadata implements Serializable {
     // only needed if instantiated in KVServer
     private KVServerInfo serverInfo;
 
-    public Metadata() {
-        this.serverInfo = null;
+    public Metadata(KVServerInfo info) {
+        this.serverInfo = info;
         this.serverMap = new TreeMap<>();
+    }
+
+    public Metadata(KVServerInfo info, String toParse) {
+        this.serverInfo = info;
+        this.serverMap = new TreeMap<>();
+        String[] parse = toParse.split(";");
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
     }
 
     public TreeMap<String, KVServerInfo> getServerMap() {
@@ -39,6 +50,15 @@ public class Metadata implements Serializable {
 
     public static String calculateHash(String str) {
         return Util.calculateHash(str);
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        for (KVServerInfo info : serverMap.values())
+            s += info.toString() + ";";
+
+        return s.substring(0, s.length() - 1);
     }
 
 }

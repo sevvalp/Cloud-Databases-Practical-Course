@@ -33,6 +33,9 @@ public class ECSCommandProcessor implements CommandProcessor {
         // TODO: handle requests
         // TODO: request of KVServer to shutdown
         switch (request[0]) {
+            case "removeserver":
+                LOGGER.info("Server shutting down.");
+                ecs.removeServer(new ServerMessage(KVMessage.StatusType.REMOVE_SERVER, request[1], v.toString(), selectionKey));
             case "newserver":
                 LOGGER.info("New server wants to connect.");
                 ecs.newServer(new ServerMessage(KVMessage.StatusType.NEW_SERVER, request[1], v.toString(), selectionKey));

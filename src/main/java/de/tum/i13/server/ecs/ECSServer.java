@@ -10,7 +10,6 @@ import de.tum.i13.shared.Util;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -22,10 +21,12 @@ public class ECSServer {
     // <hash of server, server info object>
     private TreeMap<String, KVServerInfo> serverMap;
     private TreeMap<String, KVServerInfo> startingServers;
+    private TreeMap<String, KVServerInfo> stoppingServers;
 
     public ECSServer() {
         this.serverMap = new TreeMap<>();
         this.startingServers = new TreeMap<>();
+        this.stoppingServers = new TreeMap<>();
     }
 
     /**
@@ -59,7 +60,7 @@ public class ECSServer {
         return new ServerMessage(KVMessage.StatusType.ECS_ERROR, B64Util.b64encode("unknown"), B64Util.b64encode("command"));
     }
 
-    public KVMessage newServer(KVMessage msg) {
+    public KVMessage newServer(KVMessage msg) throws UnsupportedEncodingException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
@@ -71,7 +72,6 @@ public class ECSServer {
         // Hence, we implement this single threaded and don't have to deal with multithreading.
 
         // extract info from message
-        UUID uuid = UUID.fromString(B64Util.b64decode(msg.getKey()));
         String[] payload = B64Util.b64decode(msg.getValue()).split(",");
         if (payload.length != 3)
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Cant parse payload!"));
@@ -83,9 +83,11 @@ public class ECSServer {
         String hash = Util.calculateHash(address, port);
         if (this.serverMap.isEmpty()) {
             LOGGER.info("Metadata is empty. Adding new server.");
-            this.startingServers.put(hash, new KVServerInfo(uuid, address, port, hash, hash, intraPort));
             // no re-calculating, moving of data etc. necessary
-            // TODO: update new server metadata
+            KVServerInfo info = new KVServerInfo(address, port, hash, hash, intraPort);
+            String message = "update_metadata " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(info.toString());
+            this.serverMap.put(hash, info);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
         } else {
             Map.Entry<String, KVServerInfo> prev = this.serverMap.floorEntry(hash);
             if (prev == null)
@@ -93,8 +95,14 @@ public class ECSServer {
                 prev = this.serverMap.lastEntry();
 
             LOGGER.info("Previous server found. Adding new server.");
-            this.startingServers.put(hash, new KVServerInfo(uuid, address, port, hash, prev.getKey(), intraPort));
-            // TODO: update new server metadata
+            KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort);
+            this.startingServers.put(hash, info);
+            String s = "";
+            for (KVServerInfo i : serverMap.values())
+                s += i.toString() + ";";
+            s += info.toString();
+
+            String message = "update_metadata " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(s);
 
             Map.Entry next = this.serverMap.ceilingEntry(hash);
             if (next == null)
@@ -104,5 +112,33 @@ public class ECSServer {
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getValue(), B64Util.b64encode("Accept connection from new server."));
+    }
+
+    public KVMessage removeServer(KVMessage msg) {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        // extract info from message
+        String[] payload = B64Util.b64decode(msg.getValue()).split(",");
+
+        // find next server
+        Map.Entry next = this.serverMap.ceilingEntry(msg.getKey());
+        if (next == null)
+            next = this.serverMap.firstEntry();
+
+        if (next.getKey().equals(msg.getKey())) {
+            // server to remove is only KVServer connected
+            // TODO: send ok to server
+            this.serverMap.remove(msg.getKey());
+        } else {
+            // TODO: writelock on server to remove & transfer data to next server
+            this.stoppingServers.put(msg.getKey(), this.serverMap.get(msg.getKey()));
+        }
+
+        return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
     }
 }
