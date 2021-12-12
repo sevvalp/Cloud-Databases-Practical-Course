@@ -4,7 +4,6 @@ package de.tum.i13.shared;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.TreeMap;
 
 
@@ -30,8 +29,22 @@ public class Metadata implements Serializable {
         }
     }
 
+    public Metadata(String addressPort, String toParse) {
+        this.serverMap = new TreeMap<>();
+        String[] parse = toParse.split(";");
+        for (String s : parse) {
+            KVServerInfo i = new KVServerInfo(s);
+            serverMap.put(i.getServerKeyHash(), i);
+        }
+        this.serverInfo = serverMap.get(Util.calculateHash(addressPort));
+    }
+
     public TreeMap<String, KVServerInfo> getServerMap() {
         return serverMap;
+    }
+
+    public void setServerMap(TreeMap<String, KVServerInfo> serverMap) {
+        this.serverMap = serverMap;
     }
     
     public boolean checkServerResponsible(String keyHash){
@@ -45,7 +58,12 @@ public class Metadata implements Serializable {
 
 
     public String getServerHashRange(){
-        return "<"+ serverInfo.getStartIndex() + ">, <" + serverInfo.getEndIndex() + ">, <" + serverInfo.getAddress() + ":" + serverInfo.getPort() + ">;\r\n";
+        String message = "";
+        for(String s : serverMap.keySet()){
+            KVServerInfo serverInfo = serverMap.get(s);
+            message += "<"+ serverInfo.getStartIndex() + ">, <" + serverInfo.getEndIndex() + ">, <" + serverInfo.getAddress() + ":" + serverInfo.getPort() + ">;";
+        }
+        return message + "\r\n";
     }
 
     public static String calculateHash(String str) {
