@@ -1,6 +1,5 @@
 package de.tum.i13.server.kv;
 
-import com.sun.security.ntlm.Server;
 import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.cache.FirstInFirstOutCache;
 import de.tum.i13.server.cache.LeastFrequentlyUsedCache;
@@ -375,12 +374,6 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
         }
         //if server is not responsible for given key
-        if(!checkServerResponsible(msg.getKey())){
-            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase() + " " + prepareMapToSend(metadata.getServerMap());
-            LOGGER.info("Answer to Client: " + message);
-            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
-            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
-        }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.KEY_RANGE)
             return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, null, B64Util.b64encode("KVMessage does not have correct status!"));
@@ -391,7 +384,7 @@ public class KVServer implements KVStore {
         LOGGER.info("Client wants to get key range");
         LOGGER.fine("Calculate key range");
 
-        String message = KVMessage.StatusType.KEY_RANGE_SUCCESS + metadata.getServerHashRange();
+        String message = KVMessage.StatusType.KEY_RANGE_SUCCESS + " " + metadata.getServerHashRange();
         LOGGER.info("Answer to Client: " + message);
 
         server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));

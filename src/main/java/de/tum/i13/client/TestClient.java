@@ -178,6 +178,8 @@ public class TestClient {
             } catch (IOException e) {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -196,7 +198,9 @@ public class TestClient {
                 switch(msg.getStatus()) {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
-                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        String message = String.format("keyrange ");
+                        store.sendKeyRange(message);break;
                     case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
@@ -206,6 +210,8 @@ public class TestClient {
             } catch (IOException e) {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -235,6 +241,8 @@ public class TestClient {
             } catch (IOException e) {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }

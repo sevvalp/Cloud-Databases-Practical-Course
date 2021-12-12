@@ -1,14 +1,19 @@
 package de.tum.i13.client;
 
 import de.tum.i13.server.kv.KVMessage;
+import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.B64Util;
+import de.tum.i13.shared.Metadata;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Test Store
@@ -19,6 +24,7 @@ import static de.tum.i13.shared.Constants.TELNET_ENCODING;
  */
 public class TestStore implements KVStore {
 
+    private Metadata metadata;
     private final SocketCommunicator communicator;
     private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
 
@@ -76,7 +82,35 @@ public class TestStore implements KVStore {
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         return msg.substring(0, msg.length() - 2);
     }
+    public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException
+    {
+        String message = String.format("%s \r\n", command.toUpperCase());
+        LOGGER.info("Message to server: " + message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        int attempts = 0;
+        while(true) {
+            String[] response = msg.split(" ");
+            switch (response[0]) {
+                //Retry sending with backoff
+                case "SERVER_STOPPED":
+                    try {
+                        MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                    } catch (InterruptedException e) {
+                        LOGGER.warning("Error while retrying to send keyrange request");
+                    }
+                    break;
+                case "KEY_RANGE_SUCCESS":
+                    if (response.length == 2) {
+                        LOGGER.info("Update Metadata");
+                        KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, response[1], response[2], 1234);
+                        metadata = new Metadata(newInfo);
+                    }
+                    return msg.substring(0, msg.length() - 2);
+            }
+        }
 
+        }
 
     /**
      * Inserts a key-value pair into the KVServer.
@@ -195,23 +229,47 @@ public class TestStore implements KVStore {
 
 
         KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
-        if(status == KVMessage.StatusType.ERROR){
+        if (status == KVMessage.StatusType.ERROR) {
             return null;
         }
 
-        if(status == KVMessage.StatusType.SERVER_WRITE_LOCK){
+        if (status == KVMessage.StatusType.SERVER_WRITE_LOCK) {
             return new ClientMessage(status, null, null);
         }
-        if(status == KVMessage.StatusType.SERVER_STOPPED){
+        if (status == KVMessage.StatusType.SERVER_STOPPED) {
             return new ClientMessage(status, null, null);
         }
-        if(status == KVMessage.StatusType.SERVER_NOT_RESPONSIBLE){
+        if (status == KVMessage.StatusType.SERVER_NOT_RESPONSIBLE) {
             return new ClientMessage(status, null, null);
-        }
-        else{
+        } else {
             String rcvKey = B64Util.b64decode(rcvMsg[1]);
             String rcvVal = B64Util.b64decode(rcvMsg[2]);
             return new ClientMessage(status, rcvKey, rcvVal);
         }
+    }
+    /**
+     * This is used to convert a byte array to hex Strig
+     * @param in byte array to be converted
+     * @return encoded string
+     */
+    private static String byteToHex(byte[] in) {
+        StringBuilder sb = new StringBuilder();
+        for(byte b : in) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+    /**
+     * This is used to hash the key via MD5 algorithm
+     * @param key string to be hashed
+     * @return the hash representation
+     * @throws NoSuchAlgorithmException
+     */
+    private String keyHash(String key) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        messageDigest.update(key.getBytes());
+        byte[] byteArr = messageDigest.digest();
+        messageDigest.reset();
+        return byteToHex(byteArr);
     }
 }
