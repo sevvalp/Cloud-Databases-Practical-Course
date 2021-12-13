@@ -22,6 +22,7 @@ public class StartECS {
         ECSServer ecs = new ECSServer();
         CommandProcessor ecsProcessor = new ECSCommandProcessor(ecs);
         SimpleNioServer sn = new SimpleNioServer(ecsProcessor);
+        ecs.setServer(sn);
 
         sn.bindSocket(cfg.listenaddr, cfg.port);
         sn.start();

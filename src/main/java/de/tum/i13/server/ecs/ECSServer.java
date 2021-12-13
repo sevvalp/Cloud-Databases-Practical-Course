@@ -61,7 +61,10 @@ public class ECSServer {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
-        String message = "ecs_error " + B64Util.b64encode("unknown command") + "\r\n";
+        // TODO: just for testing
+        server.send(serverMap.firstEntry().getValue().getSelectionKey(), ("ECS_TEST " + B64Util.b64encode("Test") + " " + B64Util.b64encode("Value") + "\r\n").getBytes(TELNET_ENCODING));
+
+        String message = "ecs_error " + B64Util.b64encode("error") + " " + B64Util.b64encode("unknown command") + "\r\n";
         // return answer to client
         LOGGER.info("Answer to client: " + message);
         server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
@@ -86,15 +89,19 @@ public class ECSServer {
         String address = payload[0];
         int port = Integer.parseInt(payload[1]);
         int intraPort = Integer.parseInt(payload[2]);
+        LOGGER.info("New server " + address + ":" + port + " with internal port " + intraPort);
 
         // insert new server into Metadata
         String hash = Util.calculateHash(address, port);
         if (this.serverMap.isEmpty()) {
             LOGGER.info("Metadata is empty. Adding new server.");
             // no re-calculating, moving of data etc. necessary
-            KVServerInfo info = new KVServerInfo(address, port, hash, hash, intraPort);
-            String message = "update_metadata " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(info.toString());
+            KVServerInfo info = new KVServerInfo(address, port, hash, hash, intraPort, ((ServerMessage) msg).getSelectionKey());
+            String message = "update_metadata " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(info.toString()) + "\r\n";
             this.serverMap.put(hash, info);
+            LOGGER.fine("Server map after put: " + serverMap.toString());
+            LOGGER.fine("Starting map: " + startingServers.toString());
+            LOGGER.fine("Stopping map: " + stoppingServers.toString());
             server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
         } else {
             Map.Entry<String, KVServerInfo> prev = this.serverMap.floorEntry(hash);
@@ -103,24 +110,71 @@ public class ECSServer {
                 prev = this.serverMap.lastEntry();
 
             LOGGER.info("Previous server found. Adding new server.");
-            KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort);
+            KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort, ((ServerMessage) msg).getSelectionKey());
             this.startingServers.put(hash, info);
+            LOGGER.fine("Starting map after put: " + startingServers.toString());
+            LOGGER.fine("Server map: " + serverMap.toString());
+            LOGGER.fine("Stopping map: " + stoppingServers.toString());
             String s = "";
             for (KVServerInfo i : serverMap.values())
                 s += i.toString() + ";";
             s += info.toString();
 
-            String message = "update_metadata " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(s);
-
-            Map.Entry next = this.serverMap.ceilingEntry(hash);
+            Map.Entry<String, KVServerInfo> next = this.serverMap.ceilingEntry(hash);
             if (next == null)
                 next = this.serverMap.firstEntry();
             LOGGER.info("Next server found, initiate data transfer.");
-            // TODO: writelock on next server & transfer data to new server
-            message = "rebalance " + B64Util.b64encode(address + ":" + port) + " " + B64Util.b64encode(hash);
+            next.getValue().setStartIndex(hash);
+            // send writelock to next server & transfer data to new server
+            String message = "rebalance " + B64Util.b64encode(address + ":" + intraPort) + " " + B64Util.b64encode(hash) + "\r\n";
+            server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getValue(), B64Util.b64encode("Accept connection from new server."));
+    }
+
+    public KVMessage rebalance_success(KVMessage msg) {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        // check if server just started
+        String hash = B64Util.b64decode(msg.getValue());
+        if (startingServers.containsKey(hash)) {
+            // add to server map
+            serverMap.put(hash, startingServers.remove(hash));
+            sendMetadataUpdate();
+        } else if (stoppingServers.containsKey(hash)) {
+            stoppingServers.remove(hash);
+            serverMap.remove(hash);
+            sendMetadataUpdate();
+        }
+
+        return null;
+    }
+
+    public void sendMetadataUpdate() {
+        if (server == null)
+            return;
+
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                String s = "update_metadata " + B64Util.b64encode("update") + " ";
+                for (KVServerInfo i : serverMap.values())
+                    s += i.toString() + ";";
+                for (KVServerInfo i : serverMap.values()) {
+                    try {
+                        server.send(i.getSelectionKey(), s.getBytes(TELNET_ENCODING));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 
     public KVMessage removeServer(KVMessage msg) {
@@ -149,6 +203,22 @@ public class ECSServer {
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
+    }
+
+    public KVMessage updatedMetadata(KVMessage msg) {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        // check if server is starting
+        if (this.startingServers.containsKey(B64Util.b64decode(msg.getValue()))) {
+
+        }
+
+        return null;
     }
 
     public KVMessage heartbeat(KVMessage msg) {
@@ -194,6 +264,7 @@ public class ECSServer {
                         // TODO: update metadata
                     } else {
                         // TODO: send new heartbeat
+                        String message = "ECS_HEARTBEAT " + B64Util.b64encode(e.getValue().getAddress() + ":" + e.getValue().getPort()) + " " + B64Util.b64encode(e.getKey());
                     }
                 }
             }

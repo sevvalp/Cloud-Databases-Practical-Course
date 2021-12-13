@@ -53,6 +53,9 @@ public class TestClient {
             case "delete":
                 delete(command);
                 break;
+            case "receive":
+                receive(command);
+                break;
             case "quit":
                 return true;
             default:
@@ -86,6 +89,14 @@ public class TestClient {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
             }
+        }
+    }
+
+    public static void receive(String[] command) {
+        try {
+            System.out.println(store.receive());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

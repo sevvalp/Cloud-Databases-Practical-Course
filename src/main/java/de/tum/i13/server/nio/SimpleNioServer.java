@@ -24,6 +24,7 @@ import static de.tum.i13.shared.Constants.TELNET_ENCODING;
  * Based on http://rox-xmlrpc.sourceforge.net/niotut/
  */
 public class SimpleNioServer {
+    private final Logger LOGGER = Logger.getLogger(SimpleNioServer.class.getName());
 
     private Queue<ChangeRequest> pendingChanges;
     private Map<SelectionKey, List<ByteBuffer>> pendingWrites;
