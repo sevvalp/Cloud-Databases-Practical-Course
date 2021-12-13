@@ -69,19 +69,47 @@ public class KVServer implements KVStore {
         this.historicPairs = new TreeMap<>();
 
         connectECS();
+        //newServerRebalance();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
+                serverWriteLock = true;
+                serverActive = false;
+
                 //send ecs historic data
-                String message = "removeserver " + convertMapToString(historicPairs) + "\r\n";
-                LOGGER.info("Send to ECS: " + message);
+                LOGGER.info("Notify ECS gracefully shut down.");
                 try {
+                    String message = String.format("%s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)));
+                    LOGGER.info("Message to ECS: " + message);
                     kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+                    LOGGER.info("Notified ECS gracefully shut down.");
                     kvServerECSCommunicator.disconnect();
+                } catch (Exception e) {
+                    LOGGER.info("ECS Exception while stopping server.");
+                }
+
+                //rebalance send all historic data to successor
+                if(metadata.getServerMap().size() > 1){
+                try {
+                    LOGGER.info("Rebalance succesor server.");
+                    String svrmessage = String.format("%s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)));
+                    LOGGER.info("Message to successor: " + svrmessage);
+                    //find successor
+                    String sKey = metadata.getSuccessorServerKey(listenaddress,port);
+                    KVServerInfo successorServer = metadata.getServerMap().get(sKey);
+                    //connect successor
+                    kvServer2ServerCommunicator.connect(successorServer.getAddress(), successorServer.getIntraPort());
+                    //send
+                    kvServer2ServerCommunicator.send(svrmessage.getBytes(TELNET_ENCODING));
+                    LOGGER.info("Notified successor rebalance.");
+
+                    kvServer2ServerCommunicator.disconnect();
+                    System.exit(0);
+
                 } catch (Exception e) {
                     LOGGER.info("Exception while stopping server.");
                 }
-                serverActive = false;
+                }
             }
         });
     }
@@ -453,7 +481,7 @@ public class KVServer implements KVStore {
             public Void call() throws Exception {
                 LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
 
-                String addressinfo[] = msg.getKey().split(":");
+                String addressinfo[] = B64Util.b64decode(msg.getKey()).split(":");
                 //get pairs which are smaller than new server hash
                 String nsh = Util.calculateHash(addressinfo[0], Integer.parseInt(addressinfo[1]));
                 String csh = Util.calculateHash(listenaddress, port);
@@ -473,7 +501,7 @@ public class KVServer implements KVStore {
                     disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
                 }
 
-                String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + convertMapToString(sendHist) + "\r\n";
+                String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + "\r\n";
                 LOGGER.info("Send handoff data to successor: " + message);
                 kvServer2ServerCommunicator.connect(addressinfo[0],Integer.parseInt(addressinfo[1]));
                 kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
@@ -525,28 +553,30 @@ public class KVServer implements KVStore {
         LOGGER.fine("Submitting new rebalance callable to pool for key " + msg.getKey());
 
 
+        LOGGER.fine("Start rebalance ,write lock active");
         serverWriteLock = true;
         // queue rebalance command
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
-                LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
 
-                historicPairs.putAll(convertStringToMap(msg.getKey()));
+                LOGGER.fine("Rebalance keys from historic data" + msg.getKey());
+                String msgKey = B64Util.b64decode(msg.getKey());
+                historicPairs.putAll(convertStringToMap(msgKey));
 
-                for (String hKey : historicPairs.keySet()) {
+                for (String hKey : convertStringToMap(msgKey).keySet()) {
                     String key = historicPairs.get(hKey).getKey().toString();
                     String value = historicPairs.get(hKey).getValue().toString();
                     LOGGER.fine("Put key,value to cache: " + key +", "+ value);
-                    cache.delete(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                    cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
                     LOGGER.fine("Put key,value to disk: " + key +", "+ value);
                     disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
                 }
-
+                LOGGER.fine("Rebalance done,write lock released");
 
                 // return answer to ECS
-                String message = KVMessage.StatusType.REBALANCE_SUCCESS.name().toLowerCase() + " "  + "\r\n";
-                LOGGER.info("Answer to ECS: " + message);
-                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+//                String message = KVMessage.StatusType.REBALANCE_SUCCESS.name().toLowerCase() + " "  + "\r\n";
+//                LOGGER.info("Answer to ECS: " + message);
+//                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 //release write lock
                 serverWriteLock = false;
                 return null;
@@ -571,12 +601,19 @@ public class KVServer implements KVStore {
         LOGGER.info("Connecting to ECS");
         try {
             //connect to ECS
-            kvServerECSCommunicator.connect(this.bootstrap.getHostName(), this.bootstrap.getPort());
+            kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+            String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+            LOGGER.info("Successfully connected to ECS: " + msg.substring(0, msg.length() - 2));
+
             //notify ECS that new server added
-            // NEWSERVER <encoded UUID> <encoded info: address,port,intraport>
-            String command = "newserver " + this.listenaddress +B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
+            // NEWSERVER <encoded info: address,port,intraport>
+            String command = "newserver ";
+            String b64Value = B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
+            String message = String.format("%s %s\r\n", command.toUpperCase(), b64Value);
+            LOGGER.info("Message to server: " + message);
+
             LOGGER.info("Notify ECS that new server added");
-            kvServerECSCommunicator.send(command.getBytes(TELNET_ENCODING));
+            kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
             this.metadata = receiveMetadata();
 
             if(this.metadata != null){
@@ -591,6 +628,36 @@ public class KVServer implements KVStore {
             LOGGER.info("Exception while connecting ECS ");
         }
 
+    }
+
+    private void newServerRebalance(){
+        //if there is more than one server rebalance key distribution
+        if(this.metadata.getServerMap().size() > 1){
+
+            String successorKey = metadata.getSuccessorServerKey(this.listenaddress, this.port);
+            KVServerInfo sServer = metadata.getServerMap().get(successorKey);
+            try {
+                kvServer2ServerCommunicator.connect(sServer.getAddress(), sServer.getIntraPort());
+                String command = "rebalance ";
+                String b64Value = B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
+                String message = String.format("%s %s\r\n", command.toUpperCase(), b64Value);
+                LOGGER.info("Message to server: " + message);
+
+                LOGGER.info("get new keyvalue pairs from successor");
+                kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
+
+                String msg = new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING);
+                String[] rcvMsg = msg.substring(0, msg.length() - 2).split("\\s");
+                receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, rcvMsg[1], null, null));
+
+
+            } catch (Exception e) {
+                LOGGER.info("Error in new server key value rebalancing" + e.toString());
+            }
+        }
+        else{
+            LOGGER.info("Only one server - no rebalancing needed.");
+        }
     }
 
     /**
