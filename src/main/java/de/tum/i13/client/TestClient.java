@@ -6,6 +6,7 @@ import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.util.StringJoiner;
 import java.util.logging.Handler;
@@ -27,7 +28,7 @@ public class TestClient {
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
     private final static TestStore store = new TestStore();
 
-    private static boolean interpretInput(String input) {
+    private static boolean interpretInput(String input) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
         if (input.length() == 0)
             return false;
         String[] command = input.split("\\s+");
@@ -52,6 +53,9 @@ public class TestClient {
                 break;
             case "delete":
                 delete(command);
+                break;
+            case "keyrange":
+                keyRange();
                 break;
             case "quit":
                 return true;
@@ -168,7 +172,8 @@ public class TestClient {
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
-                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        keyRange();break;
                     case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
@@ -199,8 +204,7 @@ public class TestClient {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
                     case SERVER_NOT_RESPONSIBLE:
-                        String message = String.format("keyrange ");
-                        store.sendKeyRange(message);break;
+                        keyRange();break;
                     case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
@@ -214,6 +218,11 @@ public class TestClient {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static void keyRange() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+        String message = String.format("keyrange ");
+        store.sendKeyRange(message);
     }
 
     /**
@@ -231,7 +240,8 @@ public class TestClient {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
-                    case SERVER_NOT_RESPONSIBLE: System.out.printf("Retrieval of key range%n");break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        keyRange();break;
                     case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
@@ -325,6 +335,7 @@ public class TestClient {
             }
         }
     }
+
 
     /**
      * Closes the connection of the socket and quits the program.

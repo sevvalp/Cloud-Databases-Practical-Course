@@ -29,4 +29,11 @@ public class Pair<K, V> implements Serializable {
         this.value = value;
     }
 
+    public K getFirst() {
+        return key;
+    }
+    public V getSecond() {
+        return value;
+    }
+
 }

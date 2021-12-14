@@ -17,6 +17,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 
 import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
@@ -68,7 +69,7 @@ public class KVServer implements KVStore {
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
 
-        connectECS();
+        //connectECS();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {

@@ -129,6 +129,18 @@ public class SocketCommunicator implements KVCommunicator {
         send(message.getBytes(TELNET_ENCODING));
     }
 
+    public void reconnect(String address, int port)  {
+        try {
+            disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            connect(address, port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * Sends data to the server, if the socket is connected. If the socket is currently not connected, the
      * method will do nothing.
@@ -200,5 +212,11 @@ public class SocketCommunicator implements KVCommunicator {
             LOGGER.warning("Socket currently disconnected!");
             throw new IllegalStateException("Not connected to KVServer!");
         }
+    }
+    public String getAddress(){
+        return mSocket.getInetAddress().toString().substring(1);
+    }
+    public int getPort(){
+        return mSocket.getPort();
     }
 }

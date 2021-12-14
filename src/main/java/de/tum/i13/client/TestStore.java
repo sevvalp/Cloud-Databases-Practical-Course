@@ -5,11 +5,13 @@ import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.Metadata;
+import de.tum.i13.shared.Pair;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -82,14 +84,13 @@ public class TestStore implements KVStore {
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         return msg.substring(0, msg.length() - 2);
     }
-    public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException
-    {
-        String message = String.format("%s \r\n", command.toUpperCase());
-        LOGGER.info("Message to server: " + message);
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        String msg = new String(communicator.receive(), TELNET_ENCODING);
+    public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         int attempts = 0;
         while(true) {
+            String message = String.format("%s \r\n", command.toUpperCase());
+            LOGGER.info("Message to server: " + message);
+            communicator.send(message.getBytes(TELNET_ENCODING));
+            String msg = new String(communicator.receive(), TELNET_ENCODING);
             String[] response = msg.split(" ");
             switch (response[0]) {
                 //Retry sending with backoff
@@ -101,11 +102,19 @@ public class TestStore implements KVStore {
                     }
                     break;
                 case "KEY_RANGE_SUCCESS":
-                    if (response.length == 2) {
-                        LOGGER.info("Update Metadata");
-                        KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, response[1], response[2], 1234);
-                        metadata = new Metadata(newInfo);
-                    }
+                    //if (response.length == 2) {
+                        //KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, null, null, 5153);
+                        //metadata = new Metadata(newInfo);
+                    //metadata = new Metadata("127.0.0.1:5153", msg);
+                    //TreeMap<String, Pair<String, String>> newMap = new TreeMap<String, Pair<String, String>>();
+                    KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, null, null, 5153);
+                    metadata = new Metadata(newInfo);
+                    LOGGER.info("Update Metadata");
+                    msg = msg.replace("KEY_RANGE_SUCCESS ", "");
+                    msg = msg.replace("\r\n", "");
+                    metadata.updateClientMetadata(msg);
+                    getCorrectServer(communicator, response[1]);
+                    sendKeyRange(command);
                     return msg.substring(0, msg.length() - 2);
             }
         }
@@ -113,14 +122,54 @@ public class TestStore implements KVStore {
         }
 
     /**
-     * Inserts a key-value pair into the KVServer.
-     *
-     * @param msg KVMessage containint key and value to put into the store.″
-     * @return a message that confirms the insertion of the tuple or an error.
-     * @throws IOException                if there is an IOException during the put.
-     * @throws IllegalStateException      if currently not connected to a KVServer.
-     * @throws SizeLimitExceededException if the message is greater than 128 kB.
+     * This method chooses the right server to send the query to
+     * @param communicator the connection which shall be used
+     * @param key the key that shall be sent
+     * @throws NoSuchAlgorithmException
      */
+    private void getCorrectServer(SocketCommunicator communicator, String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
+        if(metadata != null){
+            Pair<String, Integer> responsibleServer = metadata.getServerResponsible(keyHash(key));
+            if(!communicator.getAddress().equals(responsibleServer.getFirst()) || communicator.getPort() != responsibleServer.getSecond()) {
+                try {
+                    communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
+                    communicator.receive();
+                } catch (IOException e) {
+                    LOGGER.warning("Could not connect to responsible Server. Trying to update metadata on another server");
+                    metadata.removeEntry(metadata.getRangeHash(keyHash(key)));
+                    if(!metadata.isEmpty()) {
+                        responsibleServer = metadata.getServerResponsible(keyHash(key));
+                        try {
+                            communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
+                            communicator.receive();
+                        } catch (IOException ex) {
+                            getCorrectServer(communicator, key);
+                        } catch (Exception ex) {
+                            throw new IOException();
+                        }
+                    } else{
+                        throw new NullPointerException();
+                    }
+                }
+            }
+            else {
+                LOGGER.warning("Could not find the responsible server. No other server exists!");
+                throw  new IOException();
+            }
+
+        }
+    }
+
+
+    /**
+         * Inserts a key-value pair into the KVServer.
+         *
+         * @param msg KVMessage containint key and value to put into the store.″
+         * @return a message that confirms the insertion of the tuple or an error.
+         * @throws IOException                if there is an IOException during the put.
+         * @throws IllegalStateException      if currently not connected to a KVServer.
+         * @throws SizeLimitExceededException if the message is greater than 128 kB.
+         */
     @Override
     public KVMessage put(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key and value to Base64
