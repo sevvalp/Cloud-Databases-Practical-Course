@@ -41,7 +41,6 @@ public class KVServer implements KVStore {
     private boolean serverActive;
     private boolean serverWriteLock;
     private Metadata metadata;
-    private KVServerCommunicator kvServerECSCommunicator;
     private KVServerCommunicator kvServer2ServerCommunicator;
     private TreeMap<String, Pair<String, String>> historicPairs;
 
@@ -63,28 +62,11 @@ public class KVServer implements KVStore {
         this.listenaddress = listenaddress;
         this.port = port;
         this.intraPort = intraPort;
-        this.kvServerECSCommunicator = new KVServerCommunicator();
         this.kvServer2ServerCommunicator = new KVServerCommunicator();
         serverActive = false;
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
 
-        connectECS();
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                //send ecs historic data
-                String message = "removeserver " + convertMapToString(historicPairs) + "\r\n";
-                LOGGER.info("Send to ECS: " + message);
-                try {
-                    kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
-                    kvServerECSCommunicator.disconnect();
-                } catch (Exception e) {
-                    LOGGER.info("Exception while stopping server.");
-                }
-                serverActive = false;
-            }
-        });
     }
 
     /**
@@ -526,10 +508,6 @@ public class KVServer implements KVStore {
             return null;
         }
 
-            public Object getStripe() {
-                return msg.getKey();
-            }
-        });
         return null;
     }
 
