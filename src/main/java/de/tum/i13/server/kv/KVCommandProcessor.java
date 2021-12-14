@@ -36,7 +36,6 @@ public class KVCommandProcessor implements CommandProcessor {
             v.add(request[i]);
         }
 
-        //TODO: receive write lock server, update metadata
 
         switch (request[0]) {
             case "put":
@@ -60,12 +59,16 @@ public class KVCommandProcessor implements CommandProcessor {
                 break;
             case "ecs_error":
                 LOGGER.info("Got error from ECS.");
+                break;
                 // TODO: maybe handle?
             case "rebalance":
                 kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], null, selectionKey));
                 break;
             case "receive_rebalance":
-                kvStore.receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], null, selectionKey));
+                kvStore.receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1].isEmpty()?null:request[1], null, selectionKey));
+                break;
+            case "update_metadata":
+                kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], null, selectionKey));
                 break;
             default:
                 //here handle unknown commands
