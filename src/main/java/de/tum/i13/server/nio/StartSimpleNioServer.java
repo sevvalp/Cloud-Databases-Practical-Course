@@ -1,34 +1,17 @@
 package de.tum.i13.server.nio;
 
-import de.tum.i13.client.TestClient;
 import de.tum.i13.server.disk.DiskManager;
 import de.tum.i13.server.kv.KVCommandProcessor;
+import de.tum.i13.server.kv.KVECSCommunicator;
 import de.tum.i13.server.kv.KVServer;
 import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.CommandProcessor;
 import de.tum.i13.shared.Config;
-import de.tum.i13.shared.LogSetup;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Config.parseCommandlineArgs;
-import static de.tum.i13.shared.Constants.TELNET_ENCODING;
-import static de.tum.i13.shared.LogSetup.setLogFile;
 import static de.tum.i13.shared.LogSetup.setupLogging;
 import static de.tum.i13.shared.Util.getFreePort;
 
@@ -50,6 +33,9 @@ public class StartSimpleNioServer {
         ((KVServer) kvStore).changeServerStatus(true);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
 
+        Thread thread = new Thread(new KVECSCommunicator(kvStore,cfg.bootstrap,cfg.listenaddr, cfg.port, intraPort));
+        thread.start();
+
         DiskManager disk = DiskManager.getInstance();
         disk.initDiskManager(cfg.dataDir.toString());
 
@@ -59,7 +45,7 @@ public class StartSimpleNioServer {
         sn.bindSockets(cfg.listenaddr, cfg.port, intraPort);
         //sn.bindSockets("127.0.0.1", 5153); //port: 5551f
         sn.start();
-        ((KVServer) kvStore).connectECS();
+
 
     }
 

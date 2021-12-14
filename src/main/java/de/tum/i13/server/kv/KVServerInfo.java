@@ -3,6 +3,7 @@ package de.tum.i13.server.kv;
 import de.tum.i13.shared.Util;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.channels.SelectionKey;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -19,6 +20,17 @@ public class KVServerInfo {
     private String startIndex;
     private String endIndex;
     private String serverKeyHash;
+    private SelectionKey selectionKey;
+
+    public KVServerInfo(String address, int port, String startIndex, String endIndex, int intraPort, SelectionKey selectionKey){
+        this.address = address;
+        this.port = port;
+        this.intraPort = intraPort;
+        this.startIndex = startIndex;
+        this.endIndex = endIndex;
+        this.serverKeyHash = calculateHash(this.address, this.port);
+        this.selectionKey = selectionKey;
+    }
 
     public KVServerInfo(String address, int port, String startIndex, String endIndex, int intraPort){
         this.address = address;
@@ -27,8 +39,8 @@ public class KVServerInfo {
         this.startIndex = startIndex;
         this.endIndex = endIndex;
         this.serverKeyHash = calculateHash(this.address, this.port);
+        this.selectionKey = null;
     }
-
     public KVServerInfo(String toParse) {
         String[] parse = toParse.split(",");
         for (String attribute : parse) {
@@ -77,6 +89,14 @@ public class KVServerInfo {
                 this.serverKeyHash = value;
                 break;
         }
+    }
+
+    public SelectionKey getSelectionKey() {
+        return selectionKey;
+    }
+
+    public void setSelectionKey(SelectionKey selectionKey) {
+        this.selectionKey = selectionKey;
     }
 
     public String getServerKeyHash() {
@@ -132,10 +152,10 @@ public class KVServerInfo {
         return String.format("{" +
                 "\"address\"=\"%s\", " +
                 "\"port\"=%d, " +
-                "\"intraPort\"=%d. " +
+                "\"intraPort\"=%d, " +
                 "\"startIndex\"=\"%s\", " +
                 "\"endIndex\"=\"%s\", " +
-                "\"serverKeyHash\"=\"%s\", " +
+                "\"serverKeyHash\"=\"%s\"" +
                 "}", address, port, intraPort, startIndex, endIndex, serverKeyHash);
     }
 

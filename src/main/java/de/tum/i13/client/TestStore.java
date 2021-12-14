@@ -82,7 +82,14 @@ public class TestStore implements KVStore {
 
         communicator.send(message.getBytes(TELNET_ENCODING));
         String msg = new String(communicator.receive(), TELNET_ENCODING);
-        return msg.substring(0, msg.length() - 2);
+        String[] split =  msg.substring(0, msg.length() - 2).split(" ");
+        return split[0] + " " + B64Util.b64decode(split[1]) + " " + B64Util.b64decode(split[2]);
+    }
+
+    public String receive() throws IOException, IllegalStateException {
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        String[] split =  msg.substring(0, msg.length() - 2).split(" ");
+        return split[0] + " " + B64Util.b64decode(split[1]) + " " + B64Util.b64decode(split[2]);
     }
     public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         int attempts = 0;

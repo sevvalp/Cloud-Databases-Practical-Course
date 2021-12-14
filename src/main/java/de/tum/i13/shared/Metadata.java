@@ -96,6 +96,15 @@ public class Metadata implements Serializable {
         return key.equals(serverInfo.getServerKeyHash());
     }
 
+    public String getSuccessorServerKey(String address, int port){
+        String key = serverMap.ceilingKey(Util.calculateHash(address, port));
+
+        if(key.isEmpty())
+            key = serverMap.firstKey();
+
+        return key;
+    }
+
 
     public String getServerHashRange(){
         String message = "";

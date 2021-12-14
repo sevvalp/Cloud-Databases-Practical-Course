@@ -57,6 +57,9 @@ public class TestClient {
             case "keyrange":
                 keyRange();
                 break;
+            case "receive":
+                receive(command);
+                break;
             case "quit":
                 return true;
             default:
@@ -90,6 +93,14 @@ public class TestClient {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
             }
+        }
+    }
+
+    public static void receive(String[] command) {
+        try {
+            System.out.println(store.receive());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -335,7 +346,6 @@ public class TestClient {
             }
         }
     }
-
 
     /**
      * Closes the connection of the socket and quits the program.
