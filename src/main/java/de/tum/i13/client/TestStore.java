@@ -120,8 +120,13 @@ public class TestStore implements KVStore {
                     msg = msg.replace("KEY_RANGE_SUCCESS ", "");
                     msg = msg.replace("\r\n", "");
                     metadata.updateClientMetadata(msg);
-                    getCorrectServer(communicator, response[1]);
-                    sendKeyRange(command);
+                    String state = getCorrectServer(communicator, response[1]);
+                    switch(state){
+                        case "SUCCESS":
+                            sendKeyRange(command);
+                        case "FAIL":
+                            break;
+                    }
                     return msg.substring(0, msg.length() - 2);
             }
         }
@@ -133,14 +138,16 @@ public class TestStore implements KVStore {
      * @param communicator the connection which shall be used
      * @param key the key that shall be sent
      * @throws NoSuchAlgorithmException
+     * return the state of the operation as string
      */
-    private void getCorrectServer(SocketCommunicator communicator, String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
+    private String getCorrectServer(SocketCommunicator communicator, String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
         if(metadata != null){
             Pair<String, Integer> responsibleServer = metadata.getServerResponsible(keyHash(key));
             if(!communicator.getAddress().equals(responsibleServer.getFirst()) || communicator.getPort() != responsibleServer.getSecond()) {
                 try {
                     communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
                     communicator.receive();
+                    return "SUCCESS";
                 } catch (IOException e) {
                     LOGGER.warning("Could not connect to responsible Server. Trying to update metadata on another server");
                     metadata.removeEntry(metadata.getRangeHash(keyHash(key)));
@@ -149,6 +156,7 @@ public class TestStore implements KVStore {
                         try {
                             communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
                             communicator.receive();
+                            return "SUCCESS";
                         } catch (IOException ex) {
                             getCorrectServer(communicator, key);
                         } catch (Exception ex) {
@@ -161,10 +169,9 @@ public class TestStore implements KVStore {
             }
             else {
                 LOGGER.warning("Could not find the responsible server. No other server exists!");
-                throw  new IOException();
             }
-
         }
+        return "FAIL";
     }
 
 

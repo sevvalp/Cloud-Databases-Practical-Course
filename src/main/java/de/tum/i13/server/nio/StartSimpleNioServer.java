@@ -30,7 +30,6 @@ public class StartSimpleNioServer {
 
         int intraPort = getFreePort(); //5551;
         KVStore kvStore = new KVServer(cfg.cacheStrategy, cfg.cacheSize, cfg.bootstrap, cfg.listenaddr, cfg.port, intraPort);
-        ((KVServer) kvStore).changeServerStatus(true);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
 
         Thread thread = new Thread(new KVECSCommunicator(kvStore,cfg.bootstrap,cfg.listenaddr, cfg.port, intraPort));
