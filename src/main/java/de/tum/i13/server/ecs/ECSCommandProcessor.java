@@ -33,6 +33,12 @@ public class ECSCommandProcessor implements CommandProcessor {
         // TODO: handle requests
         // TODO: request of KVServer to shutdown
         switch (request[0]) {
+            case "ecs_heartbeat":
+                LOGGER.info("Heartbeat success.");
+                ecs.heartbeat(new ServerMessage(KVMessage.StatusType.ECS_HEARTBEAT_SUCCESS, request[1], v.toString(), selectionKey));
+            case "rebalance_success":
+                LOGGER.info("Rebalance success.");
+                ecs.rebalance_success(new ServerMessage(KVMessage.StatusType.REBALANCE_SUCCESS, request[1], v.toString(), selectionKey));
             case "removeserver":
                 LOGGER.info("Server shutting down.");
                 ecs.removeServer(new ServerMessage(KVMessage.StatusType.REMOVE_SERVER, request[1], v.toString(), selectionKey));

@@ -10,6 +10,7 @@ import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.Util;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.*;
@@ -254,19 +255,27 @@ public class ECSServer {
                     return;
 
                 LOGGER.info("Sending heartbeats to connected servers.");
+                boolean disconnected = false;
                 for (Map.Entry<String, KVServerInfo> e : serverMap.entrySet()) {
                     long unixTimeMillis = System.currentTimeMillis();
 
                     // check for last heartbeat
                     if (unixTimeMillis - heartBeatTime.get(e.getKey()) > 700L) {
                         LOGGER.warning("Server " + e.getValue().getAddress() + ":" + e.getValue().getPort() + "failed to respond. Removing...");
-                        // TODO: remove from list
-                        // TODO: update metadata
+                        serverMap.remove(e.getKey());
                     } else {
-                        // TODO: send new heartbeat
-                        String message = "ECS_HEARTBEAT " + B64Util.b64encode(e.getValue().getAddress() + ":" + e.getValue().getPort()) + " " + B64Util.b64encode(e.getKey());
+                        LOGGER.info("Heartbeat to " + e.getValue().getAddress());
+                        String message = "ECS_HEARTBEAT " + B64Util.b64encode(e.getValue().getAddress() + ":" + e.getValue().getPort()) + " " + B64Util.b64encode(e.getKey()) + "\r\n";
+                        try {
+                            server.send(e.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                        } catch (UnsupportedEncodingException ex) {
+                            ex.printStackTrace();
+                        }
                     }
                 }
+
+                if (disconnected)
+                    sendMetadataUpdate();
             }
         };
 

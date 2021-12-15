@@ -35,6 +35,8 @@ public interface KVMessage {
         REBALANCE_SUCCESS,
         RECEIVE_REBALANCE,
         UPDATE_METADATA,
+        ECS_HEARTBEAT_SUCCESS,
+        ECS_HEARTBEAT
     }
 
     /**
