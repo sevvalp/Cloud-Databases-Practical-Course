@@ -231,6 +231,9 @@ public class TestClient {
         }
     }
 
+    /**
+     * Sends a keyrange command to the server.
+     */
     private static void keyRange() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
         String message = String.format("keyrange ");
         store.sendKeyRange(message);

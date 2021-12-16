@@ -91,6 +91,15 @@ public class TestStore implements KVStore {
         String[] split =  msg.substring(0, msg.length() - 2).split(" ");
         return split[0] + " " + B64Util.b64decode(split[1]) + " " + B64Util.b64decode(split[2]);
     }
+
+    /**
+     * Will send keyrange command to the connected server.
+     * @param command Command to send to the server.
+     * @return
+     * @throws IOException if there is an IOException during the sending.
+     * @throws IllegalStateException if currently not connected to a Server.
+     * @throws SizeLimitExceededException if the message is greater than 128 kB.
+     */
     public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         int attempts = 0;
         while(true) {
@@ -135,10 +144,12 @@ public class TestStore implements KVStore {
 
     /**
      * This method chooses the right server to send the query to
-     * @param communicator the connection which shall be used
-     * @param key the key that shall be sent
+     * @param communicator the connection which will be used
+     * @param key the key that will be sent
+     * @return the state of the operation as string
      * @throws NoSuchAlgorithmException
-     * return the state of the operation as string
+     * @throws NullPointerException
+     * @throws IOException
      */
     private String getCorrectServer(SocketCommunicator communicator, String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
         if(metadata != null){
@@ -311,7 +322,7 @@ public class TestStore implements KVStore {
         }
     }
     /**
-     * This is used to convert a byte array to hex Strig
+     * This is used to convert a byte array to hex String
      * @param in byte array to be converted
      * @return encoded string
      */
