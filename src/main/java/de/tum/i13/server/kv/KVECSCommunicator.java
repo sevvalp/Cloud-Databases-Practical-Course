@@ -40,6 +40,7 @@ public class KVECSCommunicator implements Runnable {
         while(true) {
             try {
                 String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+
                 if(msg != null && !msg.isEmpty()) {
                     LOGGER.info("Received command: " + msg.trim());
                     String[] request = msg.substring(0, msg.length() - 2).split("\\s");
@@ -59,8 +60,8 @@ public class KVECSCommunicator implements Runnable {
                             LOGGER.info("Got error from ECS.");
                             break;
                         case "rebalance":
-                            kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], null));
-                            sendRebalanceSuccess(request[1]);
+                            kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], request[2]));
+                            sendRebalanceSuccess(request[1], request[2]);
                             break;
                         case "update_metadata":
                             kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2]));
@@ -71,12 +72,13 @@ public class KVECSCommunicator implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }
     }
 
 
-    private void sendRebalanceSuccess(String addressPort) throws Exception {
-        String msg = "rebalance_success " + B64Util.b64encode(Util.calculateHash(addressPort)) + " " + B64Util.b64encode(Util.calculateHash(addressPort));
+    private void sendRebalanceSuccess(String addressPort, String hash) throws Exception {
+        String msg = "rebalance_success " + addressPort + " " + hash + "\r\n";
         kvServerECSCommunicator.send(msg.getBytes(TELNET_ENCODING));
     }
 

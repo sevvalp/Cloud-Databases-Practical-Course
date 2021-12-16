@@ -432,7 +432,7 @@ public class KVServer implements KVStore {
 
         String addressinfo[] = B64Util.b64decode(msg.getKey()).split(":");
         //get pairs which are smaller than new server hash
-        String nsh = Util.calculateHash(addressinfo[0], Integer.parseInt(addressinfo[1]));
+        String nsh = B64Util.b64decode(msg.getValue());
         String csh = Util.calculateHash(listenaddress, port);
 
         TreeMap<String, Pair<String, String>> sendHist = new TreeMap<>();
@@ -458,14 +458,16 @@ public class KVServer implements KVStore {
             disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
         }
 
-        String val;
+        String message;
         if (sendHist.isEmpty() || sendHist == null) {
-            val = "no_data";
-        } else val = B64Util.b64encode(convertMapToString(sendHist));
-        String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + val + "\r\n";
+            message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null "+ msg.getValue() + "\r\n";
+        } else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
+
         LOGGER.info("Send handoff data to successor: " + message);
         kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
+        kvServer2ServerCommunicator.receive();
         kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
+        String rebOk  = new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING);
         //release write lock
         serverWriteLock = false;
         kvServer2ServerCommunicator.disconnect();
@@ -484,13 +486,14 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
 
         // if KVMessage does not have put command, return error
-        if (msg.getStatus() != KVMessage.StatusType.REBALANCE)
+        if (msg.getStatus() != KVMessage.StatusType.RECEIVE_REBALANCE)
             return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         LOGGER.info("Rebalance server key-value according to new server: %s" + msg.getKey());
 
-        serverWriteLock = true;
-        if (B64Util.b64decode(msg.getKey()) != "no_data") {
+
+        if (!msg.getKey().toString().equals("null")) {
+            serverWriteLock = true;
             LOGGER.fine("Rebalance keys from historic data" + msg.getKey());
             String msgKey = B64Util.b64decode(msg.getKey());
             historicPairs.putAll(convertStringToMap(msgKey));
@@ -504,9 +507,12 @@ public class KVServer implements KVStore {
                 disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
             }
             LOGGER.fine("Rebalance done,write lock released");
-            serverWriteLock = false;
-            return null;
+
         }
+
+        serverWriteLock = false;
+        String message = "rebalance_ok" + " " + B64Util.b64encode(listenaddress+":"+port) + " " + msg.getValue() +  "\r\n";
+        server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
 
         return null;
     }
@@ -529,9 +535,10 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
         changeServerWriteLockStatus(true);
-        String address_port = B64Util.b64decode(msg.getKey());
         String serverInfo = B64Util.b64decode(msg.getValue());
-        metadata = new Metadata(address_port, serverInfo);
+        if(serverInfo.split(";").length == 1)
+            this.metadata = new Metadata(new KVServerInfo(serverInfo));
+        metadata.updateMetadata(serverInfo);
         changeServerStatus(true);
         changeServerWriteLockStatus(false);
         return null;
