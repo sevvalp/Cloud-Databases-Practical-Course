@@ -634,6 +634,7 @@ public class KVServer implements KVStore {
 
     public TreeMap<String, Pair<String, String>> convertStringToMap(String mapAsString) {
         TreeMap<String, Pair<String, String>> map = new TreeMap<>();
+        mapAsString = mapAsString.replace("\r\n", "");
         mapAsString = mapAsString.substring(0, mapAsString.length() - 1);
         String[] hList = mapAsString.split(",");
         for (String data : hList) {

@@ -2,7 +2,12 @@ package de.tum.i13.server.kv;
 
 import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.Util;
+
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.StringJoiner;
 import java.util.logging.Logger;
 
@@ -19,14 +24,19 @@ public class KVECSCommunicator implements Runnable {
     private int port;
     private int intraPort;
 
+    //retrieve data from ECS
+    private ServerSocket serverSocket;
 
-    public KVECSCommunicator (KVStore kvStore, InetSocketAddress bootstrap, String listenaddress, int port, int intraPort) {
+
+    public KVECSCommunicator (KVStore kvStore, InetSocketAddress bootstrap, String listenaddress, int port, int intraPort) throws IOException {
         this.kvStore = (KVServer)kvStore;
         this.kvServerECSCommunicator = new KVServerCommunicator();
         this.bootstrap = bootstrap;
         this.listenaddress = listenaddress;
         this.port = port;
         this.intraPort = intraPort;
+
+        this.serverSocket = new ServerSocket();
     }
 
     @Override
@@ -37,43 +47,52 @@ public class KVECSCommunicator implements Runnable {
     }
 
     private void process(){
-        while(true) {
-            try {
-                String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//        while(true) {
+//            try {
 
-                if(msg != null && !msg.isEmpty()) {
-                    LOGGER.info("Received command: " + msg.trim());
-                    String[] request = msg.substring(0, msg.length() - 2).split("\\s");
-                    int size = request.length;
-                    request[0] = request[0].toLowerCase();
 
-                    StringJoiner v = new StringJoiner(" ");
-                    for (int i = 2; i < request.length; i++) {
-                        v.add(request[i]);
-                    }
-
-                    switch (request[0]) {
-                        case "ecs_accept":
-                            LOGGER.info("ECS accepted connection.");
-                            break;
-                        case "ecs_error":
-                            LOGGER.info("Got error from ECS.");
-                            break;
-                        case "rebalance":
-                            kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], request[2]));
-                            sendRebalanceSuccess(request[1], request[2]);
-                            break;
-                        case "update_metadata":
-                            kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2]));
-                            break;
-                    }
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
+//                //String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//
+//                Socket socket = serverSocket.accept();
+//                ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+//                oos.flush();
+//                ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+//                String msg = new String(kvServerECSCommunicator.receive(ois), TELNET_ENCODING);
+//
+//
+//                if(msg != null && !msg.isEmpty()) {
+//                    LOGGER.info("Received command: " + msg.trim());
+//                    String[] request = msg.substring(0, msg.length() - 2).split("\\s");
+//                    int size = request.length;
+//                    request[0] = request[0].toLowerCase();
+//
+//                    StringJoiner v = new StringJoiner(" ");
+//                    for (int i = 2; i < request.length; i++) {
+//                        v.add(request[i]);
+//                    }
+//
+//                    switch (request[0]) {
+//                        case "ecs_accept":
+//                            LOGGER.info("ECS accepted connection.");
+//                            break;
+//                        case "ecs_error":
+//                            LOGGER.info("Got error from ECS.");
+//                            break;
+//                        case "rebalance":
+//                            kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], request[2]));
+//                            sendRebalanceSuccess(request[1], request[2]);
+//                            break;
+//                        case "update_metadata":
+//                            kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2]));
+//                            break;
+//                    }
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+       // }
     }
 
 
@@ -87,8 +106,9 @@ public class KVECSCommunicator implements Runnable {
         LOGGER.info("Connecting to ECS");
         try {
             //connect to ECS
-            kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
 
+            kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+            kvServerECSCommunicator.receive();
             //notify ECS that new server added
             // NEWSERVER <encoded info: address,port,intraport>
             String command = "newserver ";
@@ -98,6 +118,12 @@ public class KVECSCommunicator implements Runnable {
 
             LOGGER.info("Notify ECS that new server added");
             kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+
+//            String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//            String[] request = msg.substring(0, msg.length() - 2).split("\\s");
+//            kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2]));
+
+            kvServerECSCommunicator.disconnect();
 
         }catch (Exception e){
             LOGGER.info("Exception while connecting ECS ");

@@ -29,13 +29,13 @@ public class KVServerCommunicator implements KVCommunicator {
     public void disconnect() throws Exception {
         // check if the socket is connected
         if (isConnected) {
-            LOGGER.fine("Socket currently connected, trying to disconnect.");
+  //          LOGGER.fine("Socket currently connected, trying to disconnect.");
             try {
                 // close connection
                 output.close();
                 input.close();
                 mSocket.close();
-                LOGGER.info("Socket disconnected successfully");
+//                LOGGER.info("Socket disconnected successfully");
             } catch (IOException e) {
                 // error while closing, we assume the socket is dead and let the garbage collector handle it
                 LOGGER.severe("IO Exception while closing the socket");
@@ -55,15 +55,15 @@ public class KVServerCommunicator implements KVCommunicator {
     public void connect(String host, int port) throws Exception {
         // check if the socket is disconnected
         if (!isConnected) {
-            LOGGER.fine("Socket currently not connected, trying to connect");
+//            LOGGER.fine("Socket currently not connected, trying to connect");
             try {
                 mSocket = new Socket(host, port);
-                LOGGER.info("Socket connected successfully");
+//                LOGGER.info("Socket connected successfully");
                 isConnected = true;
                 output = mSocket.getOutputStream();
-                LOGGER.fine("Successfully got outputStream from socket");
+//                LOGGER.fine("Successfully got outputStream from socket");
                 input = mSocket.getInputStream();
-                LOGGER.fine("Successfully got inputStream from socket");
+//                LOGGER.fine("Successfully got inputStream from socket");
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while connecting");
                 isConnected = false;
@@ -97,7 +97,7 @@ public class KVServerCommunicator implements KVCommunicator {
                 throw new SizeLimitExceededException("Length of message to high!");
             }
 
-            LOGGER.fine("Socket currently connected, trying to send data");
+//            LOGGER.fine("Socket currently connected, trying to send data");
             // if server is unexpectedly disconnected, we will get an exception, which we catch
             try {
                 output.write(data);
@@ -146,4 +146,33 @@ public class KVServerCommunicator implements KVCommunicator {
         }
     }
 
+    public byte[] receive(InputStream input) throws Exception {
+        // check if the socket is connected
+        if (isConnected) {
+            LOGGER.fine("Socket currently connected, trying to read data");
+            ByteArrayOutputStream data = new ByteArrayOutputStream();
+
+            try {
+                // iterate over input until \r\n is read
+                byte readByte = 0;
+                byte lastByte = 0;
+                while (lastByte != '\r' || readByte != '\n') {
+                    lastByte = readByte;
+                    readByte = (byte) input.read();
+                    data.write(readByte);
+                }
+            } catch (IOException e) {
+                LOGGER.severe("IO Exception while reading input stream");
+                isConnected = false;
+                throw e;
+            }
+            LOGGER.info(String.format("Received %d bytes: \"%s\"", data.size(), new String(data.toByteArray(), StandardCharsets.ISO_8859_1)));
+            //LOGGER.fine(String.format("In hex: %s", printHexBinary(data.toByteArray())));
+            return data.toByteArray();
+
+        } else {
+            LOGGER.warning("Socket currently disconnected!");
+            throw new IllegalStateException("Not connected to KVServer!");
+        }
+    }
 }
