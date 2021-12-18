@@ -1,6 +1,7 @@
 package de.tum.i13.server.ecs;
 
 import de.tum.i13.server.kv.KVMessage;
+import de.tum.i13.server.kv.KVServerCommunicator;
 import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.ServerMessage;
 import de.tum.i13.server.nio.SimpleNioServer;
@@ -103,7 +104,9 @@ public class ECSServer {
             LOGGER.fine("Server map after put: " + serverMap.toString());
             LOGGER.fine("Starting map: " + startingServers.toString());
             LOGGER.fine("Stopping map: " + stoppingServers.toString());
-            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+        //    sendMessage(address,port,message);
+            sendMetadataUpdate();
+            //server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
         } else {
             Map.Entry<String, KVServerInfo> prev = this.serverMap.floorEntry(hash);
             if (prev == null)
@@ -128,7 +131,10 @@ public class ECSServer {
             next.getValue().setStartIndex(hash);
             // send writelock to next server & transfer data to new server
             String message = "rebalance " + B64Util.b64encode(address + ":" + intraPort) + " " + B64Util.b64encode(hash) + "\r\n";
-            server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+            //I can't receive anything on serverside, no other solutions so far so I need to do this..
+            sendMessage(next.getValue().getAddress(), next.getValue().getPort(), message );
+            //server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getValue(), B64Util.b64encode("Accept connection from new server."));
@@ -142,6 +148,7 @@ public class ECSServer {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        LOGGER.info("Rebalance success received");
         // check if server just started
         String hash = B64Util.b64decode(msg.getValue());
         if (startingServers.containsKey(hash)) {
@@ -165,12 +172,16 @@ public class ECSServer {
             @Override
             public void run() {
                 String s = "update_metadata " + B64Util.b64encode("update") + " ";
+                String infos = "";
                 for (KVServerInfo i : serverMap.values())
-                    s += i.toString() + ";";
+                    infos += i.toString() + ";";
+                s += B64Util.b64encode(infos) + "\r\n";
                 for (KVServerInfo i : serverMap.values()) {
                     try {
-                        server.send(i.getSelectionKey(), s.getBytes(TELNET_ENCODING));
-                    } catch (UnsupportedEncodingException e) {
+                        //server.send(i.getSelectionKey(), s.getBytes(TELNET_ENCODING));
+                        LOGGER.info("Send metadata update to server: " + i.getAddress() + ":" + i.getPort());
+                        sendMessage(i.getAddress(), i.getPort(), s);
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -282,4 +293,18 @@ public class ECSServer {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         executor.scheduleAtFixedRate(heartBeat, 0, 1, TimeUnit.SECONDS);
     }
+
+    private void sendMessage(String address, int port, String message){
+
+        KVServerCommunicator kvom = new KVServerCommunicator();
+        try {
+            kvom.connect(address,port);
+            kvom.send(message.getBytes(TELNET_ENCODING));
+            kvom.receive();
+            kvom.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

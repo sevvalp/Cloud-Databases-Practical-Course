@@ -16,6 +16,7 @@ import de.tum.i13.shared.Util;
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
@@ -42,6 +43,7 @@ public class KVServer implements KVStore {
     private boolean serverWriteLock;
     private Metadata metadata;
     private KVServerCommunicator kvServer2ServerCommunicator;
+    private KVServerCommunicator kvServerECSCommunicator;
     private TreeMap<String, Pair<String, String>> historicPairs;
 
 
@@ -63,9 +65,14 @@ public class KVServer implements KVStore {
         this.port = port;
         this.intraPort = intraPort;
         this.kvServer2ServerCommunicator = new KVServerCommunicator();
+        this.kvServerECSCommunicator = new KVServerCommunicator();
         serverActive = false;
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
+
+        this.metadata = new Metadata(new KVServerInfo(listenaddress,port, Util.calculateHash(listenaddress,port), "", intraPort));
+        connectECS();
+        addShutDownHook();
 
     }
 
@@ -464,13 +471,28 @@ public class KVServer implements KVStore {
         } else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
 
         LOGGER.info("Send handoff data to successor: " + message);
+
+        //how will I know it's selectionKey? then connect
         kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
         kvServer2ServerCommunicator.receive();
         kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
-        String rebOk  = new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING);
+        //LOGGER.info("Rebalance done: " + new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING));
+
         //release write lock
         serverWriteLock = false;
         kvServer2ServerCommunicator.disconnect();
+
+
+        //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+        kvServerECSCommunicator.send(("rebalance_success "+ msg.getKey() +" "+ msg.getValue() + "\r\n").getBytes(TELNET_ENCODING));
+        LOGGER.info("Rebalance success send to ECS");
+
+        //receive update metadata
+
+//        String updateStr = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//        String[] request = updateStr.split("\\s");
+//        receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA,request[1], request[2], null ));
+
         return null;
     }
 
@@ -512,7 +534,12 @@ public class KVServer implements KVStore {
 
         serverWriteLock = false;
         String message = "rebalance_ok" + " " + B64Util.b64encode(listenaddress+":"+port) + " " + msg.getValue() +  "\r\n";
-        server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+        //server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+        //receive update metadata from ECS
+//        String updateStr = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//        String[] request = updateStr.split("\\s");
+//        receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA,request[1], request[2], null ));
 
         return null;
     }
@@ -534,13 +561,17 @@ public class KVServer implements KVStore {
         if (msg.getStatus() != KVMessage.StatusType.UPDATE_METADATA)
             return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
+        LOGGER.info("Metadata received. ");
         changeServerWriteLockStatus(true);
         String serverInfo = B64Util.b64decode(msg.getValue());
         if(serverInfo.split(";").length == 1)
             this.metadata = new Metadata(new KVServerInfo(serverInfo));
         metadata.updateMetadata(serverInfo);
+
         changeServerStatus(true);
         changeServerWriteLockStatus(false);
+
+        LOGGER.info("Metadata updated, server active, write lock released");
         return null;
 
     }
@@ -617,6 +648,55 @@ public class KVServer implements KVStore {
             }
         }
 
+    }
+
+    public void connectECS(){
+        LOGGER.info("Connecting to ECS");
+        try {
+            //connect to ECS
+
+            kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+            kvServerECSCommunicator.receive();
+            //notify ECS that new server added
+            // NEWSERVER <encoded info: address,port,intraport>
+            String command = "newserver ";
+            String b64Value = B64Util.b64encode(String.format("%s,%s,%s", this.listenaddress, this.port, this.intraPort));
+            String message = String.format("%s %s\r\n", command.toUpperCase(), b64Value);
+            LOGGER.info("Message to server: " + message);
+
+            LOGGER.info("Notify ECS that new server added");
+            kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+
+//            String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+//            String[] request = msg.substring(0, msg.length() - 2).split("\\s");
+//            kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2]));
+
+//            kvServerECSCommunicator.disconnect();
+
+        }catch (Exception e){
+            LOGGER.info("Exception while connecting ECS ");
+        }
+    }
+
+    private void addShutDownHook(){
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+
+               gracefullyShutdown();
+                //send ecs historic data
+                LOGGER.info("Notify ECS gracefully shut down.");
+                try {
+                    String message = String.format("%s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)));
+                    LOGGER.info("Message to ECS: " + message);
+                    kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+                    LOGGER.info("Notified ECS gracefully shut down.");
+                    kvServerECSCommunicator.disconnect();
+                } catch (Exception e) {
+                    LOGGER.info("ECS Exception while stopping server.");
+                }
+
+            }
+        });
     }
 
 }

@@ -54,21 +54,22 @@ public class KVCommandProcessor implements CommandProcessor {
                 kvStore.getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, selectionKey));
                 LOGGER.info(String.format("Get key range of the server"));
                 break;
-//            case "ecs_accept":
-//                LOGGER.info("ECS accepted connection.");
-//                break;
-//            case "ecs_error":
-//                LOGGER.info("Got error from ECS.");
-//                break;
+            case "ecs_accept":
+                LOGGER.info("ECS accepted connection.");
+                break;
+            case "ecs_error":
+                LOGGER.info("Got error from ECS.");
+                break;
                 // TODO: maybe handle?
             case "rebalance":
-                kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], null, selectionKey));
+                kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], request[2], selectionKey));
                 break;
             case "receive_rebalance":
                 kvStore.receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], request[2], selectionKey));
                 break;
             case "update_metadata":
-                kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], request[2], selectionKey));
+                LOGGER.info("update_metadata request");
+                kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2], selectionKey));
                 break;
             default:
                 //here handle unknown commands

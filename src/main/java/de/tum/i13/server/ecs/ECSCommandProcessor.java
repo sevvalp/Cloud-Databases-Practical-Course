@@ -36,12 +36,15 @@ public class ECSCommandProcessor implements CommandProcessor {
             case "ecs_heartbeat":
                 LOGGER.info("Heartbeat success.");
                 ecs.heartbeat(new ServerMessage(KVMessage.StatusType.ECS_HEARTBEAT_SUCCESS, request[1], v.toString(), selectionKey));
+                break;
             case "rebalance_success":
                 LOGGER.info("Rebalance success.");
                 ecs.rebalance_success(new ServerMessage(KVMessage.StatusType.REBALANCE_SUCCESS, request[1], v.toString(), selectionKey));
+                break;
             case "removeserver":
                 LOGGER.info("Server shutting down.");
                 ecs.removeServer(new ServerMessage(KVMessage.StatusType.REMOVE_SERVER, request[1], v.toString(), selectionKey));
+                break;
             case "newserver":
                 LOGGER.info("New server wants to connect.");
                 ecs.newServer(new ServerMessage(KVMessage.StatusType.NEW_SERVER, request[1], v.toString(), selectionKey));
@@ -50,6 +53,7 @@ public class ECSCommandProcessor implements CommandProcessor {
                 // handle unknown commands
                 ecs.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
                 LOGGER.info("Unknown command: " + String.join(" ", request));
+                break;
         }
     }
 
