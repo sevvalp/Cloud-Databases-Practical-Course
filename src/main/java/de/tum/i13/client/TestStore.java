@@ -79,7 +79,6 @@ public class TestStore implements KVStore {
 
         String message = String.format("%s %s %s\r\n", command.toUpperCase(), b64key, b64Value);
         LOGGER.info("Message to server: " + message);
-
         communicator.send(message.getBytes(TELNET_ENCODING));
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         String[] split =  msg.substring(0, msg.length() - 2).split(" ");
@@ -212,7 +211,20 @@ public class TestStore implements KVStore {
         // PUT_SUCCESS <b64 key> <b64 value>
         // PUT_ERROR <b64 key> <b64 error message>
         communicator.send(message.getBytes(TELNET_ENCODING));
-        return receiveKVMessage();
+        KVMessage retMsg = receiveKVMessage();
+        int attempts = 0;
+        while (attempts < 4) {
+            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+                    try {
+                        MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                        communicator.send(message.getBytes(TELNET_ENCODING));
+                        retMsg = receiveKVMessage();
+                    } catch (InterruptedException e) {
+                        LOGGER.warning("Error while retrying to send put request");
+                    }
+            }
+        }
+        return retMsg;
     }
 
     /**
@@ -239,7 +251,20 @@ public class TestStore implements KVStore {
         // GET_SUCCESS <b64 key> <b64 value>
         // GET_ERROR <b64 key> <b64 error message>
         communicator.send(message.getBytes(TELNET_ENCODING));
-        return receiveKVMessage();
+        KVMessage retMsg = receiveKVMessage();
+        int attempts = 0;
+        while (attempts < 4) {
+            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+                try {
+                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                    communicator.send(message.getBytes(TELNET_ENCODING));
+                    retMsg = receiveKVMessage();
+                } catch (InterruptedException e) {
+                    LOGGER.warning("Error while retrying to send get request");
+                }
+            }
+        }
+        return retMsg;
     }
 
     /**
@@ -266,7 +291,20 @@ public class TestStore implements KVStore {
         // DELETE_SUCCESS <b64 key> <b64 value>
         // DELETE_ERROR <b64 key> <b64 error message>
         communicator.send(message.getBytes(TELNET_ENCODING));
-        return receiveKVMessage();
+        KVMessage retMsg = receiveKVMessage();
+        int attempts = 0;
+        while (attempts < 4) {
+            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+                try {
+                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                    communicator.send(message.getBytes(TELNET_ENCODING));
+                    retMsg = receiveKVMessage();
+                } catch (InterruptedException e) {
+                    LOGGER.warning("Error while retrying to send delete request");
+                }
+            }
+        }
+        return retMsg;
     }
 
     @Override
@@ -333,6 +371,7 @@ public class TestStore implements KVStore {
         }
         return sb.toString();
     }
+
     /**
      * This is used to hash the key via MD5 algorithm
      * @param key string to be hashed

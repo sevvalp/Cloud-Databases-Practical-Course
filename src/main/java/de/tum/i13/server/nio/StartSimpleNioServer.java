@@ -32,8 +32,8 @@ public class StartSimpleNioServer {
         KVStore kvStore = new KVServer(cfg.cacheStrategy, cfg.cacheSize, cfg.bootstrap, cfg.listenaddr, cfg.port, intraPort);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
 
-//        Thread thread = new Thread(new KVECSCommunicator(kvStore,cfg.bootstrap,cfg.listenaddr, cfg.port, intraPort));
-//        thread.start();
+        Thread thread = new Thread(new KVECSCommunicator(kvStore,cfg.bootstrap,cfg.listenaddr, cfg.port, intraPort));
+        thread.start();
 
         DiskManager disk = DiskManager.getInstance();
         disk.initDiskManager(cfg.dataDir.toString());
