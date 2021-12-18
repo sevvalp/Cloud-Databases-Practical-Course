@@ -185,7 +185,6 @@ public class TestClient {
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
                     case SERVER_NOT_RESPONSIBLE:
                         keyRange();break;
-                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -216,7 +215,6 @@ public class TestClient {
                     case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
                     case SERVER_NOT_RESPONSIBLE:
                         keyRange();break;
-                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -256,7 +254,6 @@ public class TestClient {
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
                     case SERVER_NOT_RESPONSIBLE:
                         keyRange();break;
-                    case SERVER_STOPPED: System.out.printf("Retry several times%n");
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -363,6 +360,7 @@ public class TestClient {
         }
         System.exit(0);
     }
+
 
     /**
      * Main loop of the program. Asks the user for input indefinitely, until 'quit' is entered.
