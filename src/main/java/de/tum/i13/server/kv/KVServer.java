@@ -393,12 +393,21 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
         LOGGER.info("Client wants to get key range");
-        LOGGER.fine("Calculate key range");
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine("Calculate key range");
 
-        String message = KVMessage.StatusType.KEY_RANGE_SUCCESS + " " + metadata.getServerHashRange();
-        LOGGER.info("Answer to Client: " + message);
+                String message = KVMessage.StatusType.KEY_RANGE_SUCCESS + " " + metadata.getServerHashRange();
+                LOGGER.info("Answer to Client: " + message);
 
-        server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
         return null;
 
     }
@@ -518,7 +527,8 @@ public class KVServer implements KVStore {
             serverWriteLock = true;
             LOGGER.fine("Rebalance keys from historic data" + msg.getKey());
             String msgKey = B64Util.b64decode(msg.getKey());
-            historicPairs.putAll(convertStringToMap(msgKey));
+            TreeMap<String, Pair<String, String>> map = convertStringToMap(msgKey);
+            historicPairs.putAll(map);
 
             for (String hKey : convertStringToMap(msgKey).keySet()) {
                 String key = historicPairs.get(hKey).getKey().toString();
@@ -607,20 +617,27 @@ public class KVServer implements KVStore {
 
     public String convertMapToString(TreeMap<String, Pair<String, String>> map) {
 
+//        String mapAsString = "";
+//        if (map != null && map.isEmpty()) {
+//            mapAsString = map.keySet().stream()
+//                    .map(key -> key + "=" + map.get(key).getKey() + "=" + map.get(key).getValue())
+//                    .collect(Collectors.joining(", "));
+//        }
+
         String mapAsString = "";
-        if (map != null && map.isEmpty()) {
-            mapAsString = map.keySet().stream()
-                    .map(key -> key + "=" + map.get(key).getKey() + "=" + map.get(key).getValue())
-                    .collect(Collectors.joining(", "));
-        }
+        for (String i : map.keySet())
+            mapAsString += i.toString() + "&=&" + map.get(i).getKey().toString() + "&=&" + map.get(i).getValue().toString() + ",";
+        mapAsString += mapAsString + "\r\n";
+
         return mapAsString;
     }
 
     public TreeMap<String, Pair<String, String>> convertStringToMap(String mapAsString) {
         TreeMap<String, Pair<String, String>> map = new TreeMap<>();
+        mapAsString = mapAsString.substring(0, mapAsString.length() - 1);
         String[] hList = mapAsString.split(",");
         for (String data : hList) {
-            String info[] = data.split("=");
+            String info[] = data.split("&=&");
             map.put(info[0], new Pair<>(info[1], info[2]));
         }
         return map;
