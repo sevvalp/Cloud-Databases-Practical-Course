@@ -323,7 +323,7 @@ public class KVServer implements KVStore {
                 KVMessage res = disk.deleteContent(msg);
 
                 //delete from history
-                String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
+                String hashedKey = Util.calculateHash(msg.getKey());
                 historicPairs.remove(hashedKey);
 
                 // return answer to client

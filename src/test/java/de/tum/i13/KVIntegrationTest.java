@@ -92,7 +92,7 @@ public class KVIntegrationTest {
 
         String command = "PUT newkey202 newvalue202";
         String response = doRequest(command);
-        assertThat(response, is(equalTo("put_success newkey202 newvalue202")));
+        assertThat(response, is(equalTo("put_success newkey202")));
 
     }
 
@@ -101,7 +101,16 @@ public class KVIntegrationTest {
 
         String command = "PUT elephant one two three";
         String response = doRequest(command);
-        assertThat(response, is(equalTo("put_success elephant one two three")));
+        assertThat(response, is(equalTo("put_success elephant")));
+
+    }
+
+    @Test
+    public void test1_IllegalWorldValuePutSuccess() throws InterruptedException, IOException {
+
+        String command = "put @12347 -/() abc def";
+        String response = doRequest(command);
+        assertThat(response, is(equalTo("put_success @12347")));
 
     }
 
