@@ -95,10 +95,9 @@ public class Metadata implements Serializable {
         LOGGER.info("Received encoded string: " + keyHash);
         String decodedStr = B64Util.b64decode(keyHash);
         LOGGER.info("Received decoded string: " + decodedStr);
-        String hashed = calculateHash(decodedStr);
-        LOGGER.info("Hash decoded string: " + hashed);
-        String key = serverMap.ceilingKey(hashed);
-        LOGGER.info("Search for this: " + key);
+
+        String key = serverMap.ceilingKey(calculateHash(B64Util.b64decode(keyHash)));
+
 
         if(key == null || key.isEmpty())
             key = serverMap.firstKey();
