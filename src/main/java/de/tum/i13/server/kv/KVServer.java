@@ -397,7 +397,7 @@ public class KVServer implements KVStore {
             public Void call() throws Exception {
                 LOGGER.fine("Calculate key range");
 
-                String message = KVMessage.StatusType.KEY_RANGE_SUCCESS.name().toLowerCase() + " " + B64Util.b64encode(metadata.getServerHashRange()) + "\r\n";
+                String message = KVMessage.StatusType.KEY_RANGE_SUCCESS.name().toLowerCase() + " " + metadata.getServerHashRange() + "\r\n";
                 LOGGER.info("Answer to Client: " + message);
 
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
