@@ -50,7 +50,7 @@ public class Util {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 //            md.update((address + "+" + port).getBytes());
-            md.update((address + port).getBytes());
+            md.update((address + ":" +port).getBytes());
             return bytesToHex(md.digest());
         } catch (NoSuchAlgorithmException e) {
             // we will never reach here as MD5 is a supported Algorithm
