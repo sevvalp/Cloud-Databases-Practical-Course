@@ -4,6 +4,7 @@ import de.tum.i13.client.SocketCommunicator;
 import de.tum.i13.server.kv.KVCommandProcessor;
 import de.tum.i13.shared.B64Util;
 import org.hamcrest.CoreMatchers;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -23,7 +24,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestMethodOrder(MethodOrderer.Alphanumeric.class)
 public class KVIntegrationTest {
 
-    public static Integer port = 5153;
+    public static Integer port = 5155;
+
+    @BeforeAll
+    private static void startServer() throws InterruptedException{
+        Thread th = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    de.tum.i13.server.ecs.StartECS.main(new String[]{"-p", "5153", "-a", "127.0.0.1"});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        th.start();
+        Thread.sleep(2000);
+
+        Thread thServer = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{"-a", "127.0.0.1", "-p", "5155", "-b", "127.0.0.1:5153"});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        thServer.start(); // started the server
+        Thread.sleep(2000);
+
+    }
+
 
 
     public String getResponse(Socket s)throws IOException{
@@ -57,19 +89,6 @@ public class KVIntegrationTest {
 
     @Test
     public void test1_smokeTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
-        th.interrupt();
 
         String command = "PUT newkey202 newvalue202";
         String response = doRequest(command);
@@ -79,19 +98,6 @@ public class KVIntegrationTest {
 
     @Test
     public void test1_multiWorldValuePutSuccess() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
-        th.interrupt();
 
         String command = "PUT elephant one two three";
         String response = doRequest(command);
@@ -102,18 +108,6 @@ public class KVIntegrationTest {
 
     @Test
     public void test2_getNonExistentTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
 
         String command = "GET newkey213";
         String response = doRequest(command);
@@ -123,18 +117,6 @@ public class KVIntegrationTest {
 
     @Test
     public void test3_getSuccessfulTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
 
         String command = "GET newkey202";
         String response = doRequest(command);
@@ -144,18 +126,7 @@ public class KVIntegrationTest {
 
     @Test
     public void test4_deleteSuccessfulTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
+
 
         String command = "DELETE newkey202";
         String response = doRequest(command);
@@ -165,18 +136,7 @@ public class KVIntegrationTest {
 
     @Test
     public void test5_deleteErrorTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
+
 
         String command = "DELETE newkey202";
         String response = doRequest(command);
@@ -187,18 +147,7 @@ public class KVIntegrationTest {
 
     @Test
     public void getNonExistentTest() throws InterruptedException, IOException {
-        Thread th = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        th.start(); // started the server
-        Thread.sleep(2000);
+
 
         String command = "GET newkey213";
         String response = doRequest(command);
@@ -208,22 +157,11 @@ public class KVIntegrationTest {
 
     @Test
     public void unknownCommandTest() throws InterruptedException, IOException, SizeLimitExceededException {
-//        Thread th = new Thread() {
-//            @Override
-//            public void run() {
-//                try {
-//                    de.tum.i13.server.nio.StartSimpleNioServer.main(new String[]{});
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        };
-//        th.start(); // started the server
-//        Thread.sleep(2000);
+
 
         String command =  "arbitrary@++-- string 123\r\n";
         SocketCommunicator communicator = new SocketCommunicator();
-        communicator.connect("127.0.0.1", 5153);
+        communicator.connect("127.0.0.1", 5155);
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         communicator.send(command.getBytes(StandardCharsets.UTF_8));
         msg = new String(communicator.receive(), TELNET_ENCODING);
