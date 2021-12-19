@@ -11,6 +11,7 @@ import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -352,7 +353,7 @@ public class TestStore implements KVStore {
             return null;
 
 
-        KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0]);
+        KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0].toUpperCase(Locale.ROOT));
         if (status == KVMessage.StatusType.ERROR) {
             return null;
         }

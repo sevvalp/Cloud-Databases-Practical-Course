@@ -63,7 +63,8 @@ public interface KVMessage {
      */
     public static StatusType parseStatus(String status) {
         for (StatusType t : StatusType.values()) {
-            if (status.toUpperCase().equals(t.name().toUpperCase()))
+            String uStatus = status.toUpperCase();
+            if (uStatus.equals(t.name().toLowerCase()))
                     return t;
         }
 
