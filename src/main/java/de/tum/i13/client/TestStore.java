@@ -217,7 +217,7 @@ public class TestStore implements KVStore {
         communicator.send(message.getBytes(TELNET_ENCODING));
         KVMessage retMsg = receiveKVMessage();
         int attempts = 0;
-        while (attempts < 4) {
+        while (attempts < 3) {
             if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
                     try {
                         MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
