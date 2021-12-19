@@ -1,6 +1,5 @@
 package de.tum.i13.shared;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -26,6 +25,6 @@ public class B64Util {
      * @return Decoded String.″
      */
     public static String b64decode(String s) {
-        return new String(Base64.getDecoder().decode(s.getBytes(StandardCharsets.UTF_8)));
+        return new String(Base64.getDecoder().decode(s));
     }
 }
