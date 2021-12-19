@@ -101,17 +101,20 @@ public class TestStore implements KVStore {
      */
     public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         int attempts = 0;
+        String message = String.format("%s \r\n", command.toUpperCase());
+        LOGGER.info("Message to server: " + message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        String msg = new String(communicator.receive(), TELNET_ENCODING);
+        String[] response = msg.split(" ");
         while(true) {
-            String message = String.format("%s \r\n", command.toUpperCase());
-            LOGGER.info("Message to server: " + message);
-            communicator.send(message.getBytes(TELNET_ENCODING));
-            String msg = new String(communicator.receive(), TELNET_ENCODING);
-            String[] response = msg.split(" ");
             switch (response[0]) {
                 //Retry sending with backoff
                 case "SERVER_STOPPED":
                     try {
                         MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                        communicator.send(message.getBytes(TELNET_ENCODING));
+                        msg = new String(communicator.receive(), TELNET_ENCODING);
+                        response = msg.split(" ");
                     } catch (InterruptedException e) {
                         LOGGER.warning("Error while retrying to send keyrange request");
                     }
@@ -223,6 +226,9 @@ public class TestStore implements KVStore {
                         LOGGER.warning("Error while retrying to send put request");
                     }
             }
+            else {
+                break;
+            }
         }
         return retMsg;
     }
@@ -263,6 +269,9 @@ public class TestStore implements KVStore {
                     LOGGER.warning("Error while retrying to send get request");
                 }
             }
+            else {
+                break;
+            }
         }
         return retMsg;
     }
@@ -302,6 +311,9 @@ public class TestStore implements KVStore {
                 } catch (InterruptedException e) {
                     LOGGER.warning("Error while retrying to send delete request");
                 }
+            }
+            else {
+                break;
             }
         }
         return retMsg;
