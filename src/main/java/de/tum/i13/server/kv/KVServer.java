@@ -444,58 +444,69 @@ public class KVServer implements KVStore {
         LOGGER.fine("Submitting new rebalance callable to pool for key " + msg.getKey());
 
 
-        serverWriteLock = true;
-        LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
+        changeServerWriteLockStatus(true);
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine("Rebalancing key from cache: " + msg.getKey());
 
-        String addressinfo[] = B64Util.b64decode(msg.getKey()).split(":");
-        //get pairs which are smaller than new server hash
-        String nsh = B64Util.b64decode(msg.getValue());
-        String csh = Util.calculateHash(listenaddress, port);
+                String addressinfo[] = B64Util.b64decode(msg.getKey()).split(":");
+                //get pairs which are smaller than new server hash
+                String nsh = B64Util.b64decode(msg.getValue());
+                String csh = Util.calculateHash(listenaddress, port);
 
-        TreeMap<String, Pair<String, String>> sendHist = new TreeMap<>();
+                TreeMap<String, Pair<String, String>> sendHist = new TreeMap<>();
 
-        for (String s : historicPairs.headMap(nsh).keySet()) {
-            sendHist.put(s, historicPairs.headMap(nsh).get(s));
-        }
-        historicPairs.headMap(nsh).clear();
+                for (String s : historicPairs.headMap(nsh).keySet()) {
+                    sendHist.put(s, historicPairs.headMap(nsh).get(s));
+                }
+                historicPairs.headMap(nsh).clear();
 
-        //get pairs which are bigger that current server hash
-        for (String s : historicPairs.tailMap(csh).keySet()) {
-            sendHist.put(s, historicPairs.tailMap(csh).get(s));
-        }
-        historicPairs.tailMap(csh).clear();
+                //get pairs which are bigger that current server hash
+                for (String s : historicPairs.tailMap(csh).keySet()) {
+                    sendHist.put(s, historicPairs.tailMap(csh).get(s));
+                }
+                historicPairs.tailMap(csh).clear();
 
-        //delete pairs from cache and disk as well
-        for (String hKey : sendHist.keySet()) {
-            String key = sendHist.get(hKey).getKey().toString();
-            LOGGER.fine("Deleting key from cache: " + key);
-            cache.delete(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
-            LOGGER.fine("Deleting key from disk: " + key);
-            // Delete kv pair from disk
-            disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
-        }
+                //delete pairs from cache and disk as well
+                for (String hKey : sendHist.keySet()) {
+                    String key = sendHist.get(hKey).getKey().toString();
+                    LOGGER.fine("Deleting key from cache: " + key);
+                    cache.delete(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
+                    LOGGER.fine("Deleting key from disk: " + key);
+                    // Delete kv pair from disk
+                    disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, null));
+                }
 
-        String message;
-        if (sendHist.isEmpty() || sendHist == null) {
-            message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null "+ msg.getValue() + "\r\n";
-        } else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
+                String message;
+                if (sendHist.isEmpty() || sendHist == null) {
+                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null " + msg.getValue() + "\r\n";
+                } else
+                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
 
-        LOGGER.info("Send handoff data to successor: " + message);
+                LOGGER.info("Send handoff data to successor: " + message);
 
-        //how will I know it's selectionKey? then connect
-        kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
-        kvServer2ServerCommunicator.receive();
-        kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
-        //LOGGER.info("Rebalance done: " + new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING));
+                //how will I know it's selectionKey? then connect
+                kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
+                kvServer2ServerCommunicator.receive();
+                kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
+                //LOGGER.info("Rebalance done: " + new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING));
 
-        //release write lock
-        serverWriteLock = false;
-        kvServer2ServerCommunicator.disconnect();
+                //release write lock
+                //serverWriteLock = false;
+                kvServer2ServerCommunicator.disconnect();
 
 
-        //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
-        kvServerECSCommunicator.send(("rebalance_success "+ msg.getKey() +" "+ msg.getValue() + "\r\n").getBytes(TELNET_ENCODING));
-        LOGGER.info("Rebalance success send to ECS");
+                //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+                kvServerECSCommunicator.send(("rebalance_success " + msg.getKey() + " " + msg.getValue() + "\r\n").getBytes(TELNET_ENCODING));
+                LOGGER.info("Rebalance success send to ECS");
+
+                return null;
+            }
+            public Object getStripe() {
+                changeServerWriteLockStatus(false);
+                return msg.getKey();
+            }
+        });
 
         //receive update metadata
 
@@ -524,33 +535,44 @@ public class KVServer implements KVStore {
         LOGGER.info("Rebalance server key-value according to new server: %s" + msg.getKey());
 
 
-        if (!msg.getKey().toString().equals("null")) {
-            serverWriteLock = true;
-            LOGGER.fine("Rebalance keys from historic data" + msg.getKey());
-            String msgKey = B64Util.b64decode(msg.getKey());
-            TreeMap<String, Pair<String, String>> map = convertStringToMap(msgKey);
-            historicPairs.putAll(map);
+        changeServerWriteLockStatus(true);
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
 
-            for (String hKey : convertStringToMap(msgKey).keySet()) {
-                String key = historicPairs.get(hKey).getKey().toString();
-                String value = historicPairs.get(hKey).getValue().toString();
-                LOGGER.fine("Put key,value to cache: " + key + ", " + value);
-                cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
-                LOGGER.fine("Put key,value to disk: " + key + ", " + value);
-                disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                if (!msg.getKey().toString().equals("null")) {
+
+                    LOGGER.fine("Rebalance keys from historic data" + msg.getKey());
+                    String msgKey = B64Util.b64decode(msg.getKey());
+                    TreeMap<String, Pair<String, String>> map = convertStringToMap(msgKey);
+                    historicPairs.putAll(map);
+
+                    for (String hKey : convertStringToMap(msgKey).keySet()) {
+                        String key = historicPairs.get(hKey).getKey().toString();
+                        String value = historicPairs.get(hKey).getValue().toString();
+                        LOGGER.fine("Put key,value to cache: " + key + ", " + value);
+                        cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                        LOGGER.fine("Put key,value to disk: " + key + ", " + value);
+                        disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                    }
+                    LOGGER.fine("Rebalance done,write lock released");
+
+                 }
+
+                //serverWriteLock = false;
+                String message = "rebalance_ok" + " " + B64Util.b64encode(listenaddress+":"+port) + " " + msg.getValue() +  "\r\n";
+                //server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                //receive update metadata from ECS
+                //        String updateStr = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
+                //        String[] request = updateStr.split("\\s");
+                //        receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA,request[1], request[2], null ));
+                return null;
             }
-            LOGGER.fine("Rebalance done,write lock released");
-
-        }
-
-        serverWriteLock = false;
-        String message = "rebalance_ok" + " " + B64Util.b64encode(listenaddress+":"+port) + " " + msg.getValue() +  "\r\n";
-        //server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
-
-        //receive update metadata from ECS
-//        String updateStr = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
-//        String[] request = updateStr.split("\\s");
-//        receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA,request[1], request[2], null ));
+            public Object getStripe() {
+                changeServerWriteLockStatus(false);
+                return msg.getKey();
+            }
+        });
 
         return null;
     }
@@ -572,15 +594,27 @@ public class KVServer implements KVStore {
         if (msg.getStatus() != KVMessage.StatusType.UPDATE_METADATA)
             return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
-        LOGGER.info("Metadata received. ");
         changeServerWriteLockStatus(true);
-        String serverInfo = B64Util.b64decode(msg.getValue());
-        if(serverInfo.split(";").length == 1)
-            this.metadata = new Metadata(new KVServerInfo(serverInfo));
-        metadata.updateMetadata(serverInfo);
 
-        changeServerStatus(true);
-        changeServerWriteLockStatus(false);
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.info("Metadata received. ");
+
+                String serverInfo = B64Util.b64decode(msg.getValue());
+                if(serverInfo.split(";").length == 1)
+                    metadata = new Metadata(new KVServerInfo(serverInfo));
+                metadata.updateMetadata(serverInfo);
+
+//                changeServerStatus(true);
+//                changeServerWriteLockStatus(false);
+                return null;
+            }
+            public Object getStripe() {
+                changeServerStatus(true);
+                serverWriteLock = false;
+                return msg.getKey();
+            }
+        });
 
         LOGGER.info("Metadata updated, server active, write lock released");
         return null;
