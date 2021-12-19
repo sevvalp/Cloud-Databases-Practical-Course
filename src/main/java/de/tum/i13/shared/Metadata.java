@@ -107,12 +107,14 @@ public class Metadata implements Serializable {
 
 
     public String getServerHashRange(){
+
+        //<range_from>,<range_to>,<ip:port>;
         String message = "";
         for(String s : serverMap.keySet()){
             KVServerInfo serverInfo = serverMap.get(s);
-            message += "<"+ serverInfo.getStartIndex() + ">, <" + serverInfo.getEndIndex() + ">, <" + serverInfo.getAddress() + ":" + serverInfo.getPort() + ">;";
+            message += "<"+ B64Util.b64encode(serverInfo.getStartIndex()) + ">, <" + B64Util.b64encode(serverInfo.getEndIndex()) + ">, <" + B64Util.b64encode(serverInfo.getAddress() + ":" + serverInfo.getPort()) + ">;";
         }
-        return message + "\r\n";
+        return message;
     }
 
     public String getRangeHash(String index) throws NoSuchElementException{
