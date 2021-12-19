@@ -4,6 +4,8 @@ package de.tum.i13.shared;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
@@ -87,8 +89,11 @@ public class Metadata implements Serializable {
         return serverMap;
     }
 
-    public boolean checkServerResponsible(String keyHash){
-        String key = serverMap.ceilingKey(calculateHash(B64Util.b64decode(keyHash)));
+    public boolean checkServerResponsible(String keyHash) throws UnsupportedEncodingException {
+
+        String decoded = new String(keyHash.getBytes("ISO-8859-1"));
+
+        String key = serverMap.ceilingKey(calculateHash(decoded));
 
         if(key == null || key.isEmpty())
             key = serverMap.firstKey();
