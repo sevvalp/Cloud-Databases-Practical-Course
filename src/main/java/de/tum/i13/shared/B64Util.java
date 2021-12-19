@@ -1,7 +1,6 @@
 package de.tum.i13.shared;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -34,11 +33,6 @@ public class B64Util {
      * @return Decoded String.″
      */
     public static String b64decode(String s) {
-        try {
-            return new String(Base64.getDecoder().decode(s.getBytes(TELNET_ENCODING)));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return "";
+        return new String(Base64.getDecoder().decode(s));
     }
 }
