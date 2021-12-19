@@ -2,18 +2,15 @@ package de.tum.i13.shared;
 
 
 import de.tum.i13.server.kv.KVServerInfo;
-import de.tum.i13.server.nio.SimpleNioServer;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
-import java.util.logging.Logger;
 
 
 public class Metadata implements Serializable {
 
-    private final Logger LOGGER = Logger.getLogger(Metadata.class.getName());
     // <hash of server, server info object>
     private TreeMap<String, KVServerInfo> serverMap;
     // only needed if instantiated in KVServer
@@ -92,12 +89,7 @@ public class Metadata implements Serializable {
 
     public boolean checkServerResponsible(String keyHash){
 
-        LOGGER.info("Received encoded string: " + keyHash);
-        String decodedStr = B64Util.b64decode(keyHash);
-        LOGGER.info("Received decoded string: " + decodedStr);
-
         String key = serverMap.ceilingKey(calculateHash(B64Util.b64decode(keyHash)));
-
 
         if(key == null || key.isEmpty())
             key = serverMap.firstKey();
