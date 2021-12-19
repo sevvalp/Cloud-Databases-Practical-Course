@@ -12,7 +12,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -195,8 +194,7 @@ public class SimpleNioServer {
 
             // In case we have now finally reached all characters
             if (checkIfFinished(concatenated)) {
-//                String data = new String(concatenated, TELNET_ENCODING);
-                String data = new String(concatenated, StandardCharsets.UTF_8);
+                String data = new String(concatenated, TELNET_ENCODING);
                 this.pendingReads.remove(key);
                 handleRequest(key, data);
             } else {
@@ -208,8 +206,7 @@ public class SimpleNioServer {
             // In this case no buffering in the hashtable and start direct
             // handling the request
             if (checkIfFinished(dataCopy)) {
-//                String data = new String(dataCopy, TELNET_ENCODING);
-                String data = new String(dataCopy, StandardCharsets.UTF_8);
+                String data = new String(dataCopy, TELNET_ENCODING);
                 handleRequest(key, data);
             } else {
                 // in case it is the first request we
