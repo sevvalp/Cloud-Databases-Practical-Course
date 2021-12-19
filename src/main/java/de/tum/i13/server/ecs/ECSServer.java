@@ -12,6 +12,7 @@ import de.tum.i13.shared.Util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.*;
@@ -198,10 +199,19 @@ public class ECSServer {
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
         // extract info from message
-        String[] payload = B64Util.b64decode(msg.getValue()).split(",");
+        String[] payload = B64Util.b64decode(msg.getKey()).split(",");
 
         // find next server
-        Map.Entry next = this.serverMap.ceilingEntry(msg.getKey());
+        Map.Entry<String, KVServerInfo> next = this.serverMap.ceilingEntry(msg.getKey());
+
+        if (payload.length != 3)
+            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Cant parse payload!"));
+
+        String address = payload[0];
+        int port = Integer.parseInt(payload[1]);
+        int intraPort = Integer.parseInt(payload[2]);
+        String hash = Util.calculateHash(address, port);
+
         if (next == null)
             next = this.serverMap.firstEntry();
 
@@ -211,7 +221,10 @@ public class ECSServer {
             this.serverMap.remove(msg.getKey());
         } else {
             // TODO: writelock on server to remove & transfer data to next server
-            this.stoppingServers.put(msg.getKey(), this.serverMap.get(msg.getKey()));
+            this.stoppingServers.put(hash, this.serverMap.get(hash));
+//            String message = "rebalance " + B64Util.b64encode(address + ":" + intraPort) + " " + B64Util.b64encode(hash) + "\r\n";
+            String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + msg.getValue() + " " + msg.getKey() + "\r\n";
+            sendMessage(next.getValue().getAddress(), next.getValue().getPort(), message );
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));

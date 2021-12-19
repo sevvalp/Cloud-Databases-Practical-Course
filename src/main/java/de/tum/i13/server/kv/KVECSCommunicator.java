@@ -134,7 +134,7 @@ public class KVECSCommunicator implements Runnable {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
 
-                kvStore.gracefullyShutdown();
+//                kvStore.gracefullyShutdown();
                 //send ecs historic data
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
