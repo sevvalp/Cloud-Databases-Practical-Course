@@ -26,6 +26,6 @@ public class StartECS {
 
         sn.bindSocket(cfg.listenaddr, cfg.port);
         sn.start();
-        ecs.startHeartbeat();
+        //ecs.startHeartbeat();
     }
 }

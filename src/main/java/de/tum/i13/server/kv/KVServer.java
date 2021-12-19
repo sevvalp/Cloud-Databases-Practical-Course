@@ -519,6 +519,17 @@ public class KVServer implements KVStore {
         return null;
     }
 
+    public KVMessage respondHeartbeat(KVMessage msg) {
+        String message = "ecs_heartbeat " + B64Util.b64encode(listenaddress + ":" + port) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port)) + "\r\n";
+        try {
+            LOGGER.info("Responding to heartbeat: " + message);
+            kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * rebalance.
      *
@@ -745,7 +756,8 @@ public class KVServer implements KVStore {
 //                    String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
                     LOGGER.info("Message to ECS: " + message);
                     kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
-                    LOGGER.info("Notified ECS gracefully shut down.");
+                    LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
+                    System.out.println(kvServerECSCommunicator.receive());
                     kvServerECSCommunicator.disconnect();
                 } catch (Exception e) {
                     LOGGER.info("ECS Exception while stopping server.");

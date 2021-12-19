@@ -1,35 +1,37 @@
-package de.tum.i13.server.kv;
+package de.tum.i13.server.ecs;
 
 
 import de.tum.i13.client.SocketCommunicator;
+import de.tum.i13.server.kv.KVCommunicator;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
-public class KVServerCommunicator implements KVCommunicator {
+public class EcsServerCommunicator {
 
-    private final static Logger LOGGER = Logger.getLogger(KVServerCommunicator.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(EcsServerCommunicator.class.getName());
 
     private Socket mSocket;
     private OutputStream output;
     private InputStream input;
-    private boolean isConnected;
+    private List<String> connections;
 
-    public KVServerCommunicator() {
+    public EcsServerCommunicator() {
         mSocket = new Socket();
         output = null;
         input = null;
-        isConnected = false;
+        connections = new ArrayList<>();
     }
 
-    @Override
-    public void disconnect() throws Exception {
+    public void disconnect(String key) throws Exception {
         // check if the socket is connected
-        if (isConnected) {
-  //          LOGGER.fine("Socket currently connected, trying to disconnect.");
+        if (connections.contains(key)) {
+            //          LOGGER.fine("Socket currently connected, trying to disconnect.");
             try {
                 // close connection
                 output.close();
@@ -43,7 +45,7 @@ public class KVServerCommunicator implements KVCommunicator {
             }
 
             // update variables
-            isConnected = false;
+            connections.remove(key);
         } else {
             LOGGER.warning("Socket is not connected!");
             throw new IllegalStateException("Not connected to KVServer!");
@@ -51,22 +53,21 @@ public class KVServerCommunicator implements KVCommunicator {
 
     }
 
-    @Override
     public void connect(String host, int port) throws Exception {
         // check if the socket is disconnected
-        if (!isConnected) {
+        if (!connections.contains(host + ":" + port)) {
 //            LOGGER.fine("Socket currently not connected, trying to connect");
             try {
                 mSocket = new Socket(host, port);
 //                LOGGER.info("Socket connected successfully");
-                isConnected = true;
+                connections.add(host + ":" + port);
                 output = mSocket.getOutputStream();
 //                LOGGER.fine("Successfully got outputStream from socket");
                 input = mSocket.getInputStream();
 //                LOGGER.fine("Successfully got inputStream from socket");
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while connecting");
-                isConnected = false;
+                connections.remove(host + ":" + port);
                 e.printStackTrace();
                 throw e;
             }
@@ -83,18 +84,17 @@ public class KVServerCommunicator implements KVCommunicator {
      * @return true, if the socket is currently connected
      *         false, otherwise
      */
-    public boolean isConnected() {
-        return isConnected;
+    public boolean isConnected(String key) {
+        return connections.contains(key);
     }
 
 
-    @Override
-    public void send(byte[] data) throws Exception {
+    public void send(String key, byte[] data) throws Exception {
         // check if the socket is connected
-        if (isConnected) {
+        if (connections.contains(key)) {
             if (data.length > 128000) {
                 LOGGER.warning("Length of message too high! Not sending");
-                throw new SizeLimitExceededException("Length of message too high!");
+                throw new SizeLimitExceededException("Length of message to high!");
             }
 
 //            LOGGER.fine("Socket currently connected, trying to send data");
@@ -105,7 +105,7 @@ public class KVServerCommunicator implements KVCommunicator {
                 LOGGER.info("Successfully sent data");
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while sending data");
-                isConnected = false;
+                connections.remove(key);
                 throw e;
             }
         } else {
@@ -115,10 +115,9 @@ public class KVServerCommunicator implements KVCommunicator {
 
     }
 
-    @Override
-    public byte[] receive() throws Exception {
+    public byte[] receive(String key) throws Exception {
         // check if the socket is connected
-        if (isConnected) {
+        if (connections.contains(key)) {
             //LOGGER.fine("Socket currently connected, trying to read data");
             ByteArrayOutputStream data = new ByteArrayOutputStream();
 
@@ -133,37 +132,7 @@ public class KVServerCommunicator implements KVCommunicator {
                 }
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while reading input stream");
-                isConnected = false;
-                throw e;
-            }
-            LOGGER.info(String.format("Received %d bytes: \"%s\"", data.size(), new String(data.toByteArray(), StandardCharsets.ISO_8859_1)));
-            //LOGGER.fine(String.format("In hex: %s", printHexBinary(data.toByteArray())));
-            return data.toByteArray();
-
-        } else {
-            LOGGER.warning("Socket currently disconnected!");
-            throw new IllegalStateException("Not connected to KVServer!");
-        }
-    }
-
-    public byte[] receive(InputStream input) throws Exception {
-        // check if the socket is connected
-        if (isConnected) {
-            LOGGER.fine("Socket currently connected, trying to read data");
-            ByteArrayOutputStream data = new ByteArrayOutputStream();
-
-            try {
-                // iterate over input until \r\n is read
-                byte readByte = 0;
-                byte lastByte = 0;
-                while (lastByte != '\r' || readByte != '\n') {
-                    lastByte = readByte;
-                    readByte = (byte) input.read();
-                    data.write(readByte);
-                }
-            } catch (IOException e) {
-                LOGGER.severe("IO Exception while reading input stream");
-                isConnected = false;
+                connections.remove(key);
                 throw e;
             }
             LOGGER.info(String.format("Received %d bytes: \"%s\"", data.size(), new String(data.toByteArray(), StandardCharsets.ISO_8859_1)));

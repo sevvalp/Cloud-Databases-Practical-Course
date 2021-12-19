@@ -51,8 +51,8 @@ public class ECSCommandProcessor implements CommandProcessor {
                 break;
             default:
                 // handle unknown commands
-                ecs.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
                 LOGGER.info("Unknown command: " + String.join(" ", request));
+                ecs.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
                 break;
         }
     }

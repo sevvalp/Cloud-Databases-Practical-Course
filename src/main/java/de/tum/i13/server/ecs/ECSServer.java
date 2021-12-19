@@ -30,6 +30,7 @@ public class ECSServer {
     private TreeMap<String, KVServerInfo> stoppingServers;
     private ConcurrentHashMap<String, Long> heartBeatTime;
 
+    private EcsServerCommunicator communicator;
     private ExecutorService pool;
 
     public ECSServer() {
@@ -38,6 +39,8 @@ public class ECSServer {
         this.stoppingServers = new TreeMap<>();
         this.heartBeatTime = new ConcurrentHashMap<>();
         this.pool = new StripedExecutorService();
+        this.communicator = new EcsServerCommunicator();
+        this.startHeartbeat();
     }
 
     /**
@@ -271,30 +274,32 @@ public class ECSServer {
     }
 
     public void startHeartbeat() {
+        LOGGER.info("starting heartbeat");
         Runnable heartBeat = new Runnable() {
             @Override
             public void run() {
+                //LOGGER.info("Sending heartbeats to connected servers.");
+
                 // if server is not set, we cannot send messages
                 if (server == null)
                     return;
 
-                LOGGER.info("Sending heartbeats to connected servers.");
                 boolean disconnected = false;
                 for (Map.Entry<String, KVServerInfo> e : serverMap.entrySet()) {
                     long unixTimeMillis = System.currentTimeMillis();
-
-                    // check for last heartbeat
-                    if (unixTimeMillis - heartBeatTime.get(e.getKey()) > 700L) {
+                    if (heartBeatTime.get(e.getKey()) == null) {
+                        // KVServer never got heartbeat, initializing with current time
+                        heartBeatTime.put(e.getKey(), unixTimeMillis - 500);
+                        LOGGER.info("Initializing heartbeat time of server " + e.getKey());
+                    }
+                    // check for last heartbeat, checking for 1100ms, as there were sometimes issues using 1000ms
+                    if (unixTimeMillis - heartBeatTime.get(e.getKey()) < 300L || unixTimeMillis - heartBeatTime.get(e.getKey()) >= 1100) {
                         LOGGER.warning("Server " + e.getValue().getAddress() + ":" + e.getValue().getPort() + "failed to respond. Removing...");
                         serverMap.remove(e.getKey());
                     } else {
                         LOGGER.info("Heartbeat to " + e.getValue().getAddress());
                         String message = "ECS_HEARTBEAT " + B64Util.b64encode(e.getValue().getAddress() + ":" + e.getValue().getPort()) + " " + B64Util.b64encode(e.getKey()) + "\r\n";
-                        try {
-                            server.send(e.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
-                        } catch (UnsupportedEncodingException ex) {
-                            ex.printStackTrace();
-                        }
+                        sendMessage(e.getValue().getAddress(), e.getValue().getPort(), message );
                     }
                 }
 
@@ -309,15 +314,20 @@ public class ECSServer {
 
     private void sendMessage(String address, int port, String message){
 
-        KVServerCommunicator kvom = new KVServerCommunicator();
+        if (!communicator.isConnected(address + ":" + port)) {
+            try {
+                communicator.connect(address, port);
+                communicator.receive(address + ":" + port);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         try {
-            kvom.connect(address,port);
-            kvom.send(message.getBytes(TELNET_ENCODING));
-            kvom.receive();
-            kvom.disconnect();
+            communicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 }
+

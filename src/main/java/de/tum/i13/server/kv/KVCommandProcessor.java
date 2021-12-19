@@ -71,6 +71,10 @@ public class KVCommandProcessor implements CommandProcessor {
                 LOGGER.info("update_metadata request");
                 kvStore.receiveMetadata(new ServerMessage(KVMessage.StatusType.UPDATE_METADATA, request[1], request[2], selectionKey));
                 break;
+            case "ecs_heartbeat":
+                LOGGER.info("Heartbeat");
+                kvStore.respondHeartbeat(new ServerMessage(KVMessage.StatusType.ECS_HEARTBEAT, request[1], request[2], selectionKey));
+                break;
             default:
                 //here handle unknown commands
                 kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
