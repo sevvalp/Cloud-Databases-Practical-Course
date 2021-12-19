@@ -89,7 +89,7 @@ public class Metadata implements Serializable {
 
     public boolean checkServerResponsible(String keyHash){
 
-        String key = serverMap.ceilingKey(calculateHash(B64Util.b64decode(keyHash)));
+        String key = serverMap.ceilingKey(calculateHash(keyHash));
 
         if(key == null || key.isEmpty())
             key = serverMap.firstKey();
