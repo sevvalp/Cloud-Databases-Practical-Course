@@ -52,6 +52,25 @@
                         </goals>
                     </execution>
                     <execution>
+                        <id>ecs-server</id>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <archive>
+                                <manifest>
+                                    <mainClass>de.tum.i13.server.ecs.StartECS</mainClass> <!-- Point this to your implementation-->
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>ecs-server</finalName> <!-- Do not change this name-->
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
                         <id>echo-client</id>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
