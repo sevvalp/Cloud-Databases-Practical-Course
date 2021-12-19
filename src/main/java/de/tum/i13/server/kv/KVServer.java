@@ -136,7 +136,7 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + " " + prepareMapToSend(metadata.getServerMap());
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH);
             LOGGER.info("Answer to Client: " + message);
             server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
@@ -207,7 +207,7 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if(!checkServerResponsible(msg.getKey())){
-            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + " " + prepareMapToSend(metadata.getServerMap());
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH);
             LOGGER.info("Answer to Client: " + message);
             server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
@@ -290,7 +290,7 @@ public class KVServer implements KVStore {
         }
         //if server is not responsible for given key
         if (!checkServerResponsible(msg.getKey())) {
-            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + " " + prepareMapToSend(metadata.getServerMap());
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH);
             LOGGER.info("Answer to Client: " + message);
             server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
