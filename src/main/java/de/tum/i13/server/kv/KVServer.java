@@ -164,7 +164,7 @@ public class KVServer implements KVStore {
                 res = disk.writeContent(msg);
 
                 //add/update to history
-                String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
+                String hashedKey = Util.calculateHash(msg.getKey());
                 if (!historicPairs.containsKey(hashedKey))
                     historicPairs.put(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
                 else historicPairs.replace(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
