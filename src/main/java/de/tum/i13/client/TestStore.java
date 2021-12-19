@@ -368,8 +368,8 @@ public class TestStore implements KVStore {
             return new ClientMessage(status, null, null);
         } else {
             String rcvKey = B64Util.b64decode(rcvMsg[1]);
-            String rcvVal = B64Util.b64decode(rcvMsg[2]);
-            return new ClientMessage(status, rcvKey, rcvVal);
+            //String rcvVal = B64Util.b64decode(rcvMsg[2]);
+            return new ClientMessage(status, rcvKey, null);
         }
     }
     /**

@@ -179,7 +179,7 @@ public class TestClient {
                 String value = v.toString();
                 KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
                 switch (msg.getStatus()) {
-                    case PUT_SUCCESS: System.out.printf("Successfully put <%s, %s>%n", msg.getKey(), msg.getValue()); break;
+                    case PUT_SUCCESS: System.out.printf("Successfully put <%s", msg.getKey()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;

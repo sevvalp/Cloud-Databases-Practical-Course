@@ -158,27 +158,28 @@ public class KVServer implements KVStore {
                 // first, write the kv pair into the cache
                 KVMessage res = cache.put(msg);
                 String message;
-                if (res.getStatus() == KVMessage.StatusType.PUT_SUCCESS || res.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
-                    LOGGER.fine(String.format("Successfully put key into cache, now writing to disk: <%s, %s>", msg.getKey(), msg.getValue()));
-                    // successfully written kv pair into cache, now write to disk
-                    res = disk.writeContent(msg);
+//                if (res.getStatus() == KVMessage.StatusType.PUT_SUCCESS || res.getStatus() == KVMessage.StatusType.PUT_UPDATE) {
+                LOGGER.fine(String.format("Successfully put key into cache, now writing to disk: <%s, %s>", msg.getKey(), msg.getValue()));
+                // successfully written kv pair into cache, now write to disk
+                res = disk.writeContent(msg);
 
-                    //add/update to history
-                    String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
-                    if (!historicPairs.containsKey(hashedKey))
-                        historicPairs.put(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
-                    else historicPairs.replace(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
+                //add/update to history
+                String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
+                if (!historicPairs.containsKey(hashedKey))
+                    historicPairs.put(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
+                else historicPairs.replace(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
 
-                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
-                } else {
-                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
-                }
+//                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+//                } else {
+                message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
+//                }
 
                 // return answer to client
                 LOGGER.info("Answer to client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
                 return null;
             }
+
 
             public Object getStripe() {
                 return msg.getKey();
