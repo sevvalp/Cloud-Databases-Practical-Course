@@ -112,7 +112,7 @@ public class Metadata implements Serializable {
         String message = "";
         for(String s : serverMap.keySet()){
             KVServerInfo serverInfo = serverMap.get(s);
-            message += "<"+ B64Util.b64encode(serverInfo.getStartIndex()) + ">, <" + B64Util.b64encode(serverInfo.getEndIndex()) + ">, <" + B64Util.b64encode(serverInfo.getAddress() + ":" + serverInfo.getPort()) + ">;";
+            message += "<"+ B64Util.b64decode(serverInfo.getStartIndex()) + ">, <" + B64Util.b64decode(serverInfo.getEndIndex()) + ">, <" + B64Util.b64decode(serverInfo.getAddress() + ":" + serverInfo.getPort()) + ">;";
         }
         return message;
     }
