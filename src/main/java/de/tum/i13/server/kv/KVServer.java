@@ -164,8 +164,7 @@ public class KVServer implements KVStore {
                     res = disk.writeContent(msg);
 
                     //add/update to history
-                    String decoded = new String(msg.getKey().getBytes("ISO-8859-1"));
-                    String hashedKey = Util.calculateHash(decoded);
+                    String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
                     if (!historicPairs.containsKey(hashedKey))
                         historicPairs.put(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
                     else historicPairs.replace(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
@@ -323,9 +322,7 @@ public class KVServer implements KVStore {
                 KVMessage res = disk.deleteContent(msg);
 
                 //delete from history
-                String decoded = new String(msg.getKey().getBytes("ISO-8859-1"));
-
-                String hashedKey = Util.calculateHash(decoded);
+                String hashedKey = Util.calculateHash(B64Util.b64decode(msg.getKey()));
                 historicPairs.remove(hashedKey);
 
                 // return answer to client
@@ -630,7 +627,7 @@ public class KVServer implements KVStore {
      * @param key
      * @return true
      */
-    public boolean checkServerResponsible(String key) throws UnsupportedEncodingException {
+    public boolean checkServerResponsible(String key) {
         return metadata.checkServerResponsible(key);
     }
 
