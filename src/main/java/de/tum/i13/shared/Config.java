@@ -97,12 +97,6 @@ public class Config {
             System.exit(-1);
         }
 
-        //arrange address
-        if(cfg.listenaddr.isEmpty() || cfg.listenaddr.split("\\.").length != 4){
-            System.out.println("Address is not valid");
-            System.exit(-1);
-        }
-
         //arrange log file
         try{
             setLogFile(cfg.logfile);
