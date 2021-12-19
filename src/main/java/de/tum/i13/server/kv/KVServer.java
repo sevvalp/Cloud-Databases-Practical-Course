@@ -480,11 +480,9 @@ public class KVServer implements KVStore {
 
                 String message;
                 if (sendHist.isEmpty() || sendHist == null) {
-                    //message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null " + msg.getValue() + "\r\n";
+                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null " + msg.getValue() + "\r\n";
                 }
-                else
-                {
-                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
+                else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
 
                     LOGGER.info("Send handoff data to successor: " + message);
 
@@ -497,7 +495,7 @@ public class KVServer implements KVStore {
                     //release write lock
                     //serverWriteLock = false;
                     kvServer2ServerCommunicator.disconnect();
-                }
+
 
 
                 //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
