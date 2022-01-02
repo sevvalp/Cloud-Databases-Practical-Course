@@ -143,6 +143,11 @@ public class ECSServer {
             //I can't receive anything on serverside, no other solutions so far so I need to do this..
             sendMessage(next.getValue().getAddress(), next.getValue().getPort(), message );
             //server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+            //send metadata update without waiting for rebalance_success
+            serverMap.put(hash, info);
+            sendMetadataUpdate();
+
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getValue(), B64Util.b64encode("Accept connection from new server."));
