@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 public class EcsServerCommunicator {
@@ -20,12 +21,14 @@ public class EcsServerCommunicator {
     private OutputStream output;
     private InputStream input;
     private List<String> connections;
+    private TreeMap<String, OutputStream> connectionsOutputStreams;
 
     public EcsServerCommunicator() {
         mSocket = new Socket();
         output = null;
         input = null;
         connections = new ArrayList<>();
+        connectionsOutputStreams = new TreeMap<>();
     }
 
     public void disconnect(String key) throws Exception {
@@ -61,13 +64,17 @@ public class EcsServerCommunicator {
                 mSocket = new Socket(host, port);
 //                LOGGER.info("Socket connected successfully");
                 connections.add(host + ":" + port);
-                output = mSocket.getOutputStream();
+                //output = mSocket.getOutputStream();
+                OutputStream os = mSocket.getOutputStream();
+                connectionsOutputStreams.put(host + ":" + port, os);
+
 //                LOGGER.fine("Successfully got outputStream from socket");
                 input = mSocket.getInputStream();
 //                LOGGER.fine("Successfully got inputStream from socket");
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while connecting");
                 connections.remove(host + ":" + port);
+                connectionsOutputStreams.remove(host + ":" + port);
                 e.printStackTrace();
                 throw e;
             }
@@ -100,12 +107,16 @@ public class EcsServerCommunicator {
 //            LOGGER.fine("Socket currently connected, trying to send data");
             // if server is unexpectedly disconnected, we will get an exception, which we catch
             try {
-                output.write(data);
-                output.flush();
+                OutputStream os = connectionsOutputStreams.get(key);
+                os.write(data);
+                os.flush();
+//                output.write(data);
+//                output.flush();
                 LOGGER.info("Successfully sent data");
             } catch (IOException e) {
                 LOGGER.severe("IO Exception while sending data");
                 connections.remove(key);
+                connectionsOutputStreams.remove(key);
                 throw e;
             }
         } else {
