@@ -145,8 +145,8 @@ public class ECSServer {
             //server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
 
             //send metadata update without waiting for rebalance_success
-            serverMap.put(hash, info);
-            sendMetadataUpdate();
+//            serverMap.put(hash, info);
+//            sendMetadataUpdate();
 
         }
 
