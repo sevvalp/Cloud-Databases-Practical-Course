@@ -118,15 +118,19 @@ public class ECSServer {
                 prev = this.serverMap.lastEntry();
 
             LOGGER.info("Previous server found. Adding new server.");
-            KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort, ((ServerMessage) msg).getSelectionKey());
+            KVServerInfo info = new KVServerInfo(address, port, prev.getKey(), hash, intraPort, ((ServerMessage) msg).getSelectionKey());
+            //KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort, ((ServerMessage) msg).getSelectionKey());
+            //TODO: check and update corresponding server's information (the very first one or successor node after new server added.
+            // Next servers' start index should be the hash value of the prev server
             this.startingServers.put(hash, info);
             LOGGER.fine("Starting map after put: " + startingServers.toString());
             LOGGER.fine("Server map: " + serverMap.toString());
             LOGGER.fine("Stopping map: " + stoppingServers.toString());
-            String s = "";
-            for (KVServerInfo i : serverMap.values())
-                s += i.toString() + ";";
-            s += info.toString();
+
+//            String s = "";
+//            for (KVServerInfo i : serverMap.values())
+//                s += i.toString() + ";";
+//            s += info.toString();
 
             Map.Entry<String, KVServerInfo> next = this.serverMap.ceilingEntry(hash);
             if (next == null)
@@ -158,6 +162,7 @@ public class ECSServer {
         if (startingServers.containsKey(hash)) {
             // add to server map
             serverMap.put(hash, startingServers.remove(hash));
+
             sendMetadataUpdate();
         } else if (stoppingServers.containsKey(hash)) {
             stoppingServers.remove(hash);
