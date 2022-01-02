@@ -65,10 +65,11 @@ public class KVServerCommunicator implements KVCommunicator {
                 input = mSocket.getInputStream();
 //                LOGGER.fine("Successfully got inputStream from socket");
             } catch (IOException e) {
-                LOGGER.severe("IO Exception while connecting");
+                LOGGER.severe("IO Exception while connecting, trying again");
                 isConnected = false;
                 e.printStackTrace();
-                throw e;
+                connect(host,port);
+                //throw e;
             }
         } else {
             LOGGER.warning("Socket is currently connected!");
