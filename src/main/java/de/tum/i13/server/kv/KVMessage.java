@@ -37,7 +37,8 @@ public interface KVMessage {
         UPDATE_METADATA,
         ECS_HEARTBEAT_SUCCESS,
         ECS_HEARTBEAT,
-        RECEIVE_SINGLE
+        RECEIVE_SINGLE,
+        REPLICATE,
     }
 
     /**

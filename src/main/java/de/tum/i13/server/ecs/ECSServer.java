@@ -127,11 +127,6 @@ public class ECSServer {
             LOGGER.fine("Server map: " + serverMap.toString());
             LOGGER.fine("Stopping map: " + stoppingServers.toString());
 
-//            String s = "";
-//            for (KVServerInfo i : serverMap.values())
-//                s += i.toString() + ";";
-//            s += info.toString();
-
             Map.Entry<String, KVServerInfo> next = this.serverMap.ceilingEntry(hash);
             if (next == null)
                 next = this.serverMap.firstEntry();
@@ -139,14 +134,28 @@ public class ECSServer {
             next.getValue().setStartIndex(hash);
             // send writelock to next server & transfer data to new server
             String message = "rebalance " + B64Util.b64encode(address + ":" + intraPort) + " " + B64Util.b64encode(hash) + "\r\n";
-
-            //I can't receive anything on serverside, no other solutions so far so I need to do this..
             sendMessage(next.getValue().getAddress(), next.getValue().getPort(), message );
             //server.send(next.getValue().getSelectionKey(), message.getBytes(TELNET_ENCODING));
 
-            //send metadata update without waiting for rebalance_success
-//            serverMap.put(hash, info);
-//            sendMetadataUpdate();
+            LOGGER.fine("Prev server found initiate replica data transfer");
+            message = message.replace("rebalance", "replicate ");
+            sendMessage(prev.getValue().getAddress(), prev.getValue().getPort(), message);
+            //it is the first time we activate the replication functionality
+            if(serverMap.size() + 1 == 3){
+                String m = "replicate " + B64Util.b64encode(next.getValue().getAddress() + ":" + next.getValue().getIntraPort()) + " " + B64Util.b64encode(next.getKey()) + "\r\n";
+                sendMessage(prev.getValue().getAddress(), prev.getValue().getPort(), m);
+            }
+
+            LOGGER.fine("Second prev server found initiate replica data transfer");
+            Map.Entry<String, KVServerInfo> prevTwoTimes = this.serverMap.floorEntry(prev.getKey());
+            if (prevTwoTimes == null)
+                prevTwoTimes = this.serverMap.lastEntry();
+            sendMessage(prevTwoTimes.getValue().getAddress(), prevTwoTimes.getValue().getPort(), message);
+            //it is the first time we activate the replication functionality
+            if(serverMap.size() + 1 == 3){
+                String m = "replicate " + B64Util.b64encode(prev.getValue().getAddress() + ":" + prev.getValue().getIntraPort()) + " " + B64Util.b64encode(prev.getKey()) + "\r\n";
+                sendMessage(prevTwoTimes.getValue().getAddress(), prevTwoTimes.getValue().getPort(), m);
+            }
 
         }
 

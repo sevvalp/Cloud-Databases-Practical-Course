@@ -601,6 +601,64 @@ public class KVServer implements KVStore {
         return null;
     }
 
+    /**
+     * Send KV items to corresponding newly added replicate server.
+     *
+     * @param msg KVMessage containing the new server address information.
+     * @return null
+     */
+    public KVMessage replicate(KVMessage msg) throws Exception {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase(Locale.ENGLISH) + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.REPLICATE)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
+        LOGGER.info("Send kv items to new replicate server: %s" + msg.getKey());
+
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+
+                String addressinfo[] = B64Util.b64decode(msg.getKey()).split(":");
+
+                String message;
+                if (historicPairs.isEmpty() || historicPairs == null) {
+                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null " + msg.getValue() + "\r\n";
+                }
+                else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + msg.getValue() + "\r\n";
+
+                LOGGER.info("Send KV items to replicate server with this message: " + message);
+
+                kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
+                kvServer2ServerCommunicator.receive();
+                kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
+                kvServer2ServerCommunicator.disconnect();
+                LOGGER.info("Items successfully sent.");
+
+                return null;
+            }
+            public Object getStripe() {
+                changeServerWriteLockStatus(false);
+                return msg.getKey();
+            }
+        });
+
+        return null;
+    }
+
     public KVMessage respondHeartbeat(KVMessage msg) {
         String message = "ecs_heartbeat " + B64Util.b64encode(listenaddress + ":" + port) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port)) + "\r\n";
         try {
