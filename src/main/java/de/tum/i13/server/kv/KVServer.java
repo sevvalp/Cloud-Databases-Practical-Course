@@ -221,6 +221,11 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        boolean isRepRole = metadata.isRoleReplica(msg.getKey());
+        LOGGER.info("is replicate role: " + isRepRole);
+        boolean isCoordinator = checkServerResponsible(msg.getKey());
+        LOGGER.info("is replicate role: " + isCoordinator);
+        
         if(metadata.isRoleReplica(msg.getKey()) || checkServerResponsible(msg.getKey())) {
             LOGGER.info("Client wants to get key: " + msg.getKey());
 
