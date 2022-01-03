@@ -361,7 +361,7 @@ public class KVServer implements KVStore {
     }
 
     public void sendKVReplicas(String command, String key, String value){
-        String msg = "receive_single " + command + " " + key + ":" + value + "\r\n";
+        String msg = "receive_single " + command + " " + B64Util.b64encode(key + ":" + value) + "\r\n";
         ArrayList<String> replicaServers = metadata.getReplicasHash(Util.calculateHash(listenaddress,port));
 
         replicaServers.forEach((server) -> {
@@ -752,12 +752,14 @@ public class KVServer implements KVStore {
 
         LOGGER.info("Single key-value will be: " + msg.getKey() + " to/from Server.");
 
-//        pool.submit(new StripedCallable<Void>() {
-//            public Void call() throws Exception {
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
 
                 String[] msgValue = B64Util.b64decode(msg.getValue()).split(":");
                 String key = msgValue[0];
+                LOGGER.info("Decoded key: " + key);
                 String value = msgValue[1];
+                LOGGER.info("Decoded value: " + value);
 
                 if (msg.getKey() == "put") {
 
@@ -772,12 +774,12 @@ public class KVServer implements KVStore {
                     LOGGER.fine("Delete key,value from disk: " + key + ", " + value);
                     disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, value));
                 }
-//                return null;
-//            }
-//            public Object getStripe() {
-//                return msg.getKey();
-//            }
-//        });
+                return null;
+            }
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
 
         return null;
     }
