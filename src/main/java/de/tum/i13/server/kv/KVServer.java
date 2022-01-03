@@ -225,7 +225,7 @@ public class KVServer implements KVStore {
         LOGGER.info("is replicate role: " + isRepRole);
         boolean isCoordinator = checkServerResponsible(msg.getKey());
         LOGGER.info("is replicate role: " + isCoordinator);
-        
+
         if(metadata.isRoleReplica(msg.getKey()) || checkServerResponsible(msg.getKey())) {
             LOGGER.info("Client wants to get key: " + msg.getKey());
 
@@ -759,7 +759,7 @@ public class KVServer implements KVStore {
                 String key = msgValue[0];
                 String value = msgValue[1];
 
-                if (msg.getKey().toString().equals("put")) {
+                if (msg.getKey() == "put") {
 
                     LOGGER.fine("Put key,value to cache: " + key + ", " + value);
                     cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
