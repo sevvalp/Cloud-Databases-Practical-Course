@@ -117,28 +117,22 @@ public class Metadata implements Serializable {
     public String getServerHashRangeWithReplicas(){
 
         //<range_from>,<range_to>,<ip:port>,<rep1ip:rep1port>,<rep2ip:rep2port>;
-//        String message = "";
-//        for(String s : serverMap.keySet()){
-//            KVServerInfo serverInfo = serverMap.get(s);
-//            message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
-//
-//            if(serverMap.size() > 2){
-//            ArrayList<String> replicaServers = getReplicasHash(s);
-//
-//                for(int i=0; i<replicaServers.size(); i++){
-//                    serverInfo = serverMap.get(replicaServers.get(i));
-//                    message +=  "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
-//                }
-//            }
-//            message += ";";
-//        }
-
         String message = "";
-        ArrayList<String> replicaServers = getReplicasHash(serverInfo.getServerKeyHash());
-        replicaServers.add(serverInfo.getServerKeyHash());
-        for(String s : replicaServers){
+        for(String s : serverMap.keySet()){
             KVServerInfo serverInfo = serverMap.get(s);
             message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort() + ";";
+
+            if(serverMap.size() > 2){
+            ArrayList<String> replicaServers = getReplicasHash(s);
+
+                for(int i=0; i<replicaServers.size(); i++){
+
+                    serverInfo = serverMap.get(replicaServers.get(i));
+                    message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort() +";";
+                    //message +=  "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
+                }
+            }
+
         }
 
         return message;
