@@ -16,13 +16,9 @@ import de.tum.i13.shared.Util;
 import java.io.*;
 import java.net.InetSocketAddress;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
-import java.util.NoSuchElementException;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
 
@@ -177,6 +173,11 @@ public class KVServer implements KVStore {
                 // return answer to client
                 LOGGER.info("Answer to client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                //TODO: send new kv to replicas
+                if(metadata.getServerMap().size() > 2)
+                    sendKVReplicas("put", msg.getKey(), msg.getValue());
+
                 return null;
             }
 
@@ -207,7 +208,7 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
         }
         //if server is not responsible for given key
-        if(!checkServerResponsible(msg.getKey())){
+        if(!checkServerResponsible(msg.getKey()) &&  metadata.getServerMap().size() < 3){
             String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + "\r\n";
             LOGGER.info("Answer to Client: " + message);
             server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
@@ -220,54 +221,63 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
-        LOGGER.info("Client wants to get key: " + msg.getKey());
+        if(metadata.isRoleReplica(msg.getKey()) || checkServerResponsible(msg.getKey())) {
+            LOGGER.info("Client wants to get key: " + msg.getKey());
 
-        LOGGER.fine("Submitting new get callable to pool for key " + msg.getKey());
-        // queue get command
-        pool.submit(new StripedCallable<Void>() {
-            public Void call() throws Exception {
-                LOGGER.fine("Getting key from cache: " + msg.getKey());
-                // first, try to get the kv pair from the cache
-                KVMessage res = null;
-                try {
-                    res = cache.get(msg);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                String message;
-                LOGGER.fine("Result: " + res.getStatus().name());
-                if (res.getStatus() != KVMessage.StatusType.GET_SUCCESS) {
-                    LOGGER.fine("Key not in cache, try reading from disk: " + msg.getKey());
-                    // key not in cache, try to read from disk
-                    res = disk.readContent(msg);
+            LOGGER.fine("Submitting new get callable to pool for key " + msg.getKey());
+            // queue get command
+            pool.submit(new StripedCallable<Void>() {
+                public Void call() throws Exception {
+                    LOGGER.fine("Getting key from cache: " + msg.getKey());
+                    // first, try to get the kv pair from the cache
+                    KVMessage res = null;
+                    try {
+                        res = cache.get(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    String message;
+                    LOGGER.fine("Result: " + res.getStatus().name());
+                    if (res.getStatus() != KVMessage.StatusType.GET_SUCCESS) {
+                        LOGGER.fine("Key not in cache, try reading from disk: " + msg.getKey());
+                        // key not in cache, try to read from disk
+                        res = disk.readContent(msg);
 
-                    if (res.getStatus() == KVMessage.StatusType.GET_SUCCESS) {
-                        LOGGER.fine(String.format("Successfully read key from disk, put value in cache: <%s, %s>", res.getKey(), res.getValue()));
-                        // successfully got kv pair from disk, put into cache
-                        // ignore result of cache put operation
-                        // worst case is a new cache miss
-                        cache.put(new ServerMessage(KVMessage.StatusType.PUT, res.getKey(), res.getValue()));
-                        message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                        if (res.getStatus() == KVMessage.StatusType.GET_SUCCESS) {
+                            LOGGER.fine(String.format("Successfully read key from disk, put value in cache: <%s, %s>", res.getKey(), res.getValue()));
+                            // successfully got kv pair from disk, put into cache
+                            // ignore result of cache put operation
+                            // worst case is a new cache miss
+                            cache.put(new ServerMessage(KVMessage.StatusType.PUT, res.getKey(), res.getValue()));
+                            message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                        } else {
+                            message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                        }
+
                     } else {
+                        LOGGER.fine("Key in cache: " + res.getKey() + ", " + res.getValue());
                         message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                     }
 
-                } else {
-                    LOGGER.fine("Key in cache: " + res.getKey() + ", " + res.getValue());
-                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                    // return answer to client
+
+                    LOGGER.info("Answer to Client: " + message);
+                    server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                    return null;
                 }
 
-                // return answer to client
+                public Object getStripe() {
+                    return msg.getKey();
+                }
+            });
 
-                LOGGER.info("Answer to Client: " + message);
-                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
-                return null;
-            }
+        } else {
 
-            public Object getStripe() {
-                return msg.getKey();
-            }
-        });
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
 
         return null;
     }
@@ -330,6 +340,11 @@ public class KVServer implements KVStore {
                 String message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 LOGGER.info("Answer to Client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                //TODO: delete kv from replicas
+                if(metadata.getServerMap().size() > 2)
+                    sendKVReplicas("delete", msg.getKey(), msg.getValue());
+
                 return null;
             }
 
@@ -338,6 +353,23 @@ public class KVServer implements KVStore {
             }
         });
         return null;
+    }
+
+    public void sendKVReplicas(String command, String key, String value){
+        String msg = "receive_single " + command + " " + key + ":" + value + "\r\n";
+        ArrayList<String> replicaServers = metadata.getReplicasHash(Util.calculateHash(listenaddress,port));
+
+        replicaServers.forEach((server) -> {
+            try {
+                KVServerInfo repServer = metadata.getServerMap().get(server);
+                kvServer2ServerCommunicator.connect(repServer.getAddress(), repServer.getIntraPort());
+                kvServer2ServerCommunicator.receive();
+                kvServer2ServerCommunicator.send(msg.getBytes(TELNET_ENCODING));
+                kvServer2ServerCommunicator.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /**
@@ -403,6 +435,56 @@ public class KVServer implements KVStore {
                 LOGGER.info("Answer to Client: " + message);
 
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+        return null;
+
+    }
+
+    /**
+     * Gets keyrange_read for server.
+     *
+     * @param msg KVMessage.
+     * @return message
+     */
+    public KVMessage getKeyRangeRead(KVMessage msg) throws IOException {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.KEY_RANGE_READ)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, null, B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        LOGGER.info("Client wants to get key range success");
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+
+                if( metadata.getServerMap().size() < 3)
+                    getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, ((ServerMessage) msg).getSelectionKey()));
+                else{
+                    //TODO: implement keyrange_success method for new requirements
+
+                    String message = metadata.getServerHashRangeWithReplicas() + "\r\n";
+                    LOGGER.info("Answer to Client: " + message);
+
+                    server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+                    return null;
+                }
+
                 return null;
             }
 
@@ -583,6 +665,53 @@ public class KVServer implements KVStore {
             }
             public Object getStripe() {
                 changeServerWriteLockStatus(false);
+                return msg.getKey();
+            }
+        });
+
+        return null;
+    }
+
+    /**
+     * rebalance.
+     *
+     * @param msg KVMessage containing the map.
+     * @return null
+     */
+    public KVMessage receiveSingleKV(KVMessage msg) throws Exception {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.RECEIVE_SINGLE)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
+        LOGGER.info("Single key-value will be: " + msg.getKey() + " to/from Server.");
+
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+
+                String[] msgValue = B64Util.b64decode(msg.getValue()).split(":");
+                String key = msgValue[0];
+                String value = msgValue[1];
+
+                if (!msg.getKey().toString().equals("put")) {
+
+                    LOGGER.fine("Put key,value to cache: " + key + ", " + value);
+                    cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+                    LOGGER.fine("Put key,value to disk: " + key + ", " + value);
+                    disk.writeContent(new ServerMessage(KVMessage.StatusType.PUT, key, value));
+
+                } else {
+                    LOGGER.fine("Delete key,value from cache: " + key + ", " + value);
+                    cache.delete(new ServerMessage(KVMessage.StatusType.DELETE, key, value));
+                    LOGGER.fine("Delete key,value from disk: " + key + ", " + value);
+                    disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, value));
+                }
+                return null;
+            }
+            public Object getStripe() {
                 return msg.getKey();
             }
         });

@@ -4,6 +4,7 @@ package de.tum.i13.shared;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
@@ -98,15 +99,6 @@ public class Metadata implements Serializable {
         return key.equals(serverInfo.getServerKeyHash());
     }
 
-    public String getSuccessorServerKey(String address, int port){
-        String key = serverMap.ceilingKey(Util.calculateHash(address, port));
-
-        if(key.isEmpty())
-            key = serverMap.firstKey();
-
-        return key;
-    }
-
 
     public String getServerHashRange(){
 
@@ -115,6 +107,27 @@ public class Metadata implements Serializable {
         for(String s : serverMap.keySet()){
             KVServerInfo serverInfo = serverMap.get(s);
             message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort() + ";";
+        }
+        return message;
+    }
+
+    public String getServerHashRangeWithReplicas(){
+
+        //<range_from>,<range_to>,<ip:port>,<rep1ip:rep1port>,<rep2ip:rep2port>;
+        String message = "";
+        for(String s : serverMap.keySet()){
+            KVServerInfo serverInfo = serverMap.get(s);
+            message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
+
+            if(serverMap.size() > 2){
+            ArrayList<String> replicaServers = getReplicasHash(s);
+
+                for(int i=0; i<replicaServers.size(); i++){
+                    serverInfo = serverMap.get(replicaServers.get(i));
+                    message +=  "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
+                }
+            }
+            message += ";";
         }
         return message;
     }
@@ -133,6 +146,42 @@ public class Metadata implements Serializable {
         String hash = (m == null) ? serverMap.firstEntry().getKey(): m.getKey();
 
         return hash;
+    }
+
+    public ArrayList<String> getReplicasHash(String serverInfo) {
+        ArrayList<String> replicas = new ArrayList<>();
+        String currentHash = calculateHash(serverInfo);
+        String successorHash = null;
+        if (serverMap.size() > 2) {
+            for (int i = 0; i < 2; i++) {
+
+                //get successor of the current server
+                Map.Entry<String, KVServerInfo> successorServer;
+                successorServer = serverMap.higherEntry(currentHash);
+                if (successorServer == null)
+                    successorServer = serverMap.firstEntry();
+
+                successorHash = successorServer.getKey();
+                replicas.add(successorHash);
+
+                //do it again for the successor again
+                currentHash = successorHash;
+            }
+        }
+
+        return replicas;
+    }
+
+
+    public boolean isRoleReplica(String keyHash) {
+        String responsibleServer =  serverMap.ceilingKey(keyHash);
+        if (responsibleServer == null) {
+            responsibleServer = serverMap.firstKey();
+        }
+        if(serverMap.size() > 2)
+            return getReplicasHash(responsibleServer).contains(serverInfo.getServerKeyHash());
+        else
+            return true;
     }
 
     public static String calculateHash(String str) {

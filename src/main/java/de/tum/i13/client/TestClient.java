@@ -57,6 +57,9 @@ public class TestClient {
             case "keyrange":
                 keyRange();
                 break;
+            case "keyrange_read":
+                keyRangeRead();
+                break;
             case "receive":
                 receive(command);
                 break;
@@ -234,6 +237,14 @@ public class TestClient {
      */
     private static void keyRange() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
         String message = String.format("keyrange ");
+        store.sendKeyRange(message);
+    }
+
+    /**
+     * Sends a keyrangeread command to the server.
+     */
+    private static void keyRangeRead() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+        String message = String.format("keyrange_read ");
         store.sendKeyRange(message);
     }
 

@@ -3,7 +3,6 @@ package de.tum.i13.server.kv;
 import de.tum.i13.shared.Metadata;
 
 import java.util.Locale;
-import java.util.Map;
 
 public interface KVMessage {
 
@@ -25,6 +24,7 @@ public interface KVMessage {
         SERVER_WRITE_LOCK,      /* Put, Delete - request cannot be processed */
         SERVER_NOT_RESPONSIBLE, /* Requested key not in server range */
         KEY_RANGE,              /* Key range - request */
+        KEY_RANGE_READ,  /* Key range success - request */
         KEY_RANGE_SUCCESS,      /* Key range - request successful */
         KEY_RANGE_ERROR,        /* Key range - request failed */
         NEW_SERVER,             /* New server - first time connecting */
@@ -36,7 +36,8 @@ public interface KVMessage {
         RECEIVE_REBALANCE,
         UPDATE_METADATA,
         ECS_HEARTBEAT_SUCCESS,
-        ECS_HEARTBEAT
+        ECS_HEARTBEAT,
+        RECEIVE_SINGLE
     }
 
     /**

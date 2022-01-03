@@ -1,8 +1,6 @@
 package de.tum.i13.server.kv;
 
-import de.tum.i13.server.cache.Cache;
 import de.tum.i13.server.nio.StartSimpleNioServer;
-import de.tum.i13.shared.B64Util;
 import de.tum.i13.shared.CommandProcessor;
 
 import java.net.InetAddress;
@@ -54,18 +52,24 @@ public class KVCommandProcessor implements CommandProcessor {
                 kvStore.getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, selectionKey));
                 LOGGER.info(String.format("Get key range of the server"));
                 break;
+            case "keyrange_read":
+                kvStore.getKeyRangeRead(new ServerMessage(KVMessage.StatusType.KEY_RANGE_READ, null, null, selectionKey));
+                LOGGER.info(String.format("Get key range success of the server"));
+                break;
             case "ecs_accept":
                 LOGGER.info("ECS accepted connection.");
                 break;
             case "ecs_error":
                 LOGGER.info("Got error from ECS.");
                 break;
-                // TODO: maybe handle?
             case "rebalance":
                 kvStore.rebalance(new ServerMessage(KVMessage.StatusType.REBALANCE, request[1], request[2], selectionKey));
                 break;
             case "receive_rebalance":
                 kvStore.receiveRebalance(new ServerMessage(KVMessage.StatusType.RECEIVE_REBALANCE, request[1], request[2], selectionKey));
+                break;
+            case "receive_single":
+                kvStore.receiveSingleKV(new ServerMessage(KVMessage.StatusType.RECEIVE_SINGLE, request[1], request[2], selectionKey));
                 break;
             case "update_metadata":
                 LOGGER.info("update_metadata request");
