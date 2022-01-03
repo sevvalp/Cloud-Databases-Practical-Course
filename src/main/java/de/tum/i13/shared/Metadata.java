@@ -1,6 +1,7 @@
 package de.tum.i13.shared;
 
 
+import de.tum.i13.client.TestStore;
 import de.tum.i13.server.kv.KVServerInfo;
 
 import java.io.Serializable;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 
 public class Metadata implements Serializable {
@@ -16,6 +18,7 @@ public class Metadata implements Serializable {
     private TreeMap<String, KVServerInfo> serverMap;
     // only needed if instantiated in KVServer
     private KVServerInfo serverInfo;
+    private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
 
     public Metadata(KVServerInfo info) {
         this.serverInfo = info;
@@ -174,14 +177,17 @@ public class Metadata implements Serializable {
 
 
     public boolean isRoleReplica(String keyHash) {
-        String responsibleServer =  serverMap.ceilingKey(keyHash);
+        String responsibleServer =  serverMap.ceilingKey(calculateHash(keyHash));
         if (responsibleServer == null) {
             responsibleServer = serverMap.firstKey();
         }
-        if(serverMap.size() > 2)
+        if(serverMap.size() > 2) {
+            LOGGER.info("serverMap size is > than 2 so checking replica servers");
             return getReplicasHash(responsibleServer).contains(serverInfo.getServerKeyHash());
-        else
+        }else{
+            LOGGER.info("serverMap size is < than 2, returning true as deafult..");
             return true;
+        }
     }
 
     public static String calculateHash(String str) {
