@@ -361,7 +361,7 @@ public class KVServer implements KVStore {
     }
 
     public void sendKVReplicas(String command, String key, String value){
-        String msg = "receive_single " + command + " " + B64Util.b64encode(key + ":" + value) + "\r\n";
+        String msg = "receive_single " + B64Util.b64encode(command) + " " + B64Util.b64encode(key + ":" + value) + "\r\n";
         ArrayList<String> replicaServers = metadata.getReplicasHash(Util.calculateHash(listenaddress,port));
 
         replicaServers.forEach((server) -> {
@@ -750,7 +750,7 @@ public class KVServer implements KVStore {
         if (msg.getStatus() != KVMessage.StatusType.RECEIVE_SINGLE)
             return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
 
-        LOGGER.info("Single key-value will be: " + msg.getKey() + " to/from Server.");
+        LOGGER.info("Single key-value will be: " + B64Util.b64decode(msg.getKey()) + " to/from Server.");
 
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
@@ -761,7 +761,10 @@ public class KVServer implements KVStore {
                 String value = msgValue[1];
                 LOGGER.info("Decoded value: " + value);
 
-                if (msg.getKey() == "put") {
+                LOGGER.info("Is received command put?1: " + B64Util.b64decode(msg.getKey()).equals("put"));
+                LOGGER.info("Is received command put?2: " + (B64Util.b64decode(msg.getKey()) == "put"));
+
+                if (B64Util.b64decode(msg.getKey()).equals("put")) {
 
                     LOGGER.fine("Put key,value to cache: " + key + ", " + value);
                     cache.put(new ServerMessage(KVMessage.StatusType.PUT, key, value));
