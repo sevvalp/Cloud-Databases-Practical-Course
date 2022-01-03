@@ -752,8 +752,8 @@ public class KVServer implements KVStore {
 
         LOGGER.info("Single key-value will be: " + msg.getKey() + " to/from Server.");
 
-        pool.submit(new StripedCallable<Void>() {
-            public Void call() throws Exception {
+//        pool.submit(new StripedCallable<Void>() {
+//            public Void call() throws Exception {
 
                 String[] msgValue = B64Util.b64decode(msg.getValue()).split(":");
                 String key = msgValue[0];
@@ -772,12 +772,12 @@ public class KVServer implements KVStore {
                     LOGGER.fine("Delete key,value from disk: " + key + ", " + value);
                     disk.deleteContent(new ServerMessage(KVMessage.StatusType.DELETE, key, value));
                 }
-                return null;
-            }
-            public Object getStripe() {
-                return msg.getKey();
-            }
-        });
+//                return null;
+//            }
+//            public Object getStripe() {
+//                return msg.getKey();
+//            }
+//        });
 
         return null;
     }
