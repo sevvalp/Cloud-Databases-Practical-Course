@@ -16,6 +16,7 @@ import de.tum.i13.shared.Util;
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
@@ -370,12 +371,8 @@ public class KVServer implements KVStore {
         replicaServers.forEach((server) -> {
             try {
                 KVServerInfo repServer = metadata.getServerMap().get(server);
-                if (!kvServer2ServerCommunicator.isConnected(repServer.getAddress() + ":" + repServer.getIntraPort())) {
-                    kvServer2ServerCommunicator.connect(repServer.getAddress(), repServer.getIntraPort());
-                }
-                kvServer2ServerCommunicator.receive(repServer.getAddress() + ":" + repServer.getIntraPort());
-                kvServer2ServerCommunicator.send(repServer.getAddress() + ":" + repServer.getIntraPort(), msg.getBytes(TELNET_ENCODING));
-
+                sendMessage(repServer.getAddress(), repServer.getIntraPort(), msg);
+                LOGGER.info("Command: " + command + "successfully sent to: " + repServer.getAddress() +":" + repServer.getPort());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -965,13 +962,16 @@ public class KVServer implements KVStore {
         if (!kvServer2ServerCommunicator.isConnected(address + ":" + port)) {
             try {
                 kvServer2ServerCommunicator.connect(address, port);
-                kvServer2ServerCommunicator.receive(address + ":" + port);
+                LOGGER.info("Connectted to: " + address + ":" + port);
+                byte[] data = kvServer2ServerCommunicator.receive(address + ":" + port);
+                LOGGER.info(String.format("Received string: \"%s\"", new String(data, StandardCharsets.ISO_8859_1)));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         try {
             kvServer2ServerCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
+            LOGGER.info("Successfully sent");
         } catch (Exception e) {
             e.printStackTrace();
         }
