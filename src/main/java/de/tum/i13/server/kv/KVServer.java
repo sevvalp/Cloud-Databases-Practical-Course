@@ -370,14 +370,12 @@ public class KVServer implements KVStore {
         replicaServers.forEach((server) -> {
             try {
                 KVServerInfo repServer = metadata.getServerMap().get(server);
-                LOGGER.info("Connecting replica server: " + repServer.getAddress() + ":" + repServer.getPort() + " via intra port: " + repServer.getIntraPort());
-                kvServer2ServerCommunicator.connect(repServer.getAddress(), repServer.getIntraPort());
-                LOGGER.info("Successfully connected.");
-                kvServer2ServerCommunicator.receive();
-                LOGGER.info("Received input data.");
-                kvServer2ServerCommunicator.send(msg.getBytes(TELNET_ENCODING));
-                LOGGER.info("Successfully send.");
-                kvServer2ServerCommunicator.disconnect();
+                if (!kvServer2ServerCommunicator.isConnected(repServer.getAddress() + ":" + repServer.getIntraPort())) {
+                    kvServer2ServerCommunicator.connect(repServer.getAddress(), repServer.getIntraPort());
+                }
+                kvServer2ServerCommunicator.receive(repServer.getAddress() + ":" + repServer.getIntraPort());
+                kvServer2ServerCommunicator.send(repServer.getAddress() + ":" + repServer.getIntraPort(), msg.getBytes(TELNET_ENCODING));
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -581,19 +579,13 @@ public class KVServer implements KVStore {
                     LOGGER.info("Send handoff data to successor: " + message);
 
                     //how will I know it's selectionKey? then connect
-                    kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
-                    kvServer2ServerCommunicator.receive();
-                    kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
-                    //LOGGER.info("Rebalance done: " + new String(kvServer2ServerCommunicator.receive(), TELNET_ENCODING));
-
-                    //release write lock
-                    //serverWriteLock = false;
-                    kvServer2ServerCommunicator.disconnect();
-
+                    sendMessage(addressinfo[0], Integer.parseInt(addressinfo[1]), message);
+                    LOGGER.info("Rebalance data sent");
 
 
                 //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
-                kvServerECSCommunicator.send(("rebalance_success " + msg.getKey() + " " + msg.getValue() + "\r\n").getBytes(TELNET_ENCODING));
+                message = "rebalance_success " + msg.getKey() + " " + msg.getValue() + "\r\n";
+                sendMessage(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
                 LOGGER.info("Rebalance success send to ECS");
 
                 return null;
@@ -654,10 +646,7 @@ public class KVServer implements KVStore {
 
                 LOGGER.info("Send KV items to replicate server with this message: " + message);
 
-                kvServer2ServerCommunicator.connect(addressinfo[0], Integer.parseInt(addressinfo[1]));
-                kvServer2ServerCommunicator.receive();
-                kvServer2ServerCommunicator.send(message.getBytes(TELNET_ENCODING));
-                kvServer2ServerCommunicator.disconnect();
+                sendMessage(addressinfo[0], Integer.parseInt(addressinfo[1]), message);
                 LOGGER.info("Items successfully sent.");
 
                 return null;
@@ -675,7 +664,7 @@ public class KVServer implements KVStore {
         String message = "ecs_heartbeat " + B64Util.b64encode(listenaddress + ":" + port) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port)) + "\r\n";
         try {
             LOGGER.info("Responding to heartbeat: " + message);
-            kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+            sendMessage(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -926,7 +915,7 @@ public class KVServer implements KVStore {
             //connect to ECS
 
             kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
-            kvServerECSCommunicator.receive();
+            kvServerECSCommunicator.receive(this.bootstrap.getAddress().getHostAddress()+":"+this.bootstrap.getPort());
             //notify ECS that new server added
             // NEWSERVER <encoded info: address,port,intraport>
             String command = "newserver ";
@@ -935,7 +924,7 @@ public class KVServer implements KVStore {
             LOGGER.info("Message to server: " + message);
 
             LOGGER.info("Notify ECS that new server added");
-            kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+            kvServerECSCommunicator.send(this.bootstrap.getAddress().getHostAddress()+":"+this.bootstrap.getPort(), message.getBytes(TELNET_ENCODING));
 
 //            String msg = new String(kvServerECSCommunicator.receive(), TELNET_ENCODING);
 //            String[] request = msg.substring(0, msg.length() - 2).split("\\s");
@@ -959,16 +948,33 @@ public class KVServer implements KVStore {
                     String message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
 //                    String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
                     LOGGER.info("Message to ECS: " + message);
-                    kvServerECSCommunicator.send(message.getBytes(TELNET_ENCODING));
+                    kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), message.getBytes(TELNET_ENCODING));
                     LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
-                    System.out.println(kvServerECSCommunicator.receive());
-                    kvServerECSCommunicator.disconnect();
+                    System.out.println(kvServerECSCommunicator.receive(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort()));
+                    kvServerECSCommunicator.disconnect(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort());
                 } catch (Exception e) {
                     LOGGER.info("ECS Exception while stopping server.");
                 }
 
             }
         });
+    }
+
+    private void sendMessage(String address, int port, String message){
+
+        if (!kvServer2ServerCommunicator.isConnected(address + ":" + port)) {
+            try {
+                kvServer2ServerCommunicator.connect(address, port);
+                kvServer2ServerCommunicator.receive(address + ":" + port);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            kvServer2ServerCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

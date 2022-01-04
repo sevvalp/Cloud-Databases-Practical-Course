@@ -2,7 +2,6 @@ package de.tum.i13.server.nio;
 
 import de.tum.i13.server.disk.DiskManager;
 import de.tum.i13.server.kv.KVCommandProcessor;
-import de.tum.i13.server.kv.KVECSCommunicator;
 import de.tum.i13.server.kv.KVServer;
 import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.CommandProcessor;
@@ -31,9 +30,6 @@ public class StartSimpleNioServer {
         int intraPort = getFreePort(); //5551;
         KVStore kvStore = new KVServer(cfg.cacheStrategy, cfg.cacheSize, cfg.bootstrap, cfg.listenaddr, cfg.port, intraPort);
         CommandProcessor kvProcessor = new KVCommandProcessor(kvStore);
-
-//        Thread thread = new Thread(new KVECSCommunicator(kvStore,cfg.bootstrap,cfg.listenaddr, cfg.port, intraPort));
-//        thread.start();
 
         DiskManager disk = DiskManager.getInstance();
         disk.initDiskManager(cfg.dataDir.toString());
