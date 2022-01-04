@@ -175,8 +175,10 @@ public class KVServer implements KVStore {
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
 
                 //TODO: send new kv to replicas
-                if(metadata.getServerMap().size() > 2)
+                if(metadata.getServerMap().size() > 2){
+                    LOGGER.info("Send " +  msg.getKey() + " "+  msg.getValue() + "to replica servers");
                     sendKVReplicas("put", msg.getKey(), msg.getValue());
+                }
 
                 return null;
             }
@@ -363,13 +365,18 @@ public class KVServer implements KVStore {
     public void sendKVReplicas(String command, String key, String value){
         String msg = "receive_single " + B64Util.b64encode(command) + " " + B64Util.b64encode(key + ":" + value) + "\r\n";
         ArrayList<String> replicaServers = metadata.getReplicaServers(Util.calculateHash(listenaddress,port));
+        LOGGER.info("Message prepared, replica servers calculated, ready to send data: " + key + ":" + value);
 
         replicaServers.forEach((server) -> {
             try {
                 KVServerInfo repServer = metadata.getServerMap().get(server);
+                LOGGER.info("Connecting replica server: " + repServer.getAddress() + ":" + repServer.getPort() + " via intra port: " + repServer.getIntraPort());
                 kvServer2ServerCommunicator.connect(repServer.getAddress(), repServer.getIntraPort());
+                LOGGER.info("Successfully connected.");
                 kvServer2ServerCommunicator.receive();
+                LOGGER.info("Received input data.");
                 kvServer2ServerCommunicator.send(msg.getBytes(TELNET_ENCODING));
+                LOGGER.info("Successfully send.");
                 kvServer2ServerCommunicator.disconnect();
             } catch (Exception e) {
                 e.printStackTrace();

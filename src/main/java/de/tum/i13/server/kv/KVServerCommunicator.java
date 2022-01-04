@@ -72,7 +72,8 @@ public class KVServerCommunicator implements KVCommunicator {
                 //throw e;
             }
         } else {
-            LOGGER.warning("Socket is currently connected!");
+            LOGGER.warning("Socket is currently connected! " + host + ":" + port);
+
             //throw new IllegalStateException("Currently connected to KVServer!");
         }
 
