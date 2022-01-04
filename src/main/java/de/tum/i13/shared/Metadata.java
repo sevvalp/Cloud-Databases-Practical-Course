@@ -174,6 +174,11 @@ public class Metadata implements Serializable {
                 //do it again for the successor again
                 currentHash = successorHash;
             }
+        }else{
+            for (String key: serverMap.keySet()) {
+                if(key != serverInfo)
+                    replicas.add(key);
+            }
         }
 
         return replicas;

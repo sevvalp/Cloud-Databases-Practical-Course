@@ -243,7 +243,7 @@ public class ECSServer {
             this.serverMap.remove(msg.getKey());
         } else {
             // TODO: writelock on server to remove & transfer data to next server
-           // this.stoppingServers.put(hash, this.serverMap.get(hash));
+            this.stoppingServers.put(hash, this.serverMap.get(hash));
 
             this.serverMap.remove(hash);
             sendMetadataUpdate();

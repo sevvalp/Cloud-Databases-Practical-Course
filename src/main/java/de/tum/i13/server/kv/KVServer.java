@@ -883,25 +883,25 @@ public class KVServer implements KVStore {
     }
 
     public void sendDataToSuccessor() {
-        changeServerWriteLockStatus(true);
-        changeServerStatus(false);
+//        changeServerWriteLockStatus(true);
+//        changeServerStatus(false);
 
         //rebalance send all historic data to successor
         if (metadata.getServerMap().size() > 1) {
             try {
 
                 //find successor
-                Map.Entry<String, KVServerInfo> next = metadata.getServerMap().ceilingEntry(Util.calculateHash(listenaddress,port));
+                Map.Entry<String, KVServerInfo> next = metadata.getServerMap().higherEntry(Util.calculateHash(listenaddress,port));
+                        //metadata.getServerMap().ceilingEntry(Util.calculateHash(listenaddress,port));
                 if (next == null)
                     next = metadata.getServerMap().firstEntry();
 
-                LOGGER.info("Rebalance succesor server.");
+                LOGGER.info("Rebalance succesor server:" + next.getValue().getAddress() + ":"+ next.getValue().getPort());
                 String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)), B64Util.b64encode(next.getKey()) );
                 LOGGER.info("Message to successor: " + svrmessage);
 
                sendMessage(next.getValue().getAddress(), next.getValue().getIntraPort(), svrmessage);
                LOGGER.info("Notified successor receive historic data.");
-               System.exit(0);
 
             } catch (Exception e) {
                 LOGGER.info("Exception while stopping server.");
@@ -947,11 +947,11 @@ public class KVServer implements KVStore {
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
                     String message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
-//                    String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
+//                  String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
                     LOGGER.info("Message to ECS: " + message);
                     kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), message.getBytes(TELNET_ENCODING));
-                    LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
-                    System.out.println(kvServerECSCommunicator.receive(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort()));
+//                    LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
+//                    System.out.println(kvServerECSCommunicator.receive(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort()));
                     kvServerECSCommunicator.disconnect(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort());
                     LOGGER.info("Shutdown completed.");
                     System.exit(0);
@@ -968,7 +968,7 @@ public class KVServer implements KVStore {
         if (!kvServer2ServerCommunicator.isConnected(address + ":" + port)) {
             try {
                 kvServer2ServerCommunicator.connect(address, port);
-                LOGGER.info("Connectted to: " + address + ":" + port);
+                LOGGER.info("Connected to: " + address + ":" + port);
                 byte[] data = kvServer2ServerCommunicator.receive(address + ":" + port);
                 LOGGER.info(String.format("Received string: \"%s\"", new String(data, StandardCharsets.ISO_8859_1)));
             } catch (Exception e) {
@@ -977,7 +977,7 @@ public class KVServer implements KVStore {
         }
         try {
             kvServer2ServerCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
-            LOGGER.info("Successfully sent");
+            LOGGER.info("Successfully sent message: " + message);
         } catch (Exception e) {
             e.printStackTrace();
         }
