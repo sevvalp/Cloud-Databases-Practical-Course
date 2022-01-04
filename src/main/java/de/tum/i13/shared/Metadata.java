@@ -116,7 +116,7 @@ public class Metadata implements Serializable {
 
     public String getServerHashRangeWithReplicas(){
 
-        //<range_from>,<range_to>,<ip:port>,<rep1ip:rep1port>,<rep2ip:rep2port>;
+        //<range_from>,<range_to>,<ip:port>;<range_from>,<range_to><rep1ip:rep1port>;<range_from>,<range_to><rep2ip:rep2port>;
         String message = "";
         for(String s : serverMap.keySet()){
             KVServerInfo serverInfo = serverMap.get(s);
@@ -127,8 +127,8 @@ public class Metadata implements Serializable {
 
                 for(int i=0; i<replicaServers.size(); i++){
 
-                    serverInfo = serverMap.get(replicaServers.get(i));
-                    message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort() +";";
+                    KVServerInfo replicaInfo = serverMap.get(replicaServers.get(i));
+                    message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + replicaInfo.getAddress() + ":" + replicaInfo.getPort() +";";
                     //message +=  "," + serverInfo.getAddress() + ":" + serverInfo.getPort();
                 }
             }
