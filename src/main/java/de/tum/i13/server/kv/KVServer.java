@@ -889,14 +889,15 @@ public class KVServer implements KVStore {
         //rebalance send all historic data to successor
         if (metadata.getServerMap().size() > 1) {
             try {
-                LOGGER.info("Rebalance succesor server.");
-                String svrmessage = String.format("%s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)));
-                LOGGER.info("Message to successor: " + svrmessage);
 
                 //find successor
                 Map.Entry<String, KVServerInfo> next = metadata.getServerMap().ceilingEntry(Util.calculateHash(listenaddress,port));
                 if (next == null)
                     next = metadata.getServerMap().firstEntry();
+
+                LOGGER.info("Rebalance succesor server.");
+                String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)), B64Util.b64encode(next.getKey()) );
+                LOGGER.info("Message to successor: " + svrmessage);
 
                sendMessage(next.getValue().getAddress(), next.getValue().getIntraPort(), svrmessage);
                LOGGER.info("Notified successor receive historic data.");
