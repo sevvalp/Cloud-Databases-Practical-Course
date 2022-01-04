@@ -222,33 +222,40 @@ public class ECSServer {
 
         // extract info from message
         String[] payload = B64Util.b64decode(msg.getKey()).split(",");
-
-        // find next server
-        Map.Entry<String, KVServerInfo> next = this.serverMap.ceilingEntry(msg.getKey());
-
         if (payload.length != 3)
             return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Cant parse payload!"));
 
-        String address = payload[0];
-        int port = Integer.parseInt(payload[1]);
-        int intraPort = Integer.parseInt(payload[2]);
-        String hash = Util.calculateHash(address, port);
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
 
-        if (next == null)
-            next = this.serverMap.firstEntry();
+                // find next server
+                Map.Entry<String, KVServerInfo> next = serverMap.ceilingEntry(msg.getKey());
 
-        if (next.getKey().equals(msg.getKey())) {
-            // server to remove is only KVServer connected
-            // TODO: send ok to server
-            this.serverMap.remove(msg.getKey());
-        } else {
-            // TODO: writelock on server to remove & transfer data to next server
-            this.stoppingServers.put(hash, this.serverMap.get(hash));
+                String address = payload[0];
+                int port = Integer.parseInt(payload[1]);
+                int intraPort = Integer.parseInt(payload[2]);
+                String hash = Util.calculateHash(address, port);
 
-            this.serverMap.remove(hash);
-            sendMetadataUpdate();
+                if (next == null)
+                    next = serverMap.firstEntry();
 
-        }
+                if (next.getKey().equals(msg.getKey())) {
+                    // server to remove is only KVServer connected
+                    // TODO: send ok to server
+                    serverMap.remove(msg.getKey());
+                } else {
+                    // TODO: writelock on server to remove & transfer data to next server
+                    //stoppingServers.put(hash, serverMap.get(hash));
+                    serverMap.remove(hash);
+                    sendMetadataUpdate();
+                }
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
     }
