@@ -882,29 +882,32 @@ public class KVServer implements KVStore {
         return map;
     }
 
-//    public void gracefullyShutdown() {
-//        changeServerWriteLockStatus(true);
-//        changeServerStatus(false);
-//
-//        //rebalance send all historic data to successor
-//        if (metadata.getServerMap().size() > 1) {
-//            try {
-//                LOGGER.info("Rebalance succesor server.");
-//                String svrmessage = String.format("%s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)));
-//                LOGGER.info("Message to successor: " + svrmessage);
-//                //find successor
-//                String sKey = metadata.getSuccessorServerKey(listenaddress, port);
-//                KVServerInfo successorServer = metadata.getServerMap().get(sKey);//
-//                server.send(successorServer.getSelectionKey(), svrmessage.getBytes(TELNET_ENCODING));
-//                LOGGER.info("Notified successor rebalance.");
-//                System.exit(0);
-//
-//            } catch (Exception e) {
-//                LOGGER.info("Exception while stopping server.");
-//            }
-//        }
-//
-//    }
+    public void sendDataToSuccessor() {
+        changeServerWriteLockStatus(true);
+        changeServerStatus(false);
+
+        //rebalance send all historic data to successor
+        if (metadata.getServerMap().size() > 1) {
+            try {
+                LOGGER.info("Rebalance succesor server.");
+                String svrmessage = String.format("%s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)));
+                LOGGER.info("Message to successor: " + svrmessage);
+
+                //find successor
+                Map.Entry<String, KVServerInfo> next = metadata.getServerMap().ceilingEntry(Util.calculateHash(listenaddress,port));
+                if (next == null)
+                    next = metadata.getServerMap().firstEntry();
+
+               sendMessage(next.getValue().getAddress(), next.getValue().getIntraPort(), svrmessage);
+               LOGGER.info("Notified successor receive historic data.");
+               System.exit(0);
+
+            } catch (Exception e) {
+                LOGGER.info("Exception while stopping server.");
+            }
+        }
+
+    }
 
     public void connectECS(){
         LOGGER.info("Connecting to ECS");
@@ -938,8 +941,8 @@ public class KVServer implements KVStore {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
 
-               //gracefullyShutdown();
-                //send ecs historic data
+                sendDataToSuccessor();
+
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
                     String message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
@@ -949,6 +952,8 @@ public class KVServer implements KVStore {
                     LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
                     System.out.println(kvServerECSCommunicator.receive(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort()));
                     kvServerECSCommunicator.disconnect(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort());
+                    LOGGER.info("Shutdown completed.");
+                    System.exit(0);
                 } catch (Exception e) {
                     LOGGER.info("ECS Exception while stopping server.");
                 }

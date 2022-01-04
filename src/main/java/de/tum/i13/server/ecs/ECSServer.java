@@ -243,10 +243,11 @@ public class ECSServer {
             this.serverMap.remove(msg.getKey());
         } else {
             // TODO: writelock on server to remove & transfer data to next server
-            this.stoppingServers.put(hash, this.serverMap.get(hash));
-//            String message = "rebalance " + B64Util.b64encode(address + ":" + intraPort) + " " + B64Util.b64encode(hash) + "\r\n";
-            String message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + msg.getValue() + " " + msg.getKey() + "\r\n";
-            sendMessage(next.getValue().getAddress(), next.getValue().getPort(), message );
+           // this.stoppingServers.put(hash, this.serverMap.get(hash));
+
+            this.serverMap.remove(hash);
+            sendMetadataUpdate();
+
         }
 
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
