@@ -123,7 +123,7 @@ public class Metadata implements Serializable {
             message += serverInfo.getStartIndex() + "," + serverInfo.getEndIndex() + "," + serverInfo.getAddress() + ":" + serverInfo.getPort() + ";";
 
             if(serverMap.size() > 2){
-            ArrayList<String> replicaServers = getReplicasHash(s);
+            ArrayList<String> replicaServers = getReplicaServers(s);
 
                 for(int i=0; i<replicaServers.size(); i++){
 
@@ -157,6 +157,30 @@ public class Metadata implements Serializable {
     public ArrayList<String> getReplicasHash(String serverInfo) {
         ArrayList<String> replicas = new ArrayList<>();
         String currentHash = calculateHash(serverInfo);
+        String successorHash = null;
+        if (serverMap.size() > 2) {
+            for (int i = 0; i < 2; i++) {
+
+                //get successor of the current server
+                Map.Entry<String, KVServerInfo> successorServer;
+                successorServer = serverMap.higherEntry(currentHash);
+                if (successorServer == null)
+                    successorServer = serverMap.firstEntry();
+
+                successorHash = successorServer.getKey();
+                replicas.add(successorHash);
+
+                //do it again for the successor again
+                currentHash = successorHash;
+            }
+        }
+
+        return replicas;
+    }
+
+    public ArrayList<String> getReplicaServers(String serverInfo) {
+        ArrayList<String> replicas = new ArrayList<>();
+        String currentHash = serverInfo;
         String successorHash = null;
         if (serverMap.size() > 2) {
             for (int i = 0; i < 2; i++) {
