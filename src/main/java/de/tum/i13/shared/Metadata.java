@@ -154,30 +154,6 @@ public class Metadata implements Serializable {
         return hash;
     }
 
-    public ArrayList<String> getReplicasHash(String serverInfo) {
-        ArrayList<String> replicas = new ArrayList<>();
-        String currentHash = calculateHash(serverInfo);
-        String successorHash = null;
-        if (serverMap.size() > 2) {
-            for (int i = 0; i < 2; i++) {
-
-                //get successor of the current server
-                Map.Entry<String, KVServerInfo> successorServer;
-                successorServer = serverMap.higherEntry(currentHash);
-                if (successorServer == null)
-                    successorServer = serverMap.firstEntry();
-
-                successorHash = successorServer.getKey();
-                replicas.add(successorHash);
-
-                //do it again for the successor again
-                currentHash = successorHash;
-            }
-        }
-
-        return replicas;
-    }
-
     public ArrayList<String> getReplicaServers(String serverInfo) {
         ArrayList<String> replicas = new ArrayList<>();
         String currentHash = serverInfo;
@@ -210,7 +186,7 @@ public class Metadata implements Serializable {
         }
         if(serverMap.size() > 2) {
             LOGGER.info("serverMap size is > than 2 so checking replica servers");
-            return getReplicasHash(responsibleServer).contains(serverInfo.getServerKeyHash());
+            return getReplicaServers(responsibleServer).contains(serverInfo.getServerKeyHash());
         }else{
             LOGGER.info("serverMap size is < than 2, returning true as deafult..");
             return true;
