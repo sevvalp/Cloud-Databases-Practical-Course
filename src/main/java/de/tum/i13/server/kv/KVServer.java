@@ -362,7 +362,7 @@ public class KVServer implements KVStore {
 
     public void sendKVReplicas(String command, String key, String value){
         String msg = "receive_single " + B64Util.b64encode(command) + " " + B64Util.b64encode(key + ":" + value) + "\r\n";
-        ArrayList<String> replicaServers = metadata.getReplicaServers(Util.calculateHash(listenaddress,port));
+        ArrayList<String> replicaServers = metadata.getReplicasHash(Util.calculateHash(listenaddress,port));
 
         replicaServers.forEach((server) -> {
             try {
