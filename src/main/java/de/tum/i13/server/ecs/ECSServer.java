@@ -235,6 +235,7 @@ public class ECSServer {
                 int intraPort = Integer.parseInt(payload[2]);
                 String hash = Util.calculateHash(address, port);
 
+                LOGGER.info("Removing process started for server: " + address +":"+ port);
                 if (next == null)
                     next = serverMap.firstEntry();
 
@@ -246,9 +247,13 @@ public class ECSServer {
                     // TODO: recalculate server hash ranges
                     //stoppingServers.put(hash, serverMap.get(hash));
                     serverMap.remove(hash);
+                    LOGGER.info("Server removed from serverMap, " + address +":"+ port);
 
                     sendDataToSuccessor(serverMap.get(hash).getAddress(), serverMap.get(hash).getPort(), msg.getValue());
+                    LOGGER.info("Done send replica items to successor");
+
                     sendMetadataUpdate();
+                    LOGGER.info("Done update metadata");
                 }
                 return null;
             }
@@ -264,6 +269,7 @@ public class ECSServer {
     public void sendDataToSuccessor(String listenaddress, int port, String historicPairs) {
 
         //rebalance send all historic data to successor
+        LOGGER.info("Sending kv replica items, current serverMap size: " + serverMap.size());
         if (serverMap.size() > 3) {
             try {
 
@@ -285,9 +291,9 @@ public class ECSServer {
                 }
                 KVServerInfo next = serverMap.get(successorHash);
 
-
                 LOGGER.info("Rebalance succesor server:" + next.getAddress() + ":"+ next.getPort());
-                String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", B64Util.b64encode(historicPairs), B64Util.b64encode(next.getServerKeyHash()) );
+
+                String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", historicPairs, B64Util.b64encode(next.getServerKeyHash()) );
                 LOGGER.info("Message to successor: " + svrmessage);
 
                 sendMessage(next.getAddress(), next.getIntraPort(), svrmessage);
