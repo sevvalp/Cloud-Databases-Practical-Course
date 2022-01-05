@@ -243,6 +243,7 @@ public class ECSServer {
                     // server to remove is only KVServer connected
 
                     serverMap.remove(msg.getKey());
+                    LOGGER.info("Last server shutdown completed.");
                 } else {
                     // TODO: recalculate server hash ranges
                     //stoppingServers.put(hash, serverMap.get(hash));

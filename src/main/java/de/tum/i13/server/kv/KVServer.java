@@ -909,34 +909,31 @@ public class KVServer implements KVStore {
 
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
-                    while(!Thread.interrupted()){
-                        Thread.sleep(5000);
 
                     String message = "";
                     if (historicPairs.isEmpty() || historicPairs == null) {
                         message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), "null");
-                    } else
+                        LOGGER.info("historic data null " + message);
+                    } else{
                         message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
+                        LOGGER.info("historic data not null " + message);
+                    }
 //                  String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
                     LOGGER.info("Message to ECS: " + message);
                     kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), message.getBytes(TELNET_ENCODING));
 //                    LOGGER.info("Notified ECS gracefully shut down. Waiting for answer...");
 //                    System.out.println(kvServerECSCommunicator.receive(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort()));
-                    kvServerECSCommunicator.disconnect(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort());
+//                    kvServerECSCommunicator.disconnect(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort());
                     LOGGER.info("Shutdown completed.");
-                    System.exit(0);
-                    }
-                } catch (InterruptedException e) {
-                    LOGGER.info("Time limit exceeded. Stopping server..");
-                    System.exit(0);
-                } catch (UnsupportedEncodingException e) {
-                    LOGGER.info("ECS Exception while stopping server.");
                 } catch (Exception e) {
                     LOGGER.info("ECS Exception while stopping server.");
+                }finally {
+                    LOGGER.info("Shutdown completed.2");
                 }
-
+                LOGGER.info("Shutdown completed.3");
             }
         });
+
     }
 
     private void sendMessage(String address, int port, String message){
