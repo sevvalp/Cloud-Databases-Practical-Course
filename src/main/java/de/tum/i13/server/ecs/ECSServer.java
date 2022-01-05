@@ -236,16 +236,16 @@ public class ECSServer {
                 String hash = Util.calculateHash(address, port);
 
                 LOGGER.info("Removing process started for server: " + address +":"+ port);
-                if (next == null)
-                    next = serverMap.firstEntry();
-
-                if (next.getKey().equals(hash)) {
-                    // server to remove is only KVServer connected
-
-                    serverMap.remove(msg.getKey());
-                    sendMetadataUpdate();
-                    LOGGER.info("Last server shutdown completed.");
-                } else {
+//                if (next == null)
+//                    next = serverMap.firstEntry();
+//
+//                if (next.getKey().equals(hash)) {
+//                    // server to remove is only KVServer connected
+//
+//                    serverMap.remove(hash);
+//                    sendMetadataUpdate();
+//                    LOGGER.info("Last server shutdown completed.");
+//                } else {
                     // TODO: recalculate server hash ranges
                     //stoppingServers.put(hash, serverMap.get(hash));
                     serverMap.remove(hash);
@@ -256,7 +256,7 @@ public class ECSServer {
 
                     sendMetadataUpdate();
                     LOGGER.info("Done update metadata");
-                }
+                //}
                 return null;
             }
 
