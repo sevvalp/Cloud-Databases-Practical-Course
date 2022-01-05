@@ -383,6 +383,11 @@ public class ECSServer {
         try {
             communicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
         } catch (Exception e) {
+            if(e.getMessage().contains("Connection reset by peer")){
+                LOGGER.info("Error while sending removing server.. sending new metadata..");
+                serverMap.remove(Util.calculateHash(address,port));
+                sendMetadataUpdate();
+            }
             e.printStackTrace();
         }
     }
