@@ -108,7 +108,7 @@ public class ECSServer {
             LOGGER.fine("Server map after put: " + serverMap.toString());
             LOGGER.fine("Starting map: " + startingServers.toString());
             LOGGER.fine("Stopping map: " + stoppingServers.toString());
-        //    sendMessage(address,port,message);
+            //sendMessage(address,port,message);
             sendMetadataUpdate();
             //server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
         } else {
@@ -249,7 +249,7 @@ public class ECSServer {
                     serverMap.remove(hash);
                     LOGGER.info("Server removed from serverMap, " + address +":"+ port);
 
-                    sendDataToSuccessor(serverMap.get(hash).getAddress(), serverMap.get(hash).getPort(), msg.getValue());
+                    sendDataToSuccessor(address, port, msg.getValue());
                     LOGGER.info("Done send replica items to successor");
 
                     sendMetadataUpdate();
