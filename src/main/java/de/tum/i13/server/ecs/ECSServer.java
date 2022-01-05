@@ -354,6 +354,7 @@ public class ECSServer {
                     if (unixTimeMillis - heartBeatTime.get(e.getKey()) < 300L || unixTimeMillis - heartBeatTime.get(e.getKey()) >= 1100) {
                         LOGGER.warning("Server " + e.getValue().getAddress() + ":" + e.getValue().getPort() + "failed to respond. Removing...");
                         serverMap.remove(e.getKey());
+                        disconnected = true;
                     } else {
                         LOGGER.info("Heartbeat to " + e.getValue().getAddress());
                         String message = "ECS_HEARTBEAT " + B64Util.b64encode(e.getValue().getAddress() + ":" + e.getValue().getPort()) + " " + B64Util.b64encode(e.getKey()) + "\r\n";
