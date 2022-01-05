@@ -239,7 +239,7 @@ public class ECSServer {
                 if (next == null)
                     next = serverMap.firstEntry();
 
-                if (next.getKey().equals(msg.getKey())) {
+                if (next.getKey().equals(hash)) {
                     // server to remove is only KVServer connected
 
                     serverMap.remove(msg.getKey());
