@@ -120,8 +120,7 @@ public class ECSServer {
             LOGGER.info("Previous server found. Adding new server.");
             KVServerInfo info = new KVServerInfo(address, port, prev.getKey(), hash, intraPort, ((ServerMessage) msg).getSelectionKey());
             //KVServerInfo info = new KVServerInfo(address, port, hash, prev.getKey(), intraPort, ((ServerMessage) msg).getSelectionKey());
-            //TODO: check and update corresponding server's information (the very first one or successor node after new server added.
-            // Next servers' start index should be the hash value of the prev server
+
             this.startingServers.put(hash, info);
             LOGGER.fine("Starting map after put: " + startingServers.toString());
             LOGGER.fine("Server map: " + serverMap.toString());
@@ -241,12 +240,14 @@ public class ECSServer {
 
                 if (next.getKey().equals(msg.getKey())) {
                     // server to remove is only KVServer connected
-                    // TODO: send ok to server
+
                     serverMap.remove(msg.getKey());
                 } else {
-                    // TODO: writelock on server to remove & transfer data to next server
+                    // TODO: recalculate server hash ranges
                     //stoppingServers.put(hash, serverMap.get(hash));
                     serverMap.remove(hash);
+
+                    sendDataToSuccessor(serverMap.get(hash).getAddress(), serverMap.get(hash).getPort(), msg.getValue());
                     sendMetadataUpdate();
                 }
                 return null;
@@ -260,20 +261,43 @@ public class ECSServer {
         return new ServerMessage(KVMessage.StatusType.ECS_ACCEPT, msg.getKey(), B64Util.b64encode("Successfully removed server"));
     }
 
-    public KVMessage updatedMetadata(KVMessage msg) {
-        // if server is not set, return error
-        if (server == null)
-            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
-        // if KVMessage does not contain selectionKey, return error
-        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
-            return new ServerMessage(KVMessage.StatusType.ECS_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+    public void sendDataToSuccessor(String listenaddress, int port, String historicPairs) {
 
-        // check if server is starting
-        if (this.startingServers.containsKey(B64Util.b64decode(msg.getValue()))) {
+        //rebalance send all historic data to successor
+        if (serverMap.size() > 3) {
+            try {
 
+                //find 3rd successor
+                String currentHash = Util.calculateHash(listenaddress,port);
+                String successorHash = null;
+                for (int i = 0; i < 3; i++) {
+
+                    //get successor of the current server
+                    Map.Entry<String, KVServerInfo> successorServer;
+                    successorServer = serverMap.higherEntry(currentHash);
+                    if (successorServer == null)
+                        successorServer = serverMap.firstEntry();
+
+                    successorHash = successorServer.getKey();
+
+                    //do it again for the successor again
+                    currentHash = successorHash;
+                }
+                KVServerInfo next = serverMap.get(successorHash);
+
+
+                LOGGER.info("Rebalance succesor server:" + next.getAddress() + ":"+ next.getPort());
+                String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", B64Util.b64encode(historicPairs), B64Util.b64encode(next.getServerKeyHash()) );
+                LOGGER.info("Message to successor: " + svrmessage);
+
+                sendMessage(next.getAddress(), next.getIntraPort(), svrmessage);
+                LOGGER.info("Notified successor receive historic data.");
+
+            } catch (Exception e) {
+                LOGGER.info("Exception while stopping server.");
+            }
         }
 
-        return null;
     }
 
     public KVMessage heartbeat(KVMessage msg) {

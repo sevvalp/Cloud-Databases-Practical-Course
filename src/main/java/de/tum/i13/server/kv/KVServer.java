@@ -855,13 +855,6 @@ public class KVServer implements KVStore {
 
     public String convertMapToString(TreeMap<String, Pair<String, String>> map) {
 
-//        String mapAsString = "";
-//        if (map != null && map.isEmpty()) {
-//            mapAsString = map.keySet().stream()
-//                    .map(key -> key + "=" + map.get(key).getKey() + "=" + map.get(key).getValue())
-//                    .collect(Collectors.joining(", "));
-//        }
-
         String mapAsString = "";
         for (String i : map.keySet())
             mapAsString += i.toString() + "&=&" + map.get(i).getKey().toString() + "&=&" + map.get(i).getValue().toString() + ",";
@@ -880,52 +873,6 @@ public class KVServer implements KVStore {
             map.put(info[0], new Pair<>(info[1], info[2]));
         }
         return map;
-    }
-
-    public void sendDataToSuccessor() {
-//        changeServerWriteLockStatus(true);
-//        changeServerStatus(false);
-
-        //rebalance send all historic data to successor
-        if (metadata.getServerMap().size() > 1) {
-            try {
-
-                //find 3rd successor
-//                Map.Entry<String, KVServerInfo> next = metadata.getServerMap().higherEntry(Util.calculateHash(listenaddress,port));
-//                        //metadata.getServerMap().ceilingEntry(Util.calculateHash(listenaddress,port));
-//                if (next == null)
-//                    next = metadata.getServerMap().firstEntry();
-
-                String currentHash = Util.calculateHash(listenaddress,port);
-                String successorHash = null;
-                for (int i = 0; i < 3; i++) {
-
-                    //get successor of the current server
-                    Map.Entry<String, KVServerInfo> successorServer;
-                    successorServer = metadata.getServerMap().higherEntry(currentHash);
-                    if (successorServer == null)
-                        successorServer = metadata.getServerMap().firstEntry();
-
-                    successorHash = successorServer.getKey();
-
-                    //do it again for the successor again
-                    currentHash = successorHash;
-                }
-                Map.Entry<String, KVServerInfo> next = metadata.getServerMap().higherEntry(successorHash);
-
-
-                LOGGER.info("Rebalance succesor server:" + next.getValue().getAddress() + ":"+ next.getValue().getPort());
-                String svrmessage = String.format("%s %s %s\r\n", "receive_rebalance", B64Util.b64encode(convertMapToString(historicPairs)), B64Util.b64encode(next.getKey()) );
-                LOGGER.info("Message to successor: " + svrmessage);
-
-               sendMessage(next.getValue().getAddress(), next.getValue().getIntraPort(), svrmessage);
-               LOGGER.info("Notified successor receive historic data.");
-
-            } catch (Exception e) {
-                LOGGER.info("Exception while stopping server.");
-            }
-        }
-
     }
 
     public void connectECS(){
@@ -959,9 +906,6 @@ public class KVServer implements KVStore {
     private void addShutDownHook(){
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-
-                if(metadata.getServerMap().size() > 3)
-                    sendDataToSuccessor();
 
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
