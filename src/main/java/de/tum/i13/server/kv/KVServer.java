@@ -909,7 +909,11 @@ public class KVServer implements KVStore {
 
                 LOGGER.info("Notify ECS gracefully shut down.");
                 try {
-                    String message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
+                    String message = "";
+                    if (historicPairs.isEmpty() || historicPairs == null) {
+                        message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), " null");
+                    } else
+                        message = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", listenaddress, port, intraPort)), B64Util.b64encode(convertMapToString(historicPairs)));
 //                  String message = "removeserver " + B64Util.b64encode(convertMapToString(historicPairs)) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port));
                     LOGGER.info("Message to ECS: " + message);
                     kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), message.getBytes(TELNET_ENCODING));
