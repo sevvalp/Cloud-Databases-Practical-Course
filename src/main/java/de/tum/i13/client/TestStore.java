@@ -68,7 +68,7 @@ public class TestStore implements KVStore {
      * @param command Command to send to the server.
      * @param key Key to use, will be B64 encoded.
      * @param value Value to send, will be B64 encoded.
-     * @return
+     * @return client message
      * @throws IOException if there is an IOException during the sending.
      * @throws IllegalStateException if currently not connected to a Server.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
@@ -95,12 +95,12 @@ public class TestStore implements KVStore {
     /**
      * Will send keyrange command to the connected server.
      * @param command Command to send to the server.
-     * @return
+     * @return client message
      * @throws IOException if there is an IOException during the sending.
      * @throws IllegalStateException if currently not connected to a Server.
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
-    public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
+    public String sendKeyRange(String command) throws IOException, IllegalStateException, SizeLimitExceededException {
         int attempts = 0;
         String message = String.format("%s \r\n", command.toUpperCase());
         LOGGER.info("Message to server: " + message);
@@ -108,9 +108,9 @@ public class TestStore implements KVStore {
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         String[] response = msg.split(" ");
         while(true) {
-            switch (response[0]) {
+
                 //Retry sending with backoff
-                case "SERVER_STOPPED":
+                if(KVMessage.parseStatus(response[0]) == KVMessage.StatusType.SERVER_STOPPED) {
                     try {
                         MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
                         communicator.send(message.getBytes(TELNET_ENCODING));
@@ -119,31 +119,13 @@ public class TestStore implements KVStore {
                     } catch (InterruptedException e) {
                         LOGGER.warning("Error while retrying to send keyrange request");
                     }
-                    break;
-                case "KEY_RANGE_SUCCESS":
-                    //if (response.length == 2) {
-                        //KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, null, null, 5153);
-                        //metadata = new Metadata(newInfo);
-                    //metadata = new Metadata("127.0.0.1:5153", msg);
-                    //TreeMap<String, Pair<String, String>> newMap = new TreeMap<String, Pair<String, String>>();
-                    KVServerInfo newInfo = new KVServerInfo("127.0.0.1", 5153, null, null, 5153);
-                    metadata = new Metadata(newInfo);
-                    LOGGER.info("Update Metadata");
-                    msg = msg.replace("KEY_RANGE_SUCCESS ", "");
-                    msg = msg.replace("\r\n", "");
-                    metadata.updateClientMetadata(msg);
-                    String state = getCorrectServer(communicator, response[1]);
-                    switch(state){
-                        case "SUCCESS":
-                            sendKeyRange(command);
-                        case "FAIL":
-                            break;
-                    }
+                }
+                else {
                     return msg.substring(0, msg.length() - 2);
-            }
-        }
+                }
 
         }
+    }
 
     /**
      * This method chooses the right server to send the query to
@@ -368,8 +350,8 @@ public class TestStore implements KVStore {
             return new ClientMessage(status, null, null);
         } else {
             String rcvKey = B64Util.b64decode(rcvMsg[1]);
-            String rcvVal = B64Util.b64decode(rcvMsg[2]);
-            return new ClientMessage(status, rcvKey, rcvVal);
+//            String rcvVal = B64Util.b64decode(rcvMsg[2]);
+            return new ClientMessage(status, rcvKey, null);
         }
     }
     /**
