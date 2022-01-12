@@ -182,12 +182,11 @@ public class TestClient {
                 String value = v.toString();
                 KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
                 switch (msg.getStatus()) {
-                    case PUT_SUCCESS: System.out.printf("Successfully put <%s", msg.getKey()); break;
+                    case PUT_SUCCESS: System.out.printf("Successfully put %s%n", msg.getKey()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
-                    case SERVER_NOT_RESPONSIBLE:
-                        keyRange();break;
+                    case SERVER_NOT_RESPONSIBLE: keyRange();break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -197,6 +196,7 @@ public class TestClient {
                 System.out.println("IO error while sending.");
                 LOGGER.severe(String.format("IO error: %s", e.getMessage()));
             } catch (Exception e) {
+                System.out.println("Error while sending." + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -236,16 +236,16 @@ public class TestClient {
      * Sends a keyrange command to the server.
      */
     private static void keyRange() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-        String message = String.format("keyrange ");
-        store.sendKeyRange(message);
+        String message = "keyrange ";
+        System.out.printf("keyrange: %s%n", store.sendKeyRange(message));
     }
 
     /**
      * Sends a keyrangeread command to the server.
      */
     private static void keyRangeRead() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-        String message = String.format("keyrange_read ");
-        store.sendKeyRange(message);
+        String message = "keyrange_read ";
+        System.out.printf("keyrange_read: %s%n", store.sendKeyRange(message));
     }
 
     /**
