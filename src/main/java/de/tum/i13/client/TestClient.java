@@ -186,7 +186,13 @@ public class TestClient {
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
-                    case SERVER_NOT_RESPONSIBLE: keyRange();break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        keyRange();
+                        //added for performance testing purposes
+                        if(store.getCorrectServer(command[1]) == "SUCCESS"){
+                            put(command);
+                        }
+                        break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -217,7 +223,11 @@ public class TestClient {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
                     case SERVER_NOT_RESPONSIBLE:
-                        keyRange();break;
+                        keyRange();
+                        //added for performance testing purposes
+                        if(store.getCorrectServer(command[1]) == "SUCCESS")
+                            get(command);
+                        break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -238,6 +248,8 @@ public class TestClient {
     private static void keyRange() throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
         String message = "keyrange ";
         System.out.printf("keyrange: %s%n", store.sendKeyRange(message));
+
+
     }
 
     /**
@@ -264,7 +276,11 @@ public class TestClient {
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
                     case SERVER_NOT_RESPONSIBLE:
-                        keyRange();break;
+                        keyRange();
+                        //added for performance testing purposes
+                        if(store.getCorrectServer(command[1]) == "SUCCESS")
+                            delete(command);
+                        break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");

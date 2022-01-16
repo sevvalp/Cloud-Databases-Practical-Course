@@ -59,7 +59,7 @@ public class KVServerInfo {
         String firstElement = addressPort.split(":")[0];
         String secondElement = addressPort.split(":")[1];
         this.address = addressPort.split(":")[0].replace("<", "").trim();
-        this.port = Integer.parseInt(addressPort.split(":")[1].substring(0,secondElement.length()-1));
+        this.port = Integer.parseInt(addressPort.split(":")[1]);
         String sIndex = startIndex.replace("<", "").replace(">", "");
         String eIndex = endIndex.replace("<", "").replace(">", "").trim();
         this.startIndex = sIndex;

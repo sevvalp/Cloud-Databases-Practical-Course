@@ -20,6 +20,10 @@ public class Metadata implements Serializable {
     private KVServerInfo serverInfo;
     private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
 
+    public Metadata(){
+        this.serverMap = new TreeMap<>();
+    }
+
     public Metadata(KVServerInfo info) {
         this.serverInfo = info;
         this.serverMap = new TreeMap<>();

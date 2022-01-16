@@ -33,6 +33,7 @@ public class TestStore implements KVStore {
 
     public TestStore() {
         communicator = new SocketCommunicator();
+        metadata = new Metadata();
     }
 
     /**
@@ -129,48 +130,59 @@ public class TestStore implements KVStore {
 
     /**
      * This method chooses the right server to send the query to
-     * @param communicator the connection which will be used
      * @param key the key that will be sent
      * @return the state of the operation as string
      * @throws NoSuchAlgorithmException
      * @throws NullPointerException
      * @throws IOException
      */
-    private String getCorrectServer(SocketCommunicator communicator, String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
+    private String _getCorrectServer(String key) throws NullPointerException, NoSuchAlgorithmException, IOException {
+
+        try {
+            String keyrange = sendKeyRange("keyrange ");
+            metadata.updateClientMetadata(keyrange);
+
+        } catch (SizeLimitExceededException e) {
+            LOGGER.info("Exception getting keyrange while searching for the correct server.");
+        }
+
         if(metadata != null){
             Pair<String, Integer> responsibleServer = metadata.getServerResponsible(keyHash(key));
             if(!communicator.getAddress().equals(responsibleServer.getFirst()) || communicator.getPort() != responsibleServer.getSecond()) {
                 try {
+                    LOGGER.info("Reconnecting to server: " + responsibleServer.getFirst() +":"+ responsibleServer.getSecond() );
                     communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
                     communicator.receive();
                     return "SUCCESS";
                 } catch (IOException e) {
                     LOGGER.warning("Could not connect to responsible Server. Trying to update metadata on another server");
-                    metadata.removeEntry(metadata.getRangeHash(keyHash(key)));
-                    if(!metadata.isEmpty()) {
-                        responsibleServer = metadata.getServerResponsible(keyHash(key));
-                        try {
-                            communicator.reconnect(responsibleServer.getFirst(), responsibleServer.getSecond());
-                            communicator.receive();
-                            return "SUCCESS";
-                        } catch (IOException ex) {
-                            getCorrectServer(communicator, key);
-                        } catch (Exception ex) {
-                            throw new IOException();
-                        }
-                    } else{
-                        throw new NullPointerException();
+                    getCorrectServer(key);
                     }
-                }
+                } else LOGGER.warning("Could not find the responsible server. No other server exists!");
             }
             else {
                 LOGGER.warning("Could not find the responsible server. No other server exists!");
             }
-        }
         return "FAIL";
     }
 
 
+    public String getCorrectServer(String key){
+        String returnKey = "";
+        try {
+            long startTime = System.nanoTime();
+            returnKey = _getCorrectServer(key);
+            long endTime   = System.nanoTime();
+            LOGGER.info("Server swapped in (sec): " + (long) ((endTime - startTime) / 1000000000.0) );
+            LOGGER.info("Server swapped in (milli sec): " + (long) ((endTime - startTime) /1000000.0) );
+
+        }catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return returnKey;
+    }
     /**
          * Inserts a key-value pair into the KVServer.
          *
