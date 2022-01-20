@@ -582,7 +582,7 @@ public class KVServer implements KVStore {
 
                 //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
                 message = "rebalance_success " + msg.getKey() + " " + msg.getValue() + "\r\n";
-                sendMessage(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
+                sendMessageECS(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
                 LOGGER.info("Rebalance success send to ECS");
 
                 return null;
@@ -661,7 +661,7 @@ public class KVServer implements KVStore {
         String message = "ecs_heartbeat " + B64Util.b64encode(listenaddress + ":" + port) + " " + B64Util.b64encode(Util.calculateHash(listenaddress, port)) + "\r\n";
         try {
             LOGGER.info("Responding to heartbeat: " + message);
-            sendMessage(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
+            sendMessageECS(bootstrap.getAddress().getHostAddress(), bootstrap.getPort(), message);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -940,10 +940,29 @@ public class KVServer implements KVStore {
 
     }
 
-    private void sendMessage(String address, int port, String message) throws Exception {
 
-        //TODO: find a solution for ECSCommunicator connection check, or write an
-        // extra method for ECSCommunicator send methods otherwise you are using some communicator for both.
+    private void sendMessageECS(String address, int port, String message){
+        if (!kvServerECSCommunicator.isConnected(address + ":" + port)) {
+            try {
+                kvServerECSCommunicator.connect(address, port);
+                LOGGER.info("Connected to: " + address + ":" + port);
+                byte[] data = kvServerECSCommunicator.receive(address + ":" + port);
+                LOGGER.info(String.format("Received string: \"%s\"", new String(data, StandardCharsets.ISO_8859_1)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            kvServerECSCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
+            LOGGER.info("Successfully sent message: " + message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void sendMessage(String address, int port, String message) throws Exception {
 
         if (!kvServer2ServerCommunicator.isConnected(address + ":" + port)) {
 
@@ -976,7 +995,6 @@ public class KVServer implements KVStore {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 LOGGER.info("timeout");
-                //TODO: send remove server request to ECS for non-response server
                 String sendMessage = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", address, port, port)), B64Util.b64encode(convertMapToString(historicPairs)));
                 kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), sendMessage.getBytes(TELNET_ENCODING));
                 LOGGER.info("Timeout server information sent to ECS");
