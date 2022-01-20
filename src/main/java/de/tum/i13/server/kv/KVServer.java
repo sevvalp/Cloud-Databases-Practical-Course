@@ -18,7 +18,7 @@ import java.net.InetSocketAddress;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -799,6 +799,7 @@ public class KVServer implements KVStore {
 
         changeServerWriteLockStatus(true);
 
+
         pool.submit(new StripedCallable<Void>() {
             public Void call() throws Exception {
                 LOGGER.info("Metadata received. ");
@@ -881,7 +882,10 @@ public class KVServer implements KVStore {
             //connect to ECS
 
             kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
+            //TODO: set time out if it fails connect to spare ECS
             kvServerECSCommunicator.receive(this.bootstrap.getAddress().getHostAddress()+":"+this.bootstrap.getPort());
+
+
             //notify ECS that new server added
             // NEWSERVER <encoded info: address,port,intraport>
             String command = "newserver ";
@@ -936,24 +940,58 @@ public class KVServer implements KVStore {
 
     }
 
-    private void sendMessage(String address, int port, String message){
+    private void sendMessage(String address, int port, String message) throws Exception {
+
+        //TODO: find a solution for ECSCommunicator connection check, or write an
+        // extra method for ECSCommunicator send methods otherwise you are using some communicator for both.
 
         if (!kvServer2ServerCommunicator.isConnected(address + ":" + port)) {
+
+            StripedExecutorService executorService = new StripedExecutorService();
+            String finalMessage = message;
+            Future<?> future = executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            kvServer2ServerCommunicator.connect(address, port);
+                            byte[] data = kvServer2ServerCommunicator.receive(address + ":" + port);
+                            //LOGGER.info(String.format("Received string: \"%s\"", new String(data[0], StandardCharsets.ISO_8859_1)));
+                            LOGGER.info("Connected to: " + address + ":" + port);
+                            kvServer2ServerCommunicator.send(address + ":" + port, finalMessage.getBytes(TELNET_ENCODING));
+                            LOGGER.info("Successfully sent message: " + finalMessage);
+                        } catch (Exception e) {
+                            LOGGER.info("Exeption while server rebalance: " + e.getMessage());
+                        }
+                    }
+                });
+
+            executorService.shutdown();
+
             try {
-                kvServer2ServerCommunicator.connect(address, port);
-                LOGGER.info("Connected to: " + address + ":" + port);
-                byte[] data = kvServer2ServerCommunicator.receive(address + ":" + port);
-                LOGGER.info(String.format("Received string: \"%s\"", new String(data, StandardCharsets.ISO_8859_1)));
+                future.get(50, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOGGER.info("job was interrupted");
+            } catch (ExecutionException e) {
+                LOGGER.info("caught exception: " + e.getCause());
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                LOGGER.info("timeout");
+                //TODO: send remove server request to ECS for non-response server
+                String sendMessage = String.format("%s %s %s\r\n", "removeserver", B64Util.b64encode(String.format("%s,%s,%s", address, port, port)), B64Util.b64encode(convertMapToString(historicPairs)));
+                kvServerECSCommunicator.send(bootstrap.getAddress().getHostAddress()+":"+ bootstrap.getPort(), sendMessage.getBytes(TELNET_ENCODING));
+                LOGGER.info("Timeout server information sent to ECS");
+            }
+
+        } else {
+
+            try {
+                kvServer2ServerCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
+                LOGGER.info("Successfully sent message: " + message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        try {
-            kvServer2ServerCommunicator.send(address + ":" + port, message.getBytes(TELNET_ENCODING));
-            LOGGER.info("Successfully sent message: " + message);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
 }
