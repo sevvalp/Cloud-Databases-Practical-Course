@@ -80,6 +80,4 @@ public interface KVMessage {
      */
     public Metadata getMetadata();
 
-    public String getPassword();
-
 }
