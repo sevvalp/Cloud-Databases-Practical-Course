@@ -39,6 +39,7 @@ public interface KVMessage {
         ECS_HEARTBEAT,
         RECEIVE_SINGLE,
         REPLICATE,
+        PASSWORD_WRONG
     }
 
     /**

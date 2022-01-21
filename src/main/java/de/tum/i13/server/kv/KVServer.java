@@ -42,6 +42,7 @@ public class KVServer implements KVStore {
     private KVServerCommunicator kvServer2ServerCommunicator;
     private KVServerCommunicator kvServerECSCommunicator;
     private TreeMap<String, Pair<String, String>> historicPairs;
+    private TreeMap<String, String> keySpecificPasswords;
 
 
     public KVServer(String cacheType, int cacheSize, InetSocketAddress bootstrap, String listenaddress, int port, int intraPort) {
@@ -66,6 +67,7 @@ public class KVServer implements KVStore {
         serverActive = false;
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
+        this.keySpecificPasswords = new TreeMap<>();
 
         this.metadata = new Metadata(new KVServerInfo(listenaddress,port, Util.calculateHash(listenaddress,port), "", intraPort));
         connectECS();
@@ -144,6 +146,32 @@ public class KVServer implements KVStore {
         // if KVMessage does not contain selectionKey, return error
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        //Password check is only active when password has a non-null value..
+        if(((ServerMessage) msg).getPassword() != null) {
+            LOGGER.info(String.format("Put with password is active, checking correctness of the given password"));
+
+            if(keySpecificPasswords.size() > 0){
+                String password = keySpecificPasswords.get(msg.getKey());
+                if(password != null){
+                    //password found check correctness
+                    if(!Util.calculateHash(((ServerMessage) msg).getPassword()).equals(password)){
+                        LOGGER.info(String.format("Given password is not correct, return error to client"));
+                        return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Given password is wrong for given key!"));
+                    }
+                    // else do nothing, means password is correct keep on..
+                    LOGGER.info(String.format("Given password is correct!"));
+                } else {
+                    //password doesn't exist for given key
+                    keySpecificPasswords.put(msg.getKey(), Util.calculateHash(((ServerMessage) msg).getPassword()));
+                    LOGGER.info(String.format("New password is added to given key"));
+                }
+            } else {
+                //first kv pair with password
+                keySpecificPasswords.put(msg.getKey(), Util.calculateHash(((ServerMessage) msg).getPassword()));
+                LOGGER.info(String.format("First pair with password added"));
+            }
+        }
 
         LOGGER.info(String.format("Client wants to put key: <%s, %s>", msg.getKey(), msg.getValue()));
 
@@ -327,6 +355,32 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
+        //Password check is only active when password has a non-null value..
+        if(((ServerMessage) msg).getPassword() != null) {
+            LOGGER.info(String.format("Delete with password is active, checking correctness of the given password"));
+
+            if(keySpecificPasswords.size() > 0){
+                String password = keySpecificPasswords.get(msg.getKey());
+                if(password != null){
+                    //password found check correctness
+                    if(!Util.calculateHash(((ServerMessage) msg).getPassword()).equals(password)){
+                        LOGGER.info(String.format("Given password is not correct, return error to client"));
+                        return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Given password is wrong for given key!"));
+                    }
+                    // else do nothing, means password is correct keep on..
+                    LOGGER.info(String.format("Given password is correct!"));
+                } else {
+                    //password doesn't exist for given key
+                    keySpecificPasswords.put(msg.getKey(), Util.calculateHash(((ServerMessage) msg).getPassword()));
+                    LOGGER.info(String.format("New password is added to given key"));
+                }
+            } else {
+                //first kv pair with password
+                keySpecificPasswords.put(msg.getKey(), Util.calculateHash(((ServerMessage) msg).getPassword()));
+                LOGGER.info(String.format("First pair with password added"));
+            }
+        }
+
         LOGGER.info("Client wants to delete key: %s" + msg.getKey());
 
         LOGGER.fine("Submitting new delete callable to pool for key " + msg.getKey());
@@ -427,7 +481,7 @@ public class KVServer implements KVStore {
         }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.KEY_RANGE)
-            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, null, B64Util.b64encode("KVMessage does not have correct status!"));
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, "", B64Util.b64encode("KVMessage does not have correct status!"));
         // if KVMessage does not contain selectionKey, return error
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
@@ -471,7 +525,7 @@ public class KVServer implements KVStore {
         }
         // if KVMessage does not have put command, return error
         if (msg.getStatus() != KVMessage.StatusType.KEY_RANGE_READ)
-            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, null, B64Util.b64encode("KVMessage does not have correct status!"));
+            return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, "", B64Util.b64encode("KVMessage does not have correct status!"));
         // if KVMessage does not contain selectionKey, return error
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.KEY_RANGE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
@@ -483,7 +537,6 @@ public class KVServer implements KVStore {
                 if( metadata.getServerMap().size() < 3)
                     getKeyRange(new ServerMessage(KVMessage.StatusType.KEY_RANGE, null, null, ((ServerMessage) msg).getSelectionKey()));
                 else{
-                    //TODO: implement keyrange_success method for new requirements
 
                     String message = metadata.getServerHashRangeWithReplicas() + "\r\n";
                     LOGGER.info("Answer to Client: " + message);
