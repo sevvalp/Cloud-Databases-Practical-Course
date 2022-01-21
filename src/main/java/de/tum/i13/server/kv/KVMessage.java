@@ -11,6 +11,7 @@ public interface KVMessage {
         GET_ERROR, 		        /* requested tuple (i.e. value) not found */
         GET_SUCCESS, 	        /* requested tuple (i.e. value) found */
         PUT, 			        /* Put - request */
+        PUTPASS,                /* Put - request with password */
         PUT_SUCCESS, 	        /* Put - request successful, tuple inserted */
         PUT_UPDATE, 	        /* Put - request successful, i.e. value updated */
         PUT_ERROR, 		        /* Put - request not successful */
@@ -78,5 +79,7 @@ public interface KVMessage {
      * null if not metadata is associated.
      */
     public Metadata getMetadata();
+
+    public String getPassword();
 
 }

@@ -2,6 +2,7 @@ package de.tum.i13.server.kv;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 public interface KVStore {
 
@@ -23,7 +24,9 @@ public interface KVStore {
      * @throws Exception if put command cannot be executed (e.g. not connected to any
      *                   KV server).
      */
-    public KVMessage get(KVMessage msg) throws Exception;
+    //public KVMessage get(KVMessage msg) throws Exception;
+
+    public KVMessage get(KVMessage msg, String... password) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException;
 
     /**
      * Deletes the value for a given key from the KVServer.

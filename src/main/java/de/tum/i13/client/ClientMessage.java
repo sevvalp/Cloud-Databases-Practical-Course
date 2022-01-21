@@ -2,6 +2,7 @@ package de.tum.i13.client;
 
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.shared.Metadata;
+import de.tum.i13.shared.inputPassword;
 
 public class ClientMessage implements KVMessage {
 
@@ -9,10 +10,26 @@ public class ClientMessage implements KVMessage {
     private final String value;
     private final StatusType status;
     private Metadata metadata;
+    private String password;
+
+    public ClientMessage(StatusType status, String key, String value, String password) {
+        this.key = key;
+        this.value = value;
+        this.status = status;
+        this.metadata = null;
+        this.password = password;
+    }
 
     public ClientMessage(StatusType status, String key, String value) {
         this.key = key;
         this.value = value;
+        this.status = status;
+        this.metadata = null;
+    }
+
+    public ClientMessage(StatusType status, String key) {
+        this.key = key;
+        this.value = null;
         this.status = status;
         this.metadata = null;
     }
@@ -50,6 +67,11 @@ public class ClientMessage implements KVMessage {
     @Override
     public StatusType getStatus() {
         return status;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
     }
 
     /**

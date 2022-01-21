@@ -3,14 +3,14 @@ package de.tum.i13.client;
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.KVStore;
-import de.tum.i13.shared.B64Util;
-import de.tum.i13.shared.Metadata;
-import de.tum.i13.shared.Pair;
+import de.tum.i13.shared.*;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -28,12 +28,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class TestStore implements KVStore {
 
     private Metadata metadata;
+    private inputPassword inputPassword;
     private final SocketCommunicator communicator;
     private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
 
-    public TestStore() {
+    public TestStore(inputPassword inputPassword) {
         communicator = new SocketCommunicator();
         metadata = new Metadata();
+
     }
 
     /**
@@ -201,32 +203,93 @@ public class TestStore implements KVStore {
         // PUT <Base64 encoded key> <Base64 encoded value>
         String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
         LOGGER.info(String.format("Message to server: %s", message));
+//
+//        // try to send data, exceptions will be rethrown
+//        // expected receive message
+//        // <STATUS> <Base64 encoded key> <Base64 encoded value>
+//        // for example:
+//        // PUT_SUCCESS <b64 key> <b64 value>
+//        // PUT_ERROR <b64 key> <b64 error message>
+//        communicator.send(message.getBytes(TELNET_ENCODING));
+//        KVMessage retMsg = receiveKVMessage();
+//        int attempts = 0;
+//        while (attempts < 3) {
+//            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+//                    try {
+//                        MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+//                        communicator.send(message.getBytes(TELNET_ENCODING));
+//                        retMsg = receiveKVMessage();
+//                    } catch (InterruptedException e) {
+//                        LOGGER.warning("Error while retrying to send put request");
+//                    }
+//            }
+//            else {
+//                break;
+//            }
+//        }
+//        return retMsg;
 
-        // try to send data, exceptions will be rethrown
-        // expected receive message
-        // <STATUS> <Base64 encoded key> <Base64 encoded value>
-        // for example:
-        // PUT_SUCCESS <b64 key> <b64 value>
-        // PUT_ERROR <b64 key> <b64 error message>
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        KVMessage retMsg = receiveKVMessage();
-        int attempts = 0;
-        while (attempts < 3) {
-            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
-                    try {
-                        MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
-                        communicator.send(message.getBytes(TELNET_ENCODING));
-                        retMsg = receiveKVMessage();
-                    } catch (InterruptedException e) {
-                        LOGGER.warning("Error while retrying to send put request");
-                    }
-            }
-            else {
-                break;
+        //if the user input is less then 2 commands
+        if (message.length() < 2) {
+            //return unknown command
+            System.out.println("Unknown command");
+            return (new ClientMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey()));
+        }
+        else {
+            String[] msg_arr = message.split(" ");
+            String value = buildValue(msg_arr);
+            ArrayList<String> request = new ArrayList<>();
+            request.add(msg_arr[0]);
+            request.add(msg_arr[1]);
+            request.add(value);
+            return handlePutRequest(msg_arr);
+        }
+    }
+
+    private String buildValue(String[] command, boolean isPwd) {
+        //Build the value parameter
+        StringBuilder value = new StringBuilder();
+        value.append(command[2]);
+        for (int i = 3; i < command.length - 1; i++) {
+            value.append(" ");
+            value.append(command[i]);
+        }
+        return value.toString();
+    }
+
+    public void putKVWithPassword(String[] command, String... password) throws NoSuchAlgorithmException, SizeLimitExceededException, IOException {
+        //String b64Key = B64Util.b64encode(msg.getKey());
+        //String b64Value = B64Util.b64encode(msg.getValue());
+        //String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
+        LOGGER.info(String.format("Message to server: %s", command));
+        //if the user input is less then 4 commands
+        if (command.length < 2) {
+            //return unknown command
+            System.out.println("Invalid Input");
+            return;
+        }
+        else {
+            String value = buildValue(command);
+            ArrayList<String> request = new ArrayList<>();
+            request.add(command[0]);
+            request.add(command[1]);
+            request.add(value);
+
+            if (password.length > 0) {
+                String pwd = keyHash(Arrays.toString(password));
+                request.add(pwd);
+                handlePutRequest(request.toArray(new String[0]));
+            } else {
+                handlePutRequest(request.toArray(new String[0]));
             }
         }
-        return retMsg;
+
     }
+
+//    @Override
+//    public KVMessage get(KVMessage msg) throws Exception {
+//        return null;
+//    }
 
     /**
      * Retrieves the value for a given key from the KVServer.
@@ -238,12 +301,12 @@ public class TestStore implements KVStore {
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
-    public KVMessage get(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
+    public KVMessage get(KVMessage msg, String... password) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         // convert key to Base64
         // get message to server has the following format
         // GET <Base64 encoded key>
-        String message = String.format("GET %s\r\n", B64Util.b64encode(msg.getKey()));
-        LOGGER.info(String.format("Message to server: %s", message));
+//        String message = String.format("GET %s\r\n", B64Util.b64encode(msg.getKey()));
+//        LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
         // expected receive message
@@ -251,25 +314,152 @@ public class TestStore implements KVStore {
         // for example:
         // GET_SUCCESS <b64 key> <b64 value>
         // GET_ERROR <b64 key> <b64 error message>
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        KVMessage retMsg = receiveKVMessage();
-        int attempts = 0;
-        while (attempts < 4) {
-            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
-                try {
-                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
-                    communicator.send(message.getBytes(TELNET_ENCODING));
-                    retMsg = receiveKVMessage();
-                } catch (InterruptedException e) {
-                    LOGGER.warning("Error while retrying to send get request");
+//        communicator.send(message.getBytes(TELNET_ENCODING));
+        String pwd = keyHash(Arrays.toString(password));
+//        KVMessage retMsg = receiveKVMessage();
+//        int attempts = 0;
+//        while (attempts < 4) {
+//            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+//                try {
+//                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+//                    communicator.send(message.getBytes(TELNET_ENCODING));
+//                    retMsg = receiveKVMessage();
+//                } catch (InterruptedException e) {
+//                    LOGGER.warning("Error while retrying to send get request");
+//                }
+//            }
+//            else {
+//                break;
+//            }
+//        }
+
+        if (password.length > 0) {
+            return handleMessage(new ClientMessage(msg.getStatus(), msg.getKey(), pwd));
+        }
+        else {
+            return handleMessage(msg);
+    }
+//        return retMsg;
+    }
+
+    private KVMessage handleMessage (KVMessage msg) throws IOException, SizeLimitExceededException {
+        String message = "";
+        if (msg.getStatus() == KVMessage.StatusType.GET){
+            message = String.format("GET %s\r\n", B64Util.b64encode(msg.getKey()));
+        }
+        else if (msg.getStatus() == KVMessage.StatusType.PUT){
+            message = String.format("PUT %s\r\n", B64Util.b64encode(msg.getKey()), B64Util.b64encode(msg.getValue()));
+        }
+        else if (msg.getStatus() == KVMessage.StatusType.PUTPASS){
+            message = String.format("PUTPASS %s\r\n", B64Util.b64encode(msg.getKey()), B64Util.b64encode(msg.getValue()));
+        }
+        else if (msg.getStatus() == KVMessage.StatusType.DELETE){
+            message = String.format("DELETE %s\r\n", B64Util.b64encode(msg.getKey()));
+        }
+
+            LOGGER.info(String.format("Message to server: %s", message));
+            communicator.send(message.getBytes(TELNET_ENCODING));
+            KVMessage retMsg = receiveKVMessage();
+            int attempts = 0;
+            while (attempts < 4) {
+                if (retMsg.getStatus() == KVMessage.StatusType.SERVER_STOPPED) {
+                    try {
+                        MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                        communicator.send(message.getBytes(TELNET_ENCODING));
+                        retMsg = receiveKVMessage();
+                    } catch (InterruptedException e) {
+                        LOGGER.warning("Error while retrying to send get request");
+                    }
+                } else {
+                    break;
                 }
-            }
-            else {
-                break;
-            }
         }
         return retMsg;
     }
+
+    /**
+     * This function is used to check a string is less than len bytes
+     *
+     * @param string the key that we want to check
+     * @param len    the len we want to check
+     * @return true if it is <= than len bytes else false
+     */
+    private boolean isLessThan(String string, int len) {
+        return string.getBytes().length <= len;
+    }
+
+    /**
+     * This is used to encode a plain text string to HEX String
+     * We use this method do encode the value to delete the \r\n so that
+     * we can send it to the server without any problem
+     *
+     * @param string the string that we want to encode
+     * @return the encoded string
+     */
+    private static String encode(String string) {
+        byte[] byteArray = string.getBytes();
+        return byteToHex(byteArray);
+    }
+    private String buildValue(String[] command) {
+        //Build the value parameter
+        StringBuilder value = new StringBuilder();
+        value.append(command[2]);
+        for (int i = 3; i < command.length; i++) {
+            value.append(" ");
+            value.append(command[i]);
+        }
+        return value.toString();
+    }
+
+    /**
+     * This function is used to send a put request
+     *
+     * @param command          the command that we want to process
+     */
+    private KVMessage handlePutRequest(String[] command) throws SizeLimitExceededException, IOException {
+        //KVMessage put_msg = new ClientMessage(KVMessage.StatusType.PUT, command[1], command[2]);
+        String value = command[2];
+        if (isLessThan(value, Constants.VALUE_MAX_LENGTH) && isLessThan(command[1], Constants.KEY_MAX_LENGTH)) {
+            LOGGER.info("Len: " + command.length);
+            if (command.length == 4) {
+                return handleMessage(new ClientMessage(KVMessage.StatusType.PUTPASS, command[1], encode(command[2]), command[3]));
+            } else {
+                return handleMessage(new ClientMessage(KVMessage.StatusType.PUT, command[1], encode(command[2])));
+            }
+
+            //LOGGER.info("PUT sent " + command[1] + " " + value);
+        } else {
+            this.inputPassword.increaseCounter();
+            System.out.printf(String.format("key must be less than %s bytes, value less than %s", Constants.KEY_MAX_LENGTH, Constants.VALUE_MAX_LENGTH));
+            KVMessage ret_msg = new ClientMessage(KVMessage.StatusType.PUT_ERROR, command[1], command[2]);
+            return ret_msg;
+        }
+    }
+
+    /**
+     * This function is used to send a delete request
+     *
+     */
+    private KVMessage handleDeleteRequest(KVMessage msg, String... pwd) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+        String message = String.format("DELETE %s\r\n " + pwd, B64Util.b64encode(msg.getKey()));
+        String[] msg_arr = message.split("");
+        if (isLessThan(B64Util.b64encode(msg.getKey()), Constants.KEY_MAX_LENGTH)) {
+            if (pwd.length == 0)
+                return handleMessage(new ClientMessage(KVMessage.StatusType.DELETE, msg_arr[1]));
+            else {
+                String[] passwordList = pwd;
+                String password = keyHash(Arrays.toString(passwordList));
+                return handleMessage(new ClientMessage(KVMessage.StatusType.DELETE, msg_arr[1], password));
+            }
+            //LOGGER.fine("DELETE sent " + B64Util.b64encode(msg.getKey()));
+        } else {
+            System.out.println(String.format("key must be less than %s bytes", Constants.KEY_MAX_LENGTH));
+            KVMessage ret_msg = new ClientMessage(KVMessage.StatusType.DELETE_ERROR, msg_arr[1]);
+            return ret_msg;
+        }
+    }
+
+
 
     /**
      * Deletes the value for a given key from the KVServer.
@@ -281,12 +471,12 @@ public class TestStore implements KVStore {
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
-    public KVMessage delete(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
+    public KVMessage delete(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException {
         // convert key to Base64
         // delete message to server has the following format
         // DELETE <Base64 encoded key>
-        String message = String.format("DELETE %s\r\n", B64Util.b64encode(msg.getKey()));
-        LOGGER.info(String.format("Message to server: %s", message));
+        //String message = String.format("DELETE %s\r\n", B64Util.b64encode(msg.getKey()));
+        //LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
         // expected receive message
@@ -294,24 +484,27 @@ public class TestStore implements KVStore {
         // for example:
         // DELETE_SUCCESS <b64 key> <b64 value>
         // DELETE_ERROR <b64 key> <b64 error message>
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        KVMessage retMsg = receiveKVMessage();
-        int attempts = 0;
-        while (attempts < 4) {
-            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
-                try {
-                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
-                    communicator.send(message.getBytes(TELNET_ENCODING));
-                    retMsg = receiveKVMessage();
-                } catch (InterruptedException e) {
-                    LOGGER.warning("Error while retrying to send delete request");
-                }
-            }
-            else {
-                break;
-            }
-        }
-        return retMsg;
+        //communicator.send(message.getBytes(TELNET_ENCODING));
+//        KVMessage retMsg = receiveKVMessage();
+//        int attempts = 0;
+//        while (attempts < 4) {
+//            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+//                try {
+//                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+//                    communicator.send(message.getBytes(TELNET_ENCODING));
+//                    retMsg = receiveKVMessage();
+//                } catch (InterruptedException e) {
+//                    LOGGER.warning("Error while retrying to send delete request");
+//                }
+//            }
+//            else {
+//                break;
+//            }
+//        }
+//        return retMsg;
+        String pwd = msg.getPassword();
+        return handleDeleteRequest(msg, pwd);
+
     }
 
     @Override

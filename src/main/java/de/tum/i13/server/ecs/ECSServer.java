@@ -40,7 +40,7 @@ public class ECSServer {
         this.heartBeatTime = new ConcurrentHashMap<>();
         this.pool = new StripedExecutorService();
         this.communicator = new EcsServerCommunicator();
-        this.startHeartbeat();
+        //this.startHeartbeat();
     }
 
     /**

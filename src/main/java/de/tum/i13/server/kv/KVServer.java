@@ -13,10 +13,12 @@ import de.tum.i13.shared.Metadata;
 import de.tum.i13.shared.Pair;
 import de.tum.i13.shared.Util;
 
+import javax.naming.SizeLimitExceededException;
 import java.io.*;
 import java.net.InetSocketAddress;
 
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
@@ -228,7 +230,7 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage get(KVMessage msg) throws IOException {
+    public KVMessage get(KVMessage msg, String... password) throws IOException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));

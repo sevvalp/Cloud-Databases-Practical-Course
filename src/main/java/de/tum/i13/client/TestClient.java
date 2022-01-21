@@ -12,6 +12,7 @@ import java.util.StringJoiner;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import de.tum.i13.shared.inputPassword;
 
 import static de.tum.i13.shared.LogSetup.setupLogging;
 
@@ -26,9 +27,13 @@ public class TestClient {
 
     private final static Logger LOGGER = Logger.getLogger(TestClient.class.getName());
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
-    private final static TestStore store = new TestStore();
+    private static de.tum.i13.shared.inputPassword inputPassword = new inputPassword(false, 0);
+    private static TestStore store = null;
+    private SocketCommunicator communicator = null;
 
     private static boolean interpretInput(String input) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+        store = new TestStore(inputPassword);
+
         if (input.length() == 0)
             return false;
         String[] command = input.split("\\s+");
@@ -46,9 +51,14 @@ public class TestClient {
                 handleLogLevel(command);
                 break;
             case "put":
+                inputPassword.setPrevCommand(command);
                 put(command);
                 break;
+            case "putWithPassword":
+                handlePutWithPassword(command);
+                break;
             case "get":
+                inputPassword.setPrevCommand(command);
                 get(command);
                 break;
             case "delete":
@@ -70,6 +80,68 @@ public class TestClient {
                 break;
         }
         return false;
+    }
+
+    /**
+     * This method is called to start the request of the password to the user
+     */
+    private static void setInput(String[] command) {
+        inputPassword.setPrevCommand(command);
+        inputPassword.setCountPasswordInput(0);
+        inputPassword.setInputPassword(true);
+    }
+
+    /**
+     * This method is used to handle the put request with password
+     *
+     * @param command array that contains the user's request
+     */
+    private static void handlePutWithPassword(String[] command) {
+        if (command.length >= 1) {
+            setInput(command);
+            System.out.println("Input Password: ");
+        } else
+            System.out.println("Unknown command ");
+    }
+
+    /**
+     * This method is used to handle the requests made by the user when the user
+     * has to insert the password to access the key.
+     * We count how many times the user try to access the key with the wrong password
+     * and if the user tries more than 3 times we stop to request the password and we stop the
+     * request to the server.
+     * @param command command sent by the user
+     * @return true if the user has to insert password, false otherwise
+     */
+    private boolean checkInput(String[] command) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+        LOGGER.info("isInputPassword " +  inputPassword.isInputPassword());
+        LOGGER.info("PrevCommand " + inputPassword.getPrevCommand().length);
+        LOGGER.info("Counter " + inputPassword.getCountPasswordInput());
+        LOGGER.info(" " + inputPassword.getPrevCommand().toString());
+        if (inputPassword.getPrevCommand().length != 0 && inputPassword.isInputPassword() && inputPassword.getCountPasswordInput() <= 2) {
+            inputPassword.increaseCounter();
+            if (inputPassword.getPrevCommand()[0].equals("get")) {
+                store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null), inputPassword.getPrevCommand());
+            } else if (inputPassword.getPrevCommand()[0].equals("putWithPassword") || inputPassword.getPrevCommand()[0].equals("put")) {
+                store.putKVWithPassword(inputPassword.getPrevCommand(), command);
+            }
+
+            if (inputPassword.getCountPasswordInput() == 2) {
+                clearInput();
+            }
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
+     * This method is called to stop the request of the password to the user
+     */
+    private void clearInput() {
+        this.inputPassword.setInputPassword(false);
+        this.inputPassword.setCountPasswordInput(0);
+        this.inputPassword.clearPrevCommand();
     }
 
     /**
