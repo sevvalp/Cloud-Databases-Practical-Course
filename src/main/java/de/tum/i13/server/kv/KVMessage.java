@@ -55,6 +55,8 @@ public interface KVMessage {
      */
     public String getValue();
 
+    public String getPassword();
+
     /**
      * @return a status string that is used to identify request types,
      * response types and error types associated to the message.

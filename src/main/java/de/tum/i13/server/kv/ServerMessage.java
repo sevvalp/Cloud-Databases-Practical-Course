@@ -12,6 +12,7 @@ public class ServerMessage implements KVMessage {
     private final StatusType status;
     private final SelectionKey selectionKey;
     private final Metadata metadata;
+    private String password;
 
     public ServerMessage (StatusType status, String key, String value) {
         this.key = key;
@@ -70,6 +71,11 @@ public class ServerMessage implements KVMessage {
     @Override
     public StatusType getStatus() {
         return status;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
     }
 
     /**

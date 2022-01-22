@@ -4,6 +4,7 @@ import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.KVStore;
 import de.tum.i13.shared.*;
+import jdk.incubator.vector.VectorOperators;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @version 0.1
  * @since 2021-11-09
  */
-public class TestStore implements KVStore {
+public class TestStore implements TestStoreInterface {
 
     private Metadata metadata;
     private inputPassword inputPassword;
