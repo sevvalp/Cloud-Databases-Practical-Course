@@ -200,7 +200,6 @@ public class TestStore implements KVStore {
     public KVMessage put(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key and value to Base64
         // TODO if input.password.enabled = true store.put( password ), check if password empty: enter password
-
         String b64Key = B64Util.b64encode(msg.getKey());
         String b64Value = B64Util.b64encode(msg.getValue());
         // put message to server has the following format

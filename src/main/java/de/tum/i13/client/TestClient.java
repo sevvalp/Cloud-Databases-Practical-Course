@@ -95,7 +95,6 @@ public class TestClient {
     }
 
     /**
-     TODO
      check input
 
      */
@@ -224,20 +223,32 @@ public class TestClient {
             printHelp("put");
         else {
             try {
-                StringJoiner v = new StringJoiner(" ");
-                for (int i = 2; i < command.length; i++) {
-                    v.add(command[i]);
-                }
-                String value = v.toString();
-                //TODO ask
+//                StringJoiner v = new StringJoiner(" ");
+//                for (int i = 2; i < command.length; i++) {
+//                    v.add(command[i]);
+//                }
+//                String value = v.toString();
+                String password;
+                String value = String.join(" ", command);
                 KVMessage msg = null;
                 if(store.inputPassword.isInputPassword()) {
-                    if (store.inputPassword.getCountPasswordInput() < 4)
+                    if (store.inputPassword.getCountPasswordInput() < 4) {
                         //TODO: delete the last word and pass it as password
-                        msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
+                        password = command[command.length - 1];
+                        value = value.substring(0, value.lastIndexOf(" "));
+                        msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value, password));
+                    }
                     else {
-                        //TODO: kick client from server
                         store.clearInput();
+                        LOGGER.info("Exiting program");
+                        System.out.println("Too many wrong password attempts, exiting program...");
+                        try {
+                            store.disconnect();
+                        } catch (IOException e) {
+                            System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                        }
+                        System.exit(0);
+
                     }
                 }else
                     msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
@@ -272,13 +283,37 @@ public class TestClient {
      * Sends a get command to the server.
      * @param command   The user input split into a String array.
      */
-    private static void get(String[] command) {
+    private static void get(String[] command) throws SizeLimitExceededException, IOException {
         LOGGER.info(String.format("User wants to get a key with arguments: %s", String.join(" ", command)));
-        if (command.length != 2)
-            printHelp("get");
+        KVMessage msg = null;
+        if(!store.inputPassword.isInputPassword()) {
+            if (command.length != 2)
+                printHelp("get");
+            else
+                msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1]));
+        }
         else {
+            if (command.length != 3)
+                printHelp("get");
+            if (store.inputPassword.getCountPasswordInput() < 4) {
+                    msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], command[2]));
+                }
+                else {
+                    store.clearInput();
+                    LOGGER.info("Exiting program");
+                    System.out.println("Too many wrong password attempts, exiting program...");
+                    try {
+                        store.disconnect();
+                    } catch (IOException e) {
+                        System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                    }
+                    System.exit(0);
+
+                }
+
+            }
             try {
-                KVMessage msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null));
+                //KVMessage msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null));
                 switch(msg.getStatus()) {
                     case GET_SUCCESS: System.out.printf("Get success: <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case GET_ERROR: System.out.printf("There was an error getting the value: %s%n", msg.getValue());break;
@@ -300,7 +335,6 @@ public class TestClient {
                 e.printStackTrace();
             }
         }
-    }
 
     /**
      * Sends a keyrange command to the server.
@@ -324,13 +358,35 @@ public class TestClient {
      * Sends a delete command to the server.
      * @param command   The user input split into a String array.
      */
-    private static void delete(String[] command) {
+    private static void delete(String[] command) throws SizeLimitExceededException, IOException {
         LOGGER.info(String.format("User wants to delete a key with arguments: %s", String.join(" ", command)));
-        if (command.length != 2)
-            printHelp("delete");
+        KVMessage msg = null;
+        if(!store.inputPassword.isInputPassword()) {
+            if (command.length != 2)
+                printHelp("delete");
+            else
+                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1]));
+        }
         else {
+            if (command.length != 3)
+                printHelp("delete");
+            if (store.inputPassword.getCountPasswordInput() < 4) {
+                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], command[2]));
+            }
+            else {
+                store.clearInput();
+                LOGGER.info("Exiting program");
+                System.out.println("Too many wrong password attempts, exiting program...");
+                try {
+                    store.disconnect();
+                } catch (IOException e) {
+                    System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                }
+                System.exit(0);
+
+            }
             try {
-                KVMessage msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], null));
+                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1]));
                 switch (msg.getStatus()) {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");break;
