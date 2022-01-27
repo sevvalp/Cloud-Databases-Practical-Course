@@ -24,15 +24,14 @@ import static de.tum.i13.shared.LogSetup.setupLogging;
  * @since   2021-10-25
  */
 public class TestClient {
-
+    //TODO check for password at get,delete,put
     private final static Logger LOGGER = Logger.getLogger(TestClient.class.getName());
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
-    private static de.tum.i13.shared.inputPassword inputPassword = new inputPassword(false, 0);
     private static TestStore store = null;
     private SocketCommunicator communicator = null;
 
     private static boolean interpretInput(String input) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-        store = new TestStore(inputPassword);
+        store = new TestStore();
 
         if (input.length() == 0)
             return false;
@@ -51,14 +50,14 @@ public class TestClient {
                 handleLogLevel(command);
                 break;
             case "put":
-                inputPassword.setPrevCommand(command);
+                //inputPassword.setPrevCommand(command);
                 put(command);
                 break;
-            case "putWithPassword":
-                handlePutWithPassword(command);
+            case "handleWithPassword":
+                handleWithPassword(command);
                 break;
             case "get":
-                inputPassword.setPrevCommand(command);
+                //inputPassword.setPrevCommand(command);
                 get(command);
                 break;
             case "delete":
@@ -83,66 +82,44 @@ public class TestClient {
     }
 
     /**
-     * This method is called to start the request of the password to the user
-     */
-    private static void setInput(String[] command) {
-        inputPassword.setPrevCommand(command);
-        inputPassword.setCountPasswordInput(0);
-        inputPassword.setInputPassword(true);
-    }
-
-    /**
      * This method is used to handle the put request with password
      *
      * @param command array that contains the user's request
      */
-    private static void handlePutWithPassword(String[] command) {
+    private static void handleWithPassword(String[] command) {
         if (command.length >= 1) {
-            setInput(command);
-            System.out.println("Input Password: ");
+            store.setInput(command);
+            System.out.println("Password enabled ");
         } else
             System.out.println("Unknown command ");
     }
 
     /**
-     * This method is used to handle the requests made by the user when the user
-     * has to insert the password to access the key.
-     * We count how many times the user try to access the key with the wrong password
-     * and if the user tries more than 3 times we stop to request the password and we stop the
-     * request to the server.
-     * @param command command sent by the user
-     * @return true if the user has to insert password, false otherwise
+     TODO
+     check input
+
      */
-    private boolean checkInput(String[] command) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-        LOGGER.info("isInputPassword " +  inputPassword.isInputPassword());
-        LOGGER.info("PrevCommand " + inputPassword.getPrevCommand().length);
-        LOGGER.info("Counter " + inputPassword.getCountPasswordInput());
-        LOGGER.info(" " + inputPassword.getPrevCommand().toString());
-        if (inputPassword.getPrevCommand().length != 0 && inputPassword.isInputPassword() && inputPassword.getCountPasswordInput() <= 2) {
-            inputPassword.increaseCounter();
-            if (inputPassword.getPrevCommand()[0].equals("get")) {
-                store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null), inputPassword.getPrevCommand());
-            } else if (inputPassword.getPrevCommand()[0].equals("putWithPassword") || inputPassword.getPrevCommand()[0].equals("put")) {
-                store.putKVWithPassword(inputPassword.getPrevCommand(), command);
-            }
-
-            if (inputPassword.getCountPasswordInput() == 2) {
-                clearInput();
-            }
-            return true;
-        }
-        return false;
-
-    }
-
-    /**
-     * This method is called to stop the request of the password to the user
-     */
-    private void clearInput() {
-        this.inputPassword.setInputPassword(false);
-        this.inputPassword.setCountPasswordInput(0);
-        this.inputPassword.clearPrevCommand();
-    }
+//    private boolean checkInput(String[] command) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
+//        LOGGER.info("isInputPassword " +  inputPassword.isInputPassword());
+//        LOGGER.info("PrevCommand " + inputPassword.getPrevCommand().length);
+//        LOGGER.info("Counter " + inputPassword.getCountPasswordInput());
+//        LOGGER.info(" " + inputPassword.getPrevCommand().toString());
+//        if (inputPassword.getPrevCommand().length != 0 && inputPassword.isInputPassword() && inputPassword.getCountPasswordInput() <= 2) {
+//            inputPassword.increaseCounter();
+//            if (inputPassword.getPrevCommand()[0].equals("get")) {
+//                store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null), inputPassword.getPrevCommand());
+//            } else if (inputPassword.getPrevCommand()[0].equals("putWithPassword") || inputPassword.getPrevCommand()[0].equals("put")) {
+//                store.putKVWithPassword(inputPassword.getPrevCommand(), command);
+//            }
+//
+//            if (inputPassword.getCountPasswordInput() == 2) {
+//                clearInput();
+//            }
+//            return true;
+//        }
+//        return false;
+//
+//    }
 
     /**
      * Function used for debugging purposes. Will send any command, key, value to the connected server.
@@ -252,7 +229,18 @@ public class TestClient {
                     v.add(command[i]);
                 }
                 String value = v.toString();
-                KVMessage msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
+                //TODO ask
+                KVMessage msg = null;
+                if(store.inputPassword.isInputPassword()) {
+                    if (store.inputPassword.getCountPasswordInput() < 4)
+                        //TODO: delete the last word and pass it as password
+                        msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
+                    else {
+                        //TODO: kick client from server
+                        store.clearInput();
+                    }
+                }else
+                    msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put %s%n", msg.getKey()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
