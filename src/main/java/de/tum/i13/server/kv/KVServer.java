@@ -119,7 +119,7 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage put(KVMessage msg, String... password) throws IOException {
+    public KVMessage put(KVMessage msg) throws IOException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
@@ -149,8 +149,12 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
-        if(!checkPassword(msg, password))
+        if(!checkPassword(msg)){
+            String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Password is wrong!"));
+        }
 
 
         LOGGER.info(String.format("Client wants to put key: <%s, %s>", msg.getKey(), msg.getValue()));
@@ -208,7 +212,7 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage get(KVMessage msg, String... password) throws IOException {
+    public KVMessage get(KVMessage msg) throws IOException {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.GET_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
@@ -237,8 +241,12 @@ public class KVServer implements KVStore {
         boolean isCoordinator = checkServerResponsible(msg.getKey());
         LOGGER.info("is replicate role: " + isCoordinator);
 
-        if(!checkPassword(msg, password))
+        if(!checkPassword(msg)){
+            String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Password is wrong!"));
+        }
 
         if(metadata.isRoleReplica(msg.getKey()) || checkServerResponsible(msg.getKey())) {
             LOGGER.info("Client wants to get key: " + msg.getKey());
@@ -308,7 +316,7 @@ public class KVServer implements KVStore {
      * @return null
      */
     @Override
-    public KVMessage delete(KVMessage msg, String... password) throws Exception {
+    public KVMessage delete(KVMessage msg) throws Exception {
         // if server is not set, return error
         if (server == null)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
@@ -338,8 +346,12 @@ public class KVServer implements KVStore {
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
-        if(!checkPassword(msg, password))
+        if(!checkPassword(msg)){
+            String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
             return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Password is wrong!"));
+        }
 
         LOGGER.info("Client wants to delete key: %s" + msg.getKey());
 
@@ -394,14 +406,15 @@ public class KVServer implements KVStore {
     }
 
     //Password check is only active when password has a non-null value..
-    private boolean checkPassword(KVMessage msg, String... pwd) {
-        if (pwd.length > 0) {
+    private boolean checkPassword(KVMessage msg) {
+        String cpass = msg.getPassword();
+        if (cpass!= null) {
                 LOGGER.info(String.format("Password is active, checking correctness of the given password"));
                 if (keySpecificPasswords.size() > 0) {
                     String password = keySpecificPasswords.get(msg.getKey());
                     if (password != null) {
                         //password found check correctness
-                        if (!Util.calculateHash(pwd[0]).equals(password)) {
+                        if (!Util.calculateHash(cpass).equals(password)) {
                             LOGGER.info(String.format("Given password is not correct, return error to client"));
                             return false;
                         }else {
@@ -410,15 +423,15 @@ public class KVServer implements KVStore {
                         }
                     } else {
                         //password doesn't exist for given key
-                        keySpecificPasswords.put(msg.getKey(), Util.calculateHash(pwd[0]));
+                        keySpecificPasswords.put(msg.getKey(), Util.calculateHash(cpass));
                         LOGGER.info(String.format("New password is added to given key"));
                     }
                 } else {
                     //first kv pair with password
-                    keySpecificPasswords.put(msg.getKey(), Util.calculateHash(pwd[0]));
+                    keySpecificPasswords.put(msg.getKey(), Util.calculateHash(cpass));
                     LOGGER.info(String.format("First pair with password added"));
                 }
-        }
+        } // otherwise password control is not enabled return true
         return true;
     }
     /**

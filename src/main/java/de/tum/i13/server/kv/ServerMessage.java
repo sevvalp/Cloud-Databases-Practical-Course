@@ -12,7 +12,8 @@ public class ServerMessage implements KVMessage {
     private final StatusType status;
     private final SelectionKey selectionKey;
     private final Metadata metadata;
-    private String password;
+    private String password = null;
+
 
     public ServerMessage (StatusType status, String key, String value) {
         this.key = key;
@@ -22,12 +23,14 @@ public class ServerMessage implements KVMessage {
         this.metadata = null;
     }
 
-    public ServerMessage (StatusType status, String key, String value, SelectionKey selectionKey) {
+    public ServerMessage (StatusType status, String key, String value, SelectionKey selectionKey, String... _password) {
         this.key = key;
         this.value = value;
         this.status = status;
         this.selectionKey = selectionKey;
         this.metadata = null;
+        if(_password.length >0)
+            password = _password[0];
     }
 
     public ServerMessage (StatusType status, Metadata metadata) {
@@ -73,15 +76,17 @@ public class ServerMessage implements KVMessage {
         return status;
     }
 
-    @Override
-    public String getPassword() {
-        return password;
-    }
 
     /**
      * @return a metadata for system key range,
      * null if not metadata is associated.
      */
     public Metadata getMetadata() {return metadata;}
+
+    /**
+     * @return password for given key value pair,
+     * null if not password is associated.
+     */
+    public String getPassword() { return password;}
 
 }

@@ -14,7 +14,7 @@ public interface KVStore {
      * @throws Exception if put command cannot be executed (e.g. not connected to any
      *                   KV server).
      */
-    public KVMessage put(KVMessage msg, String... password) throws Exception;
+    public KVMessage put(KVMessage msg) throws Exception;
 
     /**
      * Retrieves the value for a given key from the KVServer.
@@ -26,7 +26,7 @@ public interface KVStore {
      */
     //public KVMessage get(KVMessage msg) throws Exception;
 
-    public KVMessage get(KVMessage msg, String... password) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException;
+    public KVMessage get(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException, NoSuchAlgorithmException;
 
     /**
      * Deletes the value for a given key from the KVServer.
@@ -35,7 +35,7 @@ public interface KVStore {
      * @return the last stored value of that key
      * @throws Exception if delete command cannot be executed (e.g. not connected to any KV server).
      */
-    public KVMessage delete(KVMessage msg, String... password) throws Exception;
+    public KVMessage delete(KVMessage msg) throws Exception;
 
     public KVMessage unknownCommand(KVMessage msg) throws Exception;
 }

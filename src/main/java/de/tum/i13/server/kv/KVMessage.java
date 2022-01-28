@@ -11,7 +11,6 @@ public interface KVMessage {
         GET_ERROR, 		        /* requested tuple (i.e. value) not found */
         GET_SUCCESS, 	        /* requested tuple (i.e. value) found */
         PUT, 			        /* Put - request */
-        PUTPASS,                /* Put - request with password */
         PUT_SUCCESS, 	        /* Put - request successful, tuple inserted */
         PUT_UPDATE, 	        /* Put - request successful, i.e. value updated */
         PUT_ERROR, 		        /* Put - request not successful */
@@ -40,7 +39,7 @@ public interface KVMessage {
         ECS_HEARTBEAT,
         RECEIVE_SINGLE,
         REPLICATE,
-        PASSWORD_WRONG
+        PASSWORD_WRONG,
     }
 
     /**
@@ -55,6 +54,10 @@ public interface KVMessage {
      */
     public String getValue();
 
+    /**
+     * @return the password that is associated with this message,
+     * null if not value is associated.
+     */
     public String getPassword();
 
     /**

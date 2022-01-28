@@ -12,7 +12,7 @@ import java.util.StringJoiner;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import de.tum.i13.shared.inputPassword;
+
 
 import static de.tum.i13.shared.LogSetup.setupLogging;
 
@@ -24,14 +24,11 @@ import static de.tum.i13.shared.LogSetup.setupLogging;
  * @since   2021-10-25
  */
 public class TestClient {
-    //TODO check for password at get,delete,put
     private final static Logger LOGGER = Logger.getLogger(TestClient.class.getName());
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
-    private static TestStore store = null;
-    private SocketCommunicator communicator = null;
+    private static TestStore store = new TestStore();
 
     private static boolean interpretInput(String input) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-        store = new TestStore();
 
         if (input.length() == 0)
             return false;
@@ -50,14 +47,12 @@ public class TestClient {
                 handleLogLevel(command);
                 break;
             case "put":
-                //inputPassword.setPrevCommand(command);
                 put(command);
                 break;
             case "handleWithPassword":
                 handleWithPassword(command);
                 break;
             case "get":
-                //inputPassword.setPrevCommand(command);
                 get(command);
                 break;
             case "delete":
@@ -81,44 +76,22 @@ public class TestClient {
         return false;
     }
 
+
     /**
      * This method is used to handle the put request with password
      *
      * @param command array that contains the user's request
      */
-    private static void handleWithPassword(String[] command) {
+    private static void handleWithPassword(String[] command) throws SizeLimitExceededException, IOException {
         if (command.length >= 1) {
             store.setInput(command);
+            String message = "handleWithPassword ";
+            System.out.printf("handleWithPassword: %s%n", store.activatePassword(message));
             System.out.println("Password enabled ");
         } else
             System.out.println("Unknown command ");
     }
 
-    /**
-     check input
-
-     */
-//    private boolean checkInput(String[] command) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
-//        LOGGER.info("isInputPassword " +  inputPassword.isInputPassword());
-//        LOGGER.info("PrevCommand " + inputPassword.getPrevCommand().length);
-//        LOGGER.info("Counter " + inputPassword.getCountPasswordInput());
-//        LOGGER.info(" " + inputPassword.getPrevCommand().toString());
-//        if (inputPassword.getPrevCommand().length != 0 && inputPassword.isInputPassword() && inputPassword.getCountPasswordInput() <= 2) {
-//            inputPassword.increaseCounter();
-//            if (inputPassword.getPrevCommand()[0].equals("get")) {
-//                store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], null), inputPassword.getPrevCommand());
-//            } else if (inputPassword.getPrevCommand()[0].equals("putWithPassword") || inputPassword.getPrevCommand()[0].equals("put")) {
-//                store.putKVWithPassword(inputPassword.getPrevCommand(), command);
-//            }
-//
-//            if (inputPassword.getCountPasswordInput() == 2) {
-//                clearInput();
-//            }
-//            return true;
-//        }
-//        return false;
-//
-//    }
 
     /**
      * Function used for debugging purposes. Will send any command, key, value to the connected server.
@@ -223,35 +196,45 @@ public class TestClient {
             printHelp("put");
         else {
             try {
-//                StringJoiner v = new StringJoiner(" ");
-//                for (int i = 2; i < command.length; i++) {
-//                    v.add(command[i]);
-//                }
-//                String value = v.toString();
-                String password;
-                String value = String.join(" ", command);
                 KVMessage msg = null;
                 if(store.inputPassword.isInputPassword()) {
-                    if (store.inputPassword.getCountPasswordInput() < 4) {
-                        //TODO: delete the last word and pass it as password
-                        password = command[command.length - 1];
-                        value = value.substring(0, value.lastIndexOf(" "));
-                        msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value, password));
-                    }
-                    else {
-                        store.clearInput();
-                        LOGGER.info("Exiting program");
-                        System.out.println("Too many wrong password attempts, exiting program...");
-                        try {
-                            store.disconnect();
-                        } catch (IOException e) {
-                            System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
-                        }
-                        System.exit(0);
 
+                    if (command.length < 4)
+                        printHelp("put");
+                    else{
+                        if (store.inputPassword.getCountPasswordInput() < 4) {
+
+                            StringJoiner v = new StringJoiner(" ");
+                            for (int i = 2; i < command.length-1; i++) {
+                                v.add(command[i]);
+                            }
+                            String value = v.toString();
+                            String password = command[command.length - 1];
+
+                            msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value, password));
+                        }
+                        else {
+                            store.clearInput();
+                            LOGGER.info("Exiting program");
+                            System.out.println("Too many wrong password attempts, exiting program...");
+                            try {
+                                store.disconnect();
+                            } catch (IOException e) {
+                                System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                            }
+                            System.exit(0);
+
+                        }
                     }
-                }else
+                }else {
+                    StringJoiner v = new StringJoiner(" ");
+                    for (int i = 2; i < command.length; i++) {
+                        v.add(command[i]);
+                    }
+                    String value = v.toString();
                     msg = store.put(new ClientMessage(KVMessage.StatusType.PUT, command[1], value));
+
+                }
                 switch (msg.getStatus()) {
                     case PUT_SUCCESS: System.out.printf("Successfully put %s%n", msg.getKey()); break;
                     case PUT_UPDATE: System.out.printf("Successfully updated <%s, %s>%n", msg.getKey(), msg.getValue()); break;
@@ -264,6 +247,7 @@ public class TestClient {
                             put(command);
                         }
                         break;
+                    case PASSWORD_WRONG: System.out.printf("Password wrong!%n");break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -296,20 +280,20 @@ public class TestClient {
             if (command.length != 3)
                 printHelp("get");
             if (store.inputPassword.getCountPasswordInput() < 4) {
-                    msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1], command[2]));
+                    msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1],null, command[2]));
+            }
+            else {
+                store.clearInput();
+                LOGGER.info("Exiting program");
+                System.out.println("Too many wrong password attempts, exiting program...");
+                try {
+                    store.disconnect();
+                } catch (IOException e) {
+                    System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
                 }
-                else {
-                    store.clearInput();
-                    LOGGER.info("Exiting program");
-                    System.out.println("Too many wrong password attempts, exiting program...");
-                    try {
-                        store.disconnect();
-                    } catch (IOException e) {
-                        System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
-                    }
-                    System.exit(0);
+                System.exit(0);
 
-                }
+            }
 
             }
             try {
@@ -323,6 +307,7 @@ public class TestClient {
                         if(store.getCorrectServer(command[1]) == "SUCCESS")
                             get(command);
                         break;
+                    case PASSWORD_WRONG: System.out.printf("Password wrong!%n");break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");
@@ -371,7 +356,7 @@ public class TestClient {
             if (command.length != 3)
                 printHelp("delete");
             if (store.inputPassword.getCountPasswordInput() < 4) {
-                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1], command[2]));
+                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1],null, command[2]));
             }
             else {
                 store.clearInput();
@@ -386,7 +371,7 @@ public class TestClient {
 
             }
             try {
-                msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1]));
+                //msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1]));
                 switch (msg.getStatus()) {
                     case DELETE_SUCCESS: System.out.printf("Successfully deleted <%s, %s>%n", msg.getKey(), msg.getValue()); break;
                     case DELETE_ERROR: System.out.println("There was an error deleting the value.");break;
@@ -397,6 +382,7 @@ public class TestClient {
                         if(store.getCorrectServer(command[1]) == "SUCCESS")
                             delete(command);
                         break;
+                    case PASSWORD_WRONG: System.out.printf("Password wrong!%n");break;
                 }
             } catch (IllegalStateException e) {
                 System.out.println("Not connected to KVServer!");

@@ -1,19 +1,14 @@
 package de.tum.i13.client;
 
 import de.tum.i13.server.kv.KVMessage;
-import de.tum.i13.server.kv.KVServerInfo;
 import de.tum.i13.server.kv.KVStore;
-import de.tum.i13.shared.B64Util;
-import de.tum.i13.shared.Metadata;
-import de.tum.i13.shared.Pair;
-import de.tum.i13.shared.inputPassword;
+import de.tum.i13.shared.*;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -31,7 +26,7 @@ public class TestStore implements KVStore {
     private Metadata metadata;
     private final SocketCommunicator communicator;
     private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
-    public static de.tum.i13.shared.inputPassword inputPassword = new inputPassword(false, 0);
+    public static inputPassword inputPassword = new inputPassword(false, 0);
 
 
     public TestStore() {
@@ -132,6 +127,22 @@ public class TestStore implements KVStore {
     }
 
     /**
+     * Will send activate password protection command to the connected server.
+     * @param command Command to send to the server.
+     * @return client message
+     * @throws IOException if there is an IOException during the sending.
+     * @throws IllegalStateException if currently not connected to a Server.
+     * @throws SizeLimitExceededException if the message is greater than 128 kB.
+     */
+    public String activatePassword(String command) throws IOException, IllegalStateException, SizeLimitExceededException {
+        int attempts = 0;
+        String message = String.format("%s \r\n", command.toUpperCase());
+        LOGGER.info("Message to server: " + message);
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        return "Pass activated";
+    }
+
+    /**
      * This method chooses the right server to send the query to
      * @param key the key that will be sent
      * @return the state of the operation as string
@@ -150,7 +161,7 @@ public class TestStore implements KVStore {
         }
 
         if(metadata != null){
-            Pair<String, Integer> responsibleServer = metadata.getServerResponsible(keyHash(key));
+            Pair<String, Integer> responsibleServer = metadata.getServerResponsible(Util.calculateHash(key));
             if(!communicator.getAddress().equals(responsibleServer.getFirst()) || communicator.getPort() != responsibleServer.getSecond()) {
                 try {
                     LOGGER.info("Reconnecting to server: " + responsibleServer.getFirst() +":"+ responsibleServer.getSecond() );
@@ -196,15 +207,16 @@ public class TestStore implements KVStore {
      * @throws SizeLimitExceededException if the message is greater than 128 kB.
      */
     @Override
-    // TODO optional string inside kvmessage
     public KVMessage put(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
         // convert key and value to Base64
-        // TODO if input.password.enabled = true store.put( password ), check if password empty: enter password
         String b64Key = B64Util.b64encode(msg.getKey());
         String b64Value = B64Util.b64encode(msg.getValue());
+        String b64Pass = "";
+        if(inputPassword.isInputPassword())
+            b64Pass = B64Util.b64encode(msg.getPassword());
         // put message to server has the following format
         // PUT <Base64 encoded key> <Base64 encoded value>
-        String message = String.format("PUT %s %s\r\n", b64Key, b64Value);
+        String message = String.format("PUT %s %s %s \r\n", b64Key, b64Value, b64Pass);
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -247,7 +259,10 @@ public class TestStore implements KVStore {
         // convert key to Base64
         // get message to server has the following format
         // GET <Base64 encoded key>
-        String message = String.format("GET %s\r\n", B64Util.b64encode(msg.getKey()));
+        String b64Pass = "";
+        if(inputPassword.isInputPassword())
+            b64Pass = B64Util.b64encode(msg.getPassword());
+        String message = String.format("GET %s %s\r\n", B64Util.b64encode(msg.getKey()),b64Pass);
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -290,7 +305,10 @@ public class TestStore implements KVStore {
         // convert key to Base64
         // delete message to server has the following format
         // DELETE <Base64 encoded key>
-        String message = String.format("DELETE %s\r\n", B64Util.b64encode(msg.getKey()));
+        String b64Pass = "";
+        if(inputPassword.isInputPassword())
+            b64Pass = B64Util.b64encode(msg.getPassword());
+        String message = String.format("DELETE %s %s\r\n", B64Util.b64encode(msg.getKey()),b64Pass);
         LOGGER.info(String.format("Message to server: %s", message));
 
         // try to send data, exceptions will be rethrown
@@ -356,7 +374,7 @@ public class TestStore implements KVStore {
         if (status == KVMessage.StatusType.ERROR) {
             return null;
         }
-        //TODO add password_wrong handle and increase counter
+
         if (status == KVMessage.StatusType.PASSWORD_WRONG) {
             inputPassword.increaseCounter();
             return new ClientMessage(status, null, null);
@@ -395,30 +413,5 @@ public class TestStore implements KVStore {
         inputPassword.clearPrevCommand();
     }
 
-    /**
-     * This is used to convert a byte array to hex String
-     * @param in byte array to be converted
-     * @return encoded string
-     */
-    private static String byteToHex(byte[] in) {
-        StringBuilder sb = new StringBuilder();
-        for(byte b : in) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
-    }
 
-    /**
-     * This is used to hash the key via MD5 algorithm
-     * @param key string to be hashed
-     * @return the hash representation
-     * @throws NoSuchAlgorithmException
-     */
-    private String keyHash(String key) throws NoSuchAlgorithmException {
-        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-        messageDigest.update(key.getBytes());
-        byte[] byteArr = messageDigest.digest();
-        messageDigest.reset();
-        return byteToHex(byteArr);
-    }
 }

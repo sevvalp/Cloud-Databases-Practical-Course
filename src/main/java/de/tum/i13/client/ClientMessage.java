@@ -10,7 +10,7 @@ public class ClientMessage implements KVMessage {
     private final String value;
     private final StatusType status;
     private Metadata metadata;
-    private String password;
+    private String password = null;
 
     public ClientMessage(StatusType status, String key, String value, String... password) {
         this.key = key;
@@ -22,26 +22,18 @@ public class ClientMessage implements KVMessage {
 
     }
 
-//    public ClientMessage(StatusType status, String key, String value) {
-//        this.key = key;
-//        this.value = value;
-//        this.status = status;
-//        this.metadata = null;
-//    }
+    public ClientMessage(StatusType status, String key,String value) {
+        this.key = key;
+        this.status = status;
+        this.metadata = null;
+        this.value = value;
+    }
 
     public ClientMessage(StatusType status, String key) {
         this.key = key;
         this.value = null;
         this.status = status;
         this.metadata = null;
-    }
-
-    public ClientMessage(StatusType status, Metadata metadata) {
-        this.status = status;
-        this.metadata = metadata;
-        this.key = null;
-        this.value = null;
-
     }
 
     /**

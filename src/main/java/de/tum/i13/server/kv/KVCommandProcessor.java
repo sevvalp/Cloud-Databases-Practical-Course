@@ -14,6 +14,7 @@ public class KVCommandProcessor implements CommandProcessor {
     private static final Logger LOGGER = Logger.getLogger(KVCommandProcessor.class.getName());
 
     private KVServer kvStore;
+    private boolean inputPassword = false;
 
     public KVCommandProcessor (KVStore kvStore) {
         this.kvStore = (KVServer)kvStore;
@@ -29,23 +30,31 @@ public class KVCommandProcessor implements CommandProcessor {
         int size = request.length;
         request[0] = request[0].toLowerCase();
 
+        //TODO check password is enabled or not
         StringJoiner v = new StringJoiner(" ");
-        for (int i = 2; i < request.length; i++) {
-            v.add(request[i]);
+        String password = null;
+        if(inputPassword && (request[0].equals("put") || request[0].equals("get") || request[0].equals("delete") ) ){
+            for (int i = 2; i < request.length-1; i++) {
+                v.add(request[i]);
+            }
+            password = request[request.length-1];
+        }else {
+            for (int i = 2; i < request.length; i++) {
+                v.add(request[i]);
+            }
         }
-
 
         switch (request[0]) {
             case "put":
-                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey));
+                kvStore.put(new ServerMessage(KVMessage.StatusType.PUT, request[1], v.toString(), selectionKey, password));
                 LOGGER.info(String.format("Put a key with arguments: %s", String.join(" ", command)));
                 break;
             case "get":
-                kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey));
+                kvStore.get(new ServerMessage(KVMessage.StatusType.GET, request[1], null, selectionKey, password));
                 LOGGER.info(String.format("Get value with arguments: %s", String.join(" ", command)));
                 break;
             case "delete":
-                kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey));
+                kvStore.delete(new ServerMessage(KVMessage.StatusType.DELETE, request[1], null, selectionKey, password));
                 LOGGER.info(String.format("Delete a key with arguments: %s", String.join(" ", command)));
                 break;
             case "keyrange":
@@ -78,6 +87,10 @@ public class KVCommandProcessor implements CommandProcessor {
             case "ecs_heartbeat":
                 LOGGER.info("Heartbeat");
                 kvStore.respondHeartbeat(new ServerMessage(KVMessage.StatusType.ECS_HEARTBEAT, request[1], request[2], selectionKey));
+                break;
+            case "handlewithpassword":
+                inputPassword = true;
+                LOGGER.info("Password activated");
                 break;
             default:
                 //here handle unknown commands
