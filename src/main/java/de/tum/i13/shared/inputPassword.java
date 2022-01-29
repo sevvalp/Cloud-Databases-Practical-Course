@@ -2,7 +2,6 @@ package de.tum.i13.shared;
 
 public class inputPassword {
     private int countPasswordInput = 0;
-    private String[] prevCommand = new String[]{};
     private boolean inputPassword = false;
 
     public synchronized int getCountPasswordInput() {
@@ -26,21 +25,8 @@ public class inputPassword {
         this.countPasswordInput = countPasswordInput;
     }
 
-
     public synchronized void increaseCounter() {
         this.countPasswordInput++;
     }
 
-    public synchronized void setPrevCommand(String[] command) {
-        this.prevCommand = new String[]{};
-        this.prevCommand = command;
-    }
-
-    public synchronized String[] getPrevCommand() {
-        return prevCommand;
-    }
-
-    public synchronized void clearPrevCommand() {
-        this.prevCommand = new String[]{};
-    }
 }

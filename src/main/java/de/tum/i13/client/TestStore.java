@@ -399,7 +399,6 @@ public class TestStore implements KVStore {
      * This method is called to start the request of the password to the user
      */
     protected static void setInput(String[] command) {
-        inputPassword.setPrevCommand(command);
         inputPassword.setCountPasswordInput(0);
         inputPassword.setInputPassword(true);
     }
@@ -410,7 +409,6 @@ public class TestStore implements KVStore {
     protected void clearInput() {
         inputPassword.setInputPassword(false);
         inputPassword.setCountPasswordInput(0);
-        inputPassword.clearPrevCommand();
     }
 
 
