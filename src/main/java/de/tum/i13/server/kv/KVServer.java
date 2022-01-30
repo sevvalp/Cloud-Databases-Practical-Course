@@ -178,9 +178,9 @@ public class KVServer implements KVStore {
                     historicPairs.put(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
                 else historicPairs.replace(hashedKey, new Pair<>(msg.getKey(), msg.getValue()));
 
-//                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                    message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
 //                } else {
-                message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
+//                message = res.getStatus().name().toLowerCase() + " " + res.getKey() + "\r\n";
 //                }
 
                 // return answer to client

@@ -190,7 +190,7 @@ public class TestClient {
      * Sends a put command to the server.
      * @param command   The user input split into a String array.
      */
-    private static void put(String[] command) {
+    private static void put(String[] command) throws SizeLimitExceededException, IOException {
         LOGGER.info(String.format("User wants to put a key with arguments: %s", String.join(" ", command)));
         if (command.length < 3)
             printHelp("put");
@@ -277,9 +277,12 @@ public class TestClient {
                 msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1]));
         }
         else {
-            if (command.length != 3)
+            if (command.length != 3) {
+                LOGGER.info("Password is not specified.");
+                System.out.println("Password is not specified.");
                 printHelp("get");
-            if (store.inputPassword.getCountPasswordInput() < 4) {
+            }
+            else if (store.inputPassword.getCountPasswordInput() < 4) {
                     msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1],null, command[2]));
             }
             else {
@@ -355,7 +358,7 @@ public class TestClient {
         else {
             if (command.length != 3)
                 printHelp("delete");
-            if (store.inputPassword.getCountPasswordInput() < 4) {
+            else if (store.inputPassword.getCountPasswordInput() < 4) {
                 msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1],null, command[2]));
             }
             else {
