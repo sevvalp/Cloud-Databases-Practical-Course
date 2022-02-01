@@ -131,7 +131,7 @@ public class PerformanceTest {
             long startTime = System.nanoTime();
 
             for (String key: loadadData.keySet()) {
-                interpretInput.invoke(testApp, "put " + loadadData.get(key) + "\r\n");
+                interpretInput.invoke(testApp, "put " + key + " " + loadadData.get(key) + "\r\n");
             }
             long endTime   = System.nanoTime();
 
@@ -175,13 +175,57 @@ public class PerformanceTest {
             long startTime = System.nanoTime();
 
             for (String key: loadadData.keySet()) {
-                interpretInput.invoke(testApp, "put " + loadadData.get(key) + "\r\n");
+                interpretInput.invoke(testApp, "put " + key + " "+ loadadData.get(key) + "\r\n");
             }
             long endTime   = System.nanoTime();
 
             outContent.reset();
 
             writeResults("single_client_four_servers.txt", startTime, endTime);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(true, equalTo(true));
+
+    }
+
+    @Test
+    public void testOneClientEightServers() throws IOException, InterruptedException, NoSuchMethodException {
+
+
+        init();
+
+        //Start ECS
+        startECS();
+
+        //Start single server
+        startServers(8);
+
+        TestClient testApp = new TestClient();
+        Class[] parameters = new Class[1];
+        parameters[0] = java.lang.String.class;
+        Method interpretInput = testApp.getClass().getDeclaredMethod("interpretInput", parameters);
+        interpretInput.setAccessible(true);
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+
+        try {
+            interpretInput.invoke(testApp, "connect 127.0.0.1 5155");
+            System.setOut(new PrintStream(outContent));
+
+            TreeMap<String, String> loadadData = enronDataset.getDataLoaded();
+            opNr = loadadData.size();
+
+            long startTime = System.nanoTime();
+
+            for (String key: loadadData.keySet()) {
+                interpretInput.invoke(testApp, "put " + key + " "+ loadadData.get(key) + "\r\n");
+            }
+            long endTime   = System.nanoTime();
+
+            outContent.reset();
+
+            writeResults("single_client_eight_servers.txt", startTime, endTime);
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }

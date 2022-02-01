@@ -241,7 +241,7 @@ public class TestClient {
                     case PUT_ERROR: System.out.printf("There was an error putting the value: %s%n", msg.getValue()); break;
                     case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
                     case SERVER_NOT_RESPONSIBLE:
-                        keyRange();
+                        //keyRange();
                         //added for performance testing purposes
                         if(store.getCorrectServer(command[1]) == "SUCCESS"){
                             put(command);

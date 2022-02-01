@@ -161,7 +161,7 @@ public class TestStore implements KVStore {
         }
 
         if(metadata != null){
-            Pair<String, Integer> responsibleServer = metadata.getServerResponsible(Util.calculateHash(key));
+            Pair<String, Integer> responsibleServer = metadata.getServerResponsible(Util.calculateHash(B64Util.b64encode(key)));
             if(!communicator.getAddress().equals(responsibleServer.getFirst()) || communicator.getPort() != responsibleServer.getSecond()) {
                 try {
                     LOGGER.info("Reconnecting to server: " + responsibleServer.getFirst() +":"+ responsibleServer.getSecond() );
