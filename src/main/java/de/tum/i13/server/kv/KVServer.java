@@ -139,11 +139,11 @@ public class KVServer implements KVStore {
             return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
         }
         // if KVMessage does not have put command, return error
-        if (msg.getStatus() != KVMessage.StatusType.PUT)
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+        if (msg.getStatus() != KVMessage.StatusType.SUBSCRBE)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
         // if KVMessage does not contain selectionKey, return error
         if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
-            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
 
         if(!checkPassword(msg)){
             String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
@@ -172,6 +172,87 @@ public class KVServer implements KVStore {
                 LOGGER.fine(String.format("Successfully added key into subribe list"));
 
                 message = KVMessage.StatusType.SUBSCRBE_OK.name().toLowerCase() + " " + msg.getKey() +" "+ msg.getKey() +"\r\n";
+
+                // return answer to client
+                LOGGER.info("Answer to client: " + message);
+                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+
+        return null;
+    }
+
+
+    public KVMessage unsubscribe(KVMessage msg) throws IOException {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase(Locale.ENGLISH) + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.UNSUBSCRBE)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        if(!checkPassword(msg)){
+            String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Password is wrong!"));
+        }
+
+
+        LOGGER.info(String.format("Client wants to unsubscribe key: %s", msg.getKey()));
+
+        LOGGER.fine("Submitting new put callable to pool for key " + msg.getKey());
+        // queue subscribe command
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine(String.format("Removing key into subscribe hashmap: %s", msg.getKey()));
+
+                String message;
+                ArrayList<SelectionKey> selectionList = subscriptionKeys.get(msg.getKey());
+                if (selectionList == null) {
+                    message = KVMessage.StatusType.UNSUBSCRBE_ERROR.name().toLowerCase() + " " + msg.getKey() +" "+ msg.getKey() +"\r\n";
+                }
+                else{
+                    int i=0;
+                    for(SelectionKey sk : selectionList){
+                        if(sk == ((ServerMessage) msg).getSelectionKey()){
+                            selectionList.remove(i);
+                            break;
+                        }
+                        i++;
+                    }
+
+                    message = KVMessage.StatusType.UNSUBSCRBE_OK.name().toLowerCase() + " " + msg.getKey() +" "+ msg.getKey() +"\r\n";
+
+                }
 
                 // return answer to client
                 LOGGER.info("Answer to client: " + message);

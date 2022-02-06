@@ -75,6 +75,9 @@ public class TestClient {
             case "subscribe":
                 subscribe(command);
                 break;
+            case "unsubscribe":
+                unsubscribe(command);
+                break;
             case "quit":
                 return true;
             default:
@@ -473,6 +476,71 @@ public class TestClient {
     }
 
     /**
+     * Sends a subscribe command to the server.
+     * @param command   The user input split into a String array.
+     */
+    private static void unsubscribe(String[] command) throws SizeLimitExceededException, IOException {
+        LOGGER.info(String.format("User wants to subscribe a key with arguments: %s", String.join(" ", command)));
+        if (command.length < 2)
+            printHelp("unsubscribe");
+        else {
+            try {
+                KVMessage msg = null;
+                if(store.inputPassword.isInputPassword()) {
+
+                    if (command.length < 3)
+                        printHelp("unsubscribe");
+                    else{
+                        if (store.inputPassword.getCountPasswordInput() < 4) {
+
+                            StringJoiner v = new StringJoiner(" ");
+                            msg = store.unsubscribe(new ClientMessage(KVMessage.StatusType.UNSUBSCRBE, command[1], null, command[2]));
+                        }
+                        else {
+                            store.clearInput();
+                            LOGGER.info("Exiting program");
+                            System.out.println("Too many wrong password attempts, exiting program...");
+                            try {
+                                store.disconnect();
+                            } catch (IOException e) {
+                                System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                            }
+                            System.exit(0);
+
+                        }
+                    }
+                }else {
+                    msg = store.unsubscribe(new ClientMessage(KVMessage.StatusType.UNSUBSCRBE, command[1], null));
+
+                }
+                switch (msg.getStatus()) {
+                    case UNSUBSCRBE_OK: System.out.printf("Successfully unsubscribed from key %s %n", msg.getKey()); break;
+                    case UNSUBSCRBE_ERROR: System.out.printf("Error on unsubscribe from key %s %n", msg.getKey()); break;
+                    case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        //keyRange();
+                        //added for performance testing purposes
+                        if(store.getCorrectServer(command[1]) == "SUCCESS"){
+                            subscribe(command);
+                        }
+                        break;
+                    case PASSWORD_WRONG: System.out.printf("Password wrong!%n");break;
+                }
+            } catch (IllegalStateException e) {
+                System.out.println("Not connected to KVServer!");
+            } catch (SizeLimitExceededException e) {
+                System.out.println("The message to the server is too long!");
+            } catch (IOException e) {
+                System.out.println("IO error while sending.");
+                LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            } catch (Exception e) {
+                System.out.println("Error while sending." + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Prints a help page for the user.
      *
      * @param commands  List of commands to print the help for. Passing no args will print full help
@@ -546,6 +614,11 @@ public class TestClient {
                 case "subscribe": {
                     System.out.println("subscribe <key> - Subscribe the key from the server.");
                     System.out.println("\t<key> - The key to be subscribed for.");
+                    break;
+                }
+                case "unsubscribe": {
+                    System.out.println("unsubscribe <key> - Unsubscribe the key from the server.");
+                    System.out.println("\t<key> - The key to be unsubscribed from.");
                     break;
                 }
                 case "quit": {

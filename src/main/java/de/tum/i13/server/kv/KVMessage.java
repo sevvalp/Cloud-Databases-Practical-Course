@@ -41,7 +41,10 @@ public interface KVMessage {
         REPLICATE,
         PASSWORD_WRONG,
         SUBSCRBE,
-        SUBSCRBE_OK
+        SUBSCRBE_OK,
+        UNSUBSCRBE,
+        UNSUBSCRBE_OK,
+        UNSUBSCRBE_ERROR
     }
 
     /**
