@@ -30,12 +30,14 @@ public class TestStore implements KVStore {
 
     private Metadata metadata;
     private final SocketCommunicator communicator;
+    private final SocketCommunicator brokerComunicator;
     private static final Logger LOGGER = Logger.getLogger(TestStore.class.getName());
     public static inputPassword inputPassword = new inputPassword(false, 0);
 
 
     public TestStore() {
         communicator = new SocketCommunicator();
+        brokerComunicator = new SocketCommunicator();
         metadata = new Metadata();
     }
 
@@ -51,12 +53,16 @@ public class TestStore implements KVStore {
      */
     public String connect(String host, int port) throws IOException, IllegalStateException {
         communicator.connect(host, port);
+        if(!brokerComunicator.isConnected()){
+            brokerComunicator.connect("127.0.0.1",5155);
+            brokerComunicator.receive();
+        }
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         return msg.substring(0, msg.length() - 2);
     }
 
     public Socket getClientSocket(){
-        return communicator.getSocket();
+        return brokerComunicator.getSocket();
     }
 
     /**
@@ -224,15 +230,15 @@ public class TestStore implements KVStore {
         // for example:
         // PUT_SUCCESS <b64 key> <b64 value>
         // PUT_ERROR <b64 key> <b64 error message>
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        KVMessage retMsg = receiveKVMessage();
+        brokerComunicator.send(message.getBytes(TELNET_ENCODING));
+        KVMessage retMsg = receiveBrokerKVMessage();
         int attempts = 0;
         while (attempts < 3) {
             if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
                 try {
                     MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
-                    communicator.send(message.getBytes(TELNET_ENCODING));
-                    retMsg = receiveKVMessage();
+                    brokerComunicator.send(message.getBytes(TELNET_ENCODING));
+                    retMsg = receiveBrokerKVMessage();
                 } catch (InterruptedException e) {
                     LOGGER.warning("Error while retrying to send put request");
                 }
@@ -261,15 +267,15 @@ public class TestStore implements KVStore {
         // for example:
         // PUT_SUCCESS <b64 key> <b64 value>
         // PUT_ERROR <b64 key> <b64 error message>
-        communicator.send(message.getBytes(TELNET_ENCODING));
-        KVMessage retMsg = receiveKVMessage();
+        brokerComunicator.send(message.getBytes(TELNET_ENCODING));
+        KVMessage retMsg = receiveBrokerKVMessage();
         int attempts = 0;
         while (attempts < 3) {
             if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
                 try {
                     MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
-                    communicator.send(message.getBytes(TELNET_ENCODING));
-                    retMsg = receiveKVMessage();
+                    brokerComunicator.send(message.getBytes(TELNET_ENCODING));
+                    retMsg = receiveBrokerKVMessage();
                 } catch (InterruptedException e) {
                     LOGGER.warning("Error while retrying to send put request");
                 }
@@ -450,6 +456,40 @@ public class TestStore implements KVStore {
      */
     private KVMessage receiveKVMessage() throws IOException, IllegalStateException {
         String msg = new String(communicator.receive(), TELNET_ENCODING);
+        String[] rcvMsg = msg.substring(0, msg.length() - 2).split("\\s");
+        if (KVMessage.parseStatus(rcvMsg[0]) == null)
+            return null;
+
+
+        KVMessage.StatusType status = KVMessage.parseStatus(rcvMsg[0].toUpperCase(Locale.ROOT));
+        if (status == KVMessage.StatusType.ERROR) {
+            return null;
+        }
+
+        if (status == KVMessage.StatusType.PASSWORD_WRONG) {
+            inputPassword.increaseCounter();
+            return new ClientMessage(status, null, null);
+        }
+
+        if (status == KVMessage.StatusType.SERVER_WRITE_LOCK) {
+            return new ClientMessage(status, null, null);
+        }
+        if (status == KVMessage.StatusType.SERVER_STOPPED) {
+            return new ClientMessage(status, null, null);
+        }
+        if (status == KVMessage.StatusType.SERVER_NOT_RESPONSIBLE) {
+            return new ClientMessage(status, null, null);
+        } else {
+            String rcvKey = B64Util.b64decode(rcvMsg[1]);
+            String rcvVal = "";
+            if(rcvMsg.length > 1)
+                rcvVal = B64Util.b64decode(rcvMsg[2]);
+            return new ClientMessage(status, rcvKey, rcvVal);
+        }
+    }
+
+    private KVMessage receiveBrokerKVMessage() throws IOException, IllegalStateException {
+        String msg = new String(brokerComunicator.receive(), TELNET_ENCODING);
         String[] rcvMsg = msg.substring(0, msg.length() - 2).split("\\s");
         if (KVMessage.parseStatus(rcvMsg[0]) == null)
             return null;

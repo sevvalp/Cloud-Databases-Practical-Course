@@ -92,12 +92,6 @@ public class KVCommandProcessor implements CommandProcessor {
                 inputPassword = true;
                 LOGGER.info("Password activated");
                 break;
-            case "subscribe":
-                kvStore.subscribe(new ServerMessage(KVMessage.StatusType.SUBSCRBE, request[1], null, selectionKey, password));
-                break;
-            case "unsubscribe":
-                kvStore.unsubscribe(new ServerMessage(KVMessage.StatusType.UNSUBSCRBE, request[1], null, selectionKey, password));
-                break;
             default:
                 //here handle unknown commands
                 kvStore.unknownCommand(new ServerMessage(KVMessage.StatusType.ERROR, "unknown", "command", selectionKey));
