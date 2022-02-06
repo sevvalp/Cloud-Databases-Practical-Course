@@ -2,13 +2,18 @@ package de.tum.i13.client;
 
 import de.tum.i13.server.kv.KVMessage;
 import de.tum.i13.server.kv.KVStore;
+import de.tum.i13.server.stripe.StripedExecutorService;
 import de.tum.i13.shared.*;
 
 import javax.naming.SizeLimitExceededException;
 import java.io.IOException;
-import java.security.MessageDigest;
+import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import static de.tum.i13.shared.Constants.TELNET_ENCODING;
@@ -48,6 +53,10 @@ public class TestStore implements KVStore {
         communicator.connect(host, port);
         String msg = new String(communicator.receive(), TELNET_ENCODING);
         return msg.substring(0, msg.length() - 2);
+    }
+
+    public Socket getClientSocket(){
+        return communicator.getSocket();
     }
 
     /**
@@ -197,6 +206,44 @@ public class TestStore implements KVStore {
         }
         return returnKey;
     }
+
+    public KVMessage subscribe(KVMessage msg) throws IOException, IllegalStateException, SizeLimitExceededException {
+        // convert key and value to Base64
+        String b64Key = B64Util.b64encode(msg.getKey());
+        String b64Pass = "";
+        if(inputPassword.isInputPassword())
+            b64Pass = B64Util.b64encode(msg.getPassword());
+        // put message to server has the following format
+        // PUT <Base64 encoded key> <Base64 encoded value>
+        String message = String.format("subscribe %s %s\r\n", b64Key, b64Pass);
+        LOGGER.info(String.format("Message to server: %s", message));
+
+        // try to send data, exceptions will be rethrown
+        // expected receive message
+        // <STATUS> <Base64 encoded key> <Base64 encoded value>
+        // for example:
+        // PUT_SUCCESS <b64 key> <b64 value>
+        // PUT_ERROR <b64 key> <b64 error message>
+        communicator.send(message.getBytes(TELNET_ENCODING));
+        KVMessage retMsg = receiveKVMessage();
+        int attempts = 0;
+        while (attempts < 3) {
+            if (retMsg.getStatus()== KVMessage.StatusType.SERVER_STOPPED) {
+                try {
+                    MILLISECONDS.sleep((int) (Math.random() * Math.min(1024, Math.pow(2, attempts++))));
+                    communicator.send(message.getBytes(TELNET_ENCODING));
+                    retMsg = receiveKVMessage();
+                } catch (InterruptedException e) {
+                    LOGGER.warning("Error while retrying to send put request");
+                }
+            }
+            else {
+                break;
+            }
+        }
+        return retMsg;
+    }
+
     /**
      * Inserts a key-value pair into the KVServer.
      *

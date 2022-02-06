@@ -17,6 +17,7 @@ import javax.naming.SizeLimitExceededException;
 import java.io.*;
 import java.net.InetSocketAddress;
 
+import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -45,6 +46,7 @@ public class KVServer implements KVStore {
     private KVServerCommunicator kvServerECSCommunicator;
     private TreeMap<String, Pair<String, String>> historicPairs;
     private TreeMap<String, String> keySpecificPasswords;
+    private TreeMap<String, ArrayList<SelectionKey>> subscriptionKeys;
 
 
     public KVServer(String cacheType, int cacheSize, InetSocketAddress bootstrap, String listenaddress, int port, int intraPort) {
@@ -70,6 +72,7 @@ public class KVServer implements KVStore {
         serverWriteLock = true;
         this.historicPairs = new TreeMap<>();
         this.keySpecificPasswords = new TreeMap<>();
+        this.subscriptionKeys = new TreeMap<>();
 
         this.metadata = new Metadata(new KVServerInfo(listenaddress,port, Util.calculateHash(listenaddress,port), "", intraPort));
         connectECS();
@@ -110,6 +113,79 @@ public class KVServer implements KVStore {
      */
     public void changeServerWriteLockStatus(boolean status) {
         this.serverWriteLock = status;
+    }
+
+    public KVMessage subscribe(KVMessage msg) throws IOException {
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+        //if ECS process is not done yet, server is not ready to retrieve requests
+        if (!serverActive) {
+            String message = KVMessage.StatusType.SERVER_STOPPED.toString().toLowerCase() + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_STOPPED, msg.getKey(), B64Util.b64encode("Server is not ready!"));
+        }
+        //if server locked
+        if (serverWriteLock) {
+            String message = KVMessage.StatusType.SERVER_WRITE_LOCK.toString().toLowerCase(Locale.ENGLISH) + "\r\n";
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_WRITE_LOCK, msg.getKey(), B64Util.b64encode("Server is locked!"));
+        }
+        //if server is not responsible for given key
+        if(!checkServerResponsible(msg.getKey())){
+            String message = KVMessage.StatusType.SERVER_NOT_RESPONSIBLE.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, metadata);
+        }
+        // if KVMessage does not have put command, return error
+        if (msg.getStatus() != KVMessage.StatusType.PUT)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+        // if KVMessage does not contain selectionKey, return error
+        if (!(msg instanceof ServerMessage) || ((ServerMessage) msg).getSelectionKey() == null)
+            return new ServerMessage(KVMessage.StatusType.PUT_ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not contain selectionKey!"));
+
+        if(!checkPassword(msg)){
+            String message = KVMessage.StatusType.PASSWORD_WRONG.name().toLowerCase(Locale.ENGLISH) + "\r\n";
+            LOGGER.info("Answer to Client: " + message);
+            server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+            return new ServerMessage(KVMessage.StatusType.PASSWORD_WRONG, msg.getKey(), B64Util.b64encode("Password is wrong!"));
+        }
+
+
+        LOGGER.info(String.format("Client wants to subscribe key: %s", msg.getKey()));
+
+        LOGGER.fine("Submitting new put callable to pool for key " + msg.getKey());
+        // queue subscribe command
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.fine(String.format("Putting key into subscribe hashmap: %s", msg.getKey()));
+
+                ArrayList<SelectionKey> selectionList = subscriptionKeys.get(msg.getKey());
+                if (selectionList == null) {
+                    selectionList = new ArrayList<SelectionKey>();
+                    subscriptionKeys.put(msg.getKey(), selectionList);
+                }
+                selectionList.add(((ServerMessage) msg).getSelectionKey());
+
+                String message;
+                LOGGER.fine(String.format("Successfully added key into subribe list"));
+
+                message = KVMessage.StatusType.SUBSCRBE_OK.name().toLowerCase() + " " + msg.getKey() +" "+ msg.getKey() +"\r\n";
+
+                // return answer to client
+                LOGGER.info("Answer to client: " + message);
+                server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                return null;
+            }
+
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+
+        return null;
     }
 
     /**
@@ -186,6 +262,19 @@ public class KVServer implements KVStore {
                 // return answer to client
                 LOGGER.info("Answer to client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                //send subscribed clients message
+                ArrayList<SelectionKey> selectionList = subscriptionKeys.get(msg.getKey());
+                if (selectionList != null) {
+                    String smsg =  "subscribe_update" + " " + res.getKey() + " " + res.getValue() + "\r\n";
+                    for(SelectionKey sk : selectionList){
+                        if(sk != ((ServerMessage) msg).getSelectionKey())
+                            server.send(sk, smsg.getBytes(TELNET_ENCODING));
+//                        SocketChannel client = (SocketChannel) sk.channel();
+//                        SocketAddress socketAddress = client.getRemoteAddress();
+//                        sendMessage(socketAddress.toString(), 6869, smsg);
+                    }
+                }
 
                 //TODO: send new kv to replicas
                 if(metadata.getServerMap().size() > 2){
@@ -374,6 +463,19 @@ public class KVServer implements KVStore {
                 String message = res.getStatus().name().toLowerCase() + " " + res.getKey() + " " + res.getValue() + "\r\n";
                 LOGGER.info("Answer to Client: " + message);
                 server.send(((ServerMessage) msg).getSelectionKey(), message.getBytes(TELNET_ENCODING));
+
+                ArrayList<SelectionKey> selectionList = subscriptionKeys.get(msg.getKey());
+                if (selectionList != null) {
+                    String smsg =  "subscribe_delete " + res.getKey() + " " + res.getKey() +  "\r\n";
+                    for(SelectionKey sk : selectionList){
+                        if(sk != ((ServerMessage) msg).getSelectionKey())
+                            server.send(sk, smsg.getBytes(TELNET_ENCODING));
+//                        SocketChannel client = (SocketChannel) sk.channel();
+//                        SocketAddress socketAddress = client.getRemoteAddress();
+//                        sendMessage(socketAddress.toString(), 6869, smsg);
+                    }
+                    subscriptionKeys.remove(msg.getKey());
+                }
 
                 //TODO: delete kv from replicas
                 if(metadata.getServerMap().size() > 2)

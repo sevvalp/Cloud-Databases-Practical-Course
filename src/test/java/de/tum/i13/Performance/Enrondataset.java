@@ -43,7 +43,7 @@ public class Enrondataset {
 
     public void loadData(int amount) {
         this.dataLoaded = new TreeMap<>();
-//        Collections.shuffle(files);
+        Collections.shuffle(files);
 
         for (int i = 0; i < amount; i++) {
             Path filePath = this.files.get(i);

@@ -3,12 +3,15 @@ package de.tum.i13.client;
 import de.tum.i13.server.kv.KVMessage;
 
 import javax.naming.SizeLimitExceededException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.util.StringJoiner;
+import java.util.Timer;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,6 +30,7 @@ public class TestClient {
     private final static Logger LOGGER = Logger.getLogger(TestClient.class.getName());
     private final static Logger ROOT_LOGGER = Logger.getLogger("");
     private static TestStore store = new TestStore();
+    static BufferedReader FromServer = null;
 
     private static boolean interpretInput(String input) throws SizeLimitExceededException, IOException, NoSuchAlgorithmException {
 
@@ -36,6 +40,7 @@ public class TestClient {
         switch (command[0]) {
             case "connect":
                 connect(command);
+                FromServer = new BufferedReader(new InputStreamReader(store.getClientSocket().getInputStream()));
                 break;
             case "disconnect":
                 disconnect();
@@ -66,6 +71,9 @@ public class TestClient {
                 break;
             case "receive":
                 receive(command);
+                break;
+            case "subscribe":
+                subscribe(command);
                 break;
             case "quit":
                 return true;
@@ -401,6 +409,70 @@ public class TestClient {
     }
 
     /**
+     * Sends a subscribe command to the server.
+     * @param command   The user input split into a String array.
+     */
+    private static void subscribe(String[] command) throws SizeLimitExceededException, IOException {
+        LOGGER.info(String.format("User wants to subscribe a key with arguments: %s", String.join(" ", command)));
+        if (command.length < 2)
+            printHelp("subscribe");
+        else {
+            try {
+                KVMessage msg = null;
+                if(store.inputPassword.isInputPassword()) {
+
+                    if (command.length < 3)
+                        printHelp("subscribe");
+                    else{
+                        if (store.inputPassword.getCountPasswordInput() < 4) {
+
+                            StringJoiner v = new StringJoiner(" ");
+                            msg = store.subscribe(new ClientMessage(KVMessage.StatusType.SUBSCRBE, command[1], null, command[2]));
+                        }
+                        else {
+                            store.clearInput();
+                            LOGGER.info("Exiting program");
+                            System.out.println("Too many wrong password attempts, exiting program...");
+                            try {
+                                store.disconnect();
+                            } catch (IOException e) {
+                                System.out.printf("There was an error while disconnecting from the server: %s%n", e.getMessage());
+                            }
+                            System.exit(0);
+
+                        }
+                    }
+                }else {
+                    msg = store.subscribe(new ClientMessage(KVMessage.StatusType.SUBSCRBE, command[1], null));
+
+                }
+                switch (msg.getStatus()) {
+                    case SUBSCRBE_OK: System.out.printf("Successfully subscribe to key %s %n", msg.getKey()); break;
+                    case SERVER_WRITE_LOCK: System.out.printf("Storage server is currently blocked for write requests%n");break;
+                    case SERVER_NOT_RESPONSIBLE:
+                        //keyRange();
+                        //added for performance testing purposes
+                        if(store.getCorrectServer(command[1]) == "SUCCESS"){
+                            subscribe(command);
+                        }
+                        break;
+                    case PASSWORD_WRONG: System.out.printf("Password wrong!%n");break;
+                }
+            } catch (IllegalStateException e) {
+                System.out.println("Not connected to KVServer!");
+            } catch (SizeLimitExceededException e) {
+                System.out.println("The message to the server is too long!");
+            } catch (IOException e) {
+                System.out.println("IO error while sending.");
+                LOGGER.severe(String.format("IO error: %s", e.getMessage()));
+            } catch (Exception e) {
+                System.out.println("Error while sending." + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Prints a help page for the user.
      *
      * @param commands  List of commands to print the help for. Passing no args will print full help
@@ -471,6 +543,11 @@ public class TestClient {
                     System.out.println("help - Prints this help message.");
                     break;
                 }
+                case "subscribe": {
+                    System.out.println("subscribe <key> - Subscribe the key from the server.");
+                    System.out.println("\t<key> - The key to be subscribed for.");
+                    break;
+                }
                 case "quit": {
                     System.out.println("quit - Disconnects from the server and exits the program execution.");
                     break;
@@ -499,15 +576,30 @@ public class TestClient {
      *
      * @param args  Not used.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         setupLogging(Paths.get("test.log"));
         Scanner scanner = new Scanner(System.in);
+
+        if(store.getClientSocket().isConnected())
+             FromServer = new BufferedReader(new InputStreamReader(store.getClientSocket().getInputStream()));
+        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 
         try {
             boolean quit = false;
             while (!quit) {
-                System.out.print("EchoClient> ");
-                quit = interpretInput(scanner.nextLine());
+
+                if (FromServer!= null && FromServer.ready()) {
+                    // receive from server
+                    Subscriber sb = new Subscriber();
+                    sb.handleRequests(FromServer.readLine());
+                }
+
+                if (inFromUser.ready()) {
+                    System.out.print("EchoClient> ");
+                    quit = interpretInput(scanner.nextLine());
+                }
+
+
             }
 
             quitProgram();

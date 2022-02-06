@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PerformanceTest {
     private Enrondataset enronDataset;
-    int opNr = 128103;
+    int opNr = 200; //128103;
 
 
     private void init() throws IOException {
@@ -61,6 +61,148 @@ public class PerformanceTest {
             thServer.start(); // started the server
             Thread.sleep(2000);
         }
+
+    }
+
+    private Socket[] startClients(int number, int servernr) throws IOException {
+        Socket[] sockets = new Socket[number];
+
+        for(int i= 0; i<number; i++){
+            int port = 5155;
+            if(servernr > 1){
+                if(servernr >= number)
+                    port = 5155 + i;
+                else
+                    port = 5156;
+            }
+
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress("127.0.0.1", port));
+            getResponse(s);
+            sockets[i] = s;
+        }
+
+        return sockets;
+    }
+
+    @Test
+    public void oneServer_twoClient() throws InterruptedException, IOException {
+
+        //init();
+        enronDataset = new Enrondataset();
+        enronDataset.loadData(200);
+        TreeMap<String, String> loadadData1 = enronDataset.getDataLoaded();
+
+//        enronDataset.loadData(100);
+//        TreeMap<String, String> loadadData2 = enronDataset.getDataLoaded();
+
+//        enronDataset.loadData(50);
+//        TreeMap<String, String> loadadData3 = enronDataset.getDataLoaded();
+//
+//        enronDataset.loadData(50);
+//        TreeMap<String, String> loadadData4 = enronDataset.getDataLoaded();
+
+        startECS();
+
+        startServers(4);
+
+        Thread.sleep(60000);
+        Socket[] sockets = startClients(1, 4);
+
+        String req ="";
+
+        // get timestamp here
+        Timestamp beforeTS = new Timestamp(System.currentTimeMillis());
+        long startTime = System.nanoTime();
+
+        //TreeMap<String, String> loadadData = enronDataset.getDataLoaded();
+        String res = "";
+        opNr =  200; //loadadData.size();
+
+
+
+        Thread thServer1 = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Socket s = sockets[0];
+                    int x = 0;
+                    for (String key: loadadData1.keySet()) {
+                        String req = "put " + key + " " + loadadData1.get(key);
+                        String res = doRequest(s, req);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+//        Thread thServer2 = new Thread() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Socket s = sockets[1];
+//                    int x = 0;
+//                    for (String key: loadadData2.keySet()) {
+//                        String req = "put " + key+ " " + loadadData2.get(key);
+//                        String res = doRequest(s, req);
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
+
+//        Thread thServer3 = new Thread() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Socket s = sockets[2];
+//                    int x = 0;
+//                    for (String key: loadadData3.keySet()) {
+//                        String req = "put " + key+ " " + loadadData3.get(key);
+//                        String res = doRequest(s, req);
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
+//
+//        Thread thServer4 = new Thread() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Socket s = sockets[3];
+//                    int x = 0;
+//                    for (String key: loadadData4.keySet()) {
+//                        String req = "put " + key+ " " + loadadData4.get(key);
+//                        String res = doRequest(s, req);
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
+
+
+        thServer1.start();
+//        thServer2.start();
+//        thServer3.start();
+//        thServer4.start();
+
+        thServer1.join();
+//        thServer2.join();
+//        thServer3.join();
+//        thServer4.join();
+
+        Thread.sleep(500);
+//        Timestamp afterTS = new Timestamp(System.currentTimeMillis());
+        long endTime   = System.nanoTime();
+
+        writeResults("_one_client_four_server.txt", startTime, endTime);
+
+        assertThat(true, equalTo(true));
 
     }
 
@@ -237,7 +379,8 @@ public class PerformanceTest {
 
     public void writeResults(String fileName, long startTime, long endTime) throws IOException {
 
-        long total_time = (long) ((endTime - startTime) / 1000000000.0);
+        long total_time = (long) ((endTime - startTime) / 1000000.0);
+                /// 1000000.0);
         // for milliseconds: / 1000000.0);
         System.out.println("total time: " + total_time);
 

@@ -219,4 +219,5 @@ public class SocketCommunicator implements KVCommunicator {
     public int getPort(){
         return mSocket.getPort();
     }
+    public Socket getSocket(){ return this.mSocket; }
 }

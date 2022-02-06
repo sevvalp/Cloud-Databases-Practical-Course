@@ -40,6 +40,8 @@ public interface KVMessage {
         RECEIVE_SINGLE,
         REPLICATE,
         PASSWORD_WRONG,
+        SUBSCRBE,
+        SUBSCRBE_OK
     }
 
     /**
