@@ -89,8 +89,18 @@ public class KVCommandProcessor implements CommandProcessor {
                 kvStore.respondHeartbeat(new ServerMessage(KVMessage.StatusType.ECS_HEARTBEAT, request[1], request[2], selectionKey));
                 break;
             case "handlewithpassword":
-                inputPassword = true;
-                LOGGER.info("Password activated");
+                if(!inputPassword){
+                    inputPassword = true;
+                    LOGGER.info("Password activated");
+                }
+                else{
+                    inputPassword = false;
+                    LOGGER.info("Password deactivated");
+                }
+
+                break;
+            case "receive_password":
+                kvStore.receivePassword(new ServerMessage(KVMessage.StatusType.PASSWORD, request[1], request[2], selectionKey));
                 break;
             default:
                 //here handle unknown commands

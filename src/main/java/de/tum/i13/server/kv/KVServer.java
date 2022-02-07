@@ -390,7 +390,7 @@ public class KVServer implements KVStore {
 
                String smsg =  "subscribe_delete " + res.getKey() + " " + res.getKey() +  "\r\n";
                kvServerBrokerCommunicator.send("127.0.0.1:5155", smsg.getBytes(StandardCharsets.UTF_8));
-               
+
 
                 //TODO: delete kv from replicas
                 if(metadata.getServerMap().size() > 2)
@@ -422,6 +422,22 @@ public class KVServer implements KVStore {
         });
     }
 
+    public void sendPassword(String command){
+        String msg = "receive_password " + "receive_password" + " " + B64Util.b64encode(command)  + "\r\n";
+        ArrayList<String> replicaServers = metadata.getReplicaServers(Util.calculateHash(listenaddress,port));
+        LOGGER.info("Message prepared, replica servers calculated, ready to send passwords");
+
+        replicaServers.forEach((server) -> {
+            try {
+                KVServerInfo repServer = metadata.getServerMap().get(server);
+                sendMessage(repServer.getAddress(), repServer.getIntraPort(), msg);
+                LOGGER.info("Passwords successfully sent to: " + repServer.getAddress() +":" + repServer.getPort());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     //Password check is only active when password has a non-null value..
     private boolean checkPassword(KVMessage msg) {
         String cpass = msg.getPassword();
@@ -441,6 +457,10 @@ public class KVServer implements KVStore {
                     } else {
                         //password doesn't exist for given key
                         keySpecificPasswords.put(msg.getKey(), Util.calculateHash(cpass));
+                        //prepare sending passwords
+                        String kp = preparePasswordString();
+                        sendPassword(kp);
+                        //send passwords to replica nodes
                         LOGGER.info(String.format("New password is added to given key"));
                     }
                 } else {
@@ -450,6 +470,16 @@ public class KVServer implements KVStore {
                 }
         } // otherwise password control is not enabled return true
         return true;
+    }
+
+    private String preparePasswordString(){
+        String kp = "";
+        for (String key: keySpecificPasswords.keySet()) {
+            kp += key + ";=;" + keySpecificPasswords.get(key) + "&=&";
+        }
+        kp= kp.substring(0, kp.length() - 3);
+
+        return kp;
     }
     /**
      * Returns error message to client for unknown command.
@@ -642,13 +672,22 @@ public class KVServer implements KVStore {
                 if (sendHist.isEmpty() || sendHist == null) {
                     message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " null " + msg.getValue() + "\r\n";
                 }
-                else message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
+                else{
+                    message = KVMessage.StatusType.RECEIVE_REBALANCE.name().toLowerCase(Locale.ENGLISH) + " " + B64Util.b64encode(convertMapToString(sendHist)) + " " + msg.getValue() + "\r\n";
+
+                    // if there is some keys to be send then send passwords as well
+                    String kp = preparePasswordString();
+                    sendPassword(kp);
+
+                }
 
                     LOGGER.info("Send handoff data to successor: " + message);
 
                     //how will I know it's selectionKey? then connect
                     sendMessage(addressinfo[0], Integer.parseInt(addressinfo[1]), message);
                     LOGGER.info("Rebalance data sent");
+
+
 
 
                 //kvServerECSCommunicator.connect(this.bootstrap.getAddress().getHostAddress(), this.bootstrap.getPort());
@@ -892,6 +931,39 @@ public class KVServer implements KVStore {
         });
 
         LOGGER.info("Metadata updated, server active, write lock released");
+        return null;
+
+    }
+
+    public KVMessage receivePassword(KVMessage msg) throws Exception {
+
+        // if server is not set, return error
+        if (server == null)
+            return new ServerMessage(KVMessage.StatusType.REBALANCE_ERROR, msg.getKey(), B64Util.b64encode("Server is not set!"));
+
+        if (msg.getStatus() != KVMessage.StatusType.PASSWORD)
+            return new ServerMessage(KVMessage.StatusType.ERROR, msg.getKey(), B64Util.b64encode("KVMessage does not have correct status!"));
+
+        pool.submit(new StripedCallable<Void>() {
+            public Void call() throws Exception {
+                LOGGER.info("Metadata received. ");
+
+                String key_pass = B64Util.b64decode(msg.getValue());
+                String[] kp_list = key_pass.split("&=&");
+
+                for (String s : kp_list) {
+                    String[] kp = s.split(";=;");
+                    keySpecificPasswords.put(kp[0],kp[1]);
+                }
+
+                return null;
+            }
+            public Object getStripe() {
+                return msg.getKey();
+            }
+        });
+
+        LOGGER.info("Passwords updated");
         return null;
 
     }

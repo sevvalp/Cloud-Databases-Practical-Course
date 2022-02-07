@@ -482,7 +482,7 @@ public class TestStore implements KVStore {
         } else {
             String rcvKey = B64Util.b64decode(rcvMsg[1]);
             String rcvVal = "";
-            if(rcvMsg.length > 1)
+            if(rcvMsg.length > 2)
                 rcvVal = B64Util.b64decode(rcvMsg[2]);
             return new ClientMessage(status, rcvKey, rcvVal);
         }
@@ -525,9 +525,16 @@ public class TestStore implements KVStore {
     /**
      * This method is called to start the request of the password to the user
      */
-    protected static void setInput(String[] command) {
+    protected static String setInput(String[] command) {
         inputPassword.setCountPasswordInput(0);
-        inputPassword.setInputPassword(true);
+        if(!inputPassword.isInputPassword()){
+            inputPassword.setInputPassword(true);
+            return "Password enabled.";
+        }
+        else {
+            inputPassword.setInputPassword(false);
+            return "Password disabled.";
+        }
     }
 
     /**

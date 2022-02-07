@@ -95,10 +95,10 @@ public class TestClient {
      */
     private static void handleWithPassword(String[] command) throws SizeLimitExceededException, IOException {
         if (command.length >= 1) {
-            store.setInput(command);
+            String msg = store.setInput(command);
             String message = "handleWithPassword ";
-            System.out.printf("handleWithPassword: %s%n", store.activatePassword(message));
-            System.out.println("Password enabled ");
+            store.activatePassword(message);
+            System.out.println(msg);
         } else
             System.out.println("Unknown command ");
     }
@@ -210,9 +210,12 @@ public class TestClient {
                 KVMessage msg = null;
                 if(store.inputPassword.isInputPassword()) {
 
-                    if (command.length < 4)
+                    if (command.length != 4){
+                        LOGGER.info("Password is not specified.");
+                        System.out.println("Password is not specified.");
                         printHelp("put");
-                    else{
+                        return;
+                    } else{
                         if (store.inputPassword.getCountPasswordInput() < 4) {
 
                             StringJoiner v = new StringJoiner(" ");
@@ -292,6 +295,7 @@ public class TestClient {
                 LOGGER.info("Password is not specified.");
                 System.out.println("Password is not specified.");
                 printHelp("get");
+                return;
             }
             else if (store.inputPassword.getCountPasswordInput() < 4) {
                     msg = store.get(new ClientMessage(KVMessage.StatusType.GET, command[1],null, command[2]));
@@ -367,9 +371,12 @@ public class TestClient {
                 msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1]));
         }
         else {
-            if (command.length != 3)
+            if (command.length != 3){
+                LOGGER.info("Password is not specified.");
+                System.out.println("Password is not specified.");
                 printHelp("delete");
-            else if (store.inputPassword.getCountPasswordInput() < 4) {
+                return;
+            } else if (store.inputPassword.getCountPasswordInput() < 4) {
                 msg = store.delete(new ClientMessage(KVMessage.StatusType.DELETE, command[1],null, command[2]));
             }
             else {
