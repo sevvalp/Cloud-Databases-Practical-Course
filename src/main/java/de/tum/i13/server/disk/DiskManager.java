@@ -160,7 +160,7 @@ public class DiskManager implements IDiskManager {
                 return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Key not in disk!"));
             }
         } catch (IOException e) {
-            LOGGER.info("IOException occurred while deleting key the from disk.");
+            LOGGER.info("IOException occurred while deleting the key from disk.");
             return new ServerMessage(KVMessage.StatusType.DELETE_ERROR, msg.getKey(), B64Util.b64encode("Exception occurred while deleting key!"));
         }
 

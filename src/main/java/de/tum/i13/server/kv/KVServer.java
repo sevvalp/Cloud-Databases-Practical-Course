@@ -447,7 +447,7 @@ public class KVServer implements KVStore {
                     String password = keySpecificPasswords.get(msg.getKey());
                     if (password != null) {
                         //password found check correctness
-                        if (!Util.calculateHash(cpass).equals(password)) {
+                        if (!(Util.calculateHash(cpass).equals(password))) {
                             LOGGER.info(String.format("Given password is not correct, return error to client"));
                             return false;
                         }else {
